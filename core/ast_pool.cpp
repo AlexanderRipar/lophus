@@ -258,7 +258,7 @@ static constexpr u64 NODE_BUILDER_RESERVE_SIZE = (static_cast<u64>(1) << 26) * s
 
 static constexpr u64 SOURCE_BUILDER_RESERVE_SIZE = (static_cast<u64>(1) << 26) * sizeof(SourceId);
 
-static constexpr u64 CLOSURE_LISTS_RESERVE_SIZE = (static_cast<u64>(1) << 24) * sizeof(ClosureListEntry);
+static constexpr u64 ATTACHMENT_LISTS_RESERVE_SIZE = (static_cast<u64>(1) << 24) * sizeof(ClosureListEntry);
 
 bool ast_pool_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSink sink) noexcept
 {
@@ -267,44 +267,42 @@ bool ast_pool_validate_config([[maybe_unused]] const Config* config, [[maybe_unu
 
 MemoryRequirements ast_pool_memory_requirements([[maybe_unused]] const Config* config) noexcept
 {
+	static_assert(alignof(AstNode) == alignof(decltype(*AstPool::attachment_lists.begin())));
+
 	MemoryRequirements reqs;
-	reqs.count = 3;
-	reqs.ranges[0].size = NODES_RESERVE_SIZE;
+	reqs.count = 2;
+	reqs.ranges[0].size = NODES_RESERVE_SIZE + ATTACHMENT_LISTS_RESERVE_SIZE;
 	reqs.ranges[0].max_offset = static_cast<u64>(UINT32_MAX) * alignof(AstNode);
-	reqs.ranges[1].size = CLOSURE_LISTS_RESERVE_SIZE;
-	reqs.ranges[1].max_offset = static_cast<u64>(UINT32_MAX) * alignof(ClosureListEntry);
-	reqs.ranges[2].size = SOURCES_RESERVE_SIZE + NODE_BUILDER_RESERVE_SIZE + SOURCE_BUILDER_RESERVE_SIZE;
-	reqs.ranges[2].max_offset = UINT64_MAX;
+	reqs.ranges[1].size = SOURCES_RESERVE_SIZE + NODE_BUILDER_RESERVE_SIZE + SOURCE_BUILDER_RESERVE_SIZE;
+	reqs.ranges[1].max_offset = UINT64_MAX;
 
 	return reqs;
 }
 
 void ast_pool_init(CoreData* core, MemoryAllocation allocation) noexcept
 {
-	ASSERT_OR_IGNORE(allocation.ranges[0].count() == NODES_RESERVE_SIZE);
+	ASSERT_OR_IGNORE(allocation.ranges[0].count() == NODES_RESERVE_SIZE + ATTACHMENT_LISTS_RESERVE_SIZE);
 	
-	ASSERT_OR_IGNORE(allocation.ranges[1].count() == CLOSURE_LISTS_RESERVE_SIZE);
-
-	ASSERT_OR_IGNORE(allocation.ranges[2].count() == SOURCES_RESERVE_SIZE + NODE_BUILDER_RESERVE_SIZE + SOURCE_BUILDER_RESERVE_SIZE);
+	ASSERT_OR_IGNORE(allocation.ranges[1].count() == SOURCES_RESERVE_SIZE + NODE_BUILDER_RESERVE_SIZE + SOURCE_BUILDER_RESERVE_SIZE);
 
 	AstPool* const asts = &core->asts;
 
-	asts->nodes.init(allocation.ranges[0], static_cast<u32>(1) << 18);
+	asts->nodes.init(allocation.ranges[0].mut_subrange(0, NODES_RESERVE_SIZE), static_cast<u32>(1) << 18);
 
-	asts->attachment_lists.init(allocation.ranges[1], static_cast<u32>(1) << 12);
+	asts->attachment_lists.init(allocation.ranges[0].mut_subrange(NODES_RESERVE_SIZE, ATTACHMENT_LISTS_RESERVE_SIZE), static_cast<u32>(1) << 14);
 
 	u64 offset = 0;
 
-	asts->sources.init(allocation.ranges[2].mut_subrange(offset, SOURCES_RESERVE_SIZE), static_cast<u32>(1) << 18);
+	asts->sources.init(allocation.ranges[1].mut_subrange(offset, SOURCES_RESERVE_SIZE), static_cast<u32>(1) << 18);
 	offset += SOURCES_RESERVE_SIZE;
 
-	asts->node_builder.init(allocation.ranges[2].mut_subrange(offset, NODE_BUILDER_RESERVE_SIZE), static_cast<u32>(1) << 16);
+	asts->node_builder.init(allocation.ranges[1].mut_subrange(offset, NODE_BUILDER_RESERVE_SIZE), static_cast<u32>(1) << 16);
 	offset += NODE_BUILDER_RESERVE_SIZE;
 
-	asts->source_builder.init(allocation.ranges[2].mut_subrange(offset, SOURCE_BUILDER_RESERVE_SIZE), static_cast<u32>(1) << 16);
+	asts->source_builder.init(allocation.ranges[1].mut_subrange(offset, SOURCE_BUILDER_RESERVE_SIZE), static_cast<u32>(1) << 16);
 	offset += SOURCE_BUILDER_RESERVE_SIZE;
 
-	ASSERT_OR_IGNORE(allocation.ranges[2].count() == offset);
+	ASSERT_OR_IGNORE(allocation.ranges[1].count() == offset);
 
 	(void) asts->nodes.reserve();
 
@@ -436,7 +434,7 @@ ClosureList* alloc_closure_list(CoreData* core, u32 entry_count) noexcept
 
 	ASSERT_OR_IGNORE(size <= UINT32_MAX);
 
-	ClosureList* const list = static_cast<ClosureList*>(core->asts.attachment_lists.reserve_exact(static_cast<u32>(size)));
+	ClosureList* const list = static_cast<ClosureList*>(core->asts.attachment_lists.reserve_padded(static_cast<u32>(size)));
 	list->count = entry_count;
 
 	return list;
@@ -444,7 +442,7 @@ ClosureList* alloc_closure_list(CoreData* core, u32 entry_count) noexcept
 
 ClosureListId id_from_closure_list(CoreData* core, ClosureList* closure_list) noexcept
 {
-	return static_cast<ClosureListId>(reinterpret_cast<u32*>(closure_list) - core->asts.attachment_lists.begin());
+	return static_cast<ClosureListId>(reinterpret_cast<u64*>(closure_list) - core->asts.attachment_lists.begin());
 }
 
 ClosureList* closure_list_from_id(CoreData* core, ClosureListId id) noexcept
@@ -470,7 +468,7 @@ ReferenceList* alloc_reference_list(CoreData* core, u32 entry_count) noexcept
 
 ReferenceListId id_from_reference_list(CoreData* core, ReferenceList* reference_list) noexcept
 {
-	return static_cast<ReferenceListId>(reinterpret_cast<u32*>(reference_list) - core->asts.attachment_lists.begin());
+	return static_cast<ReferenceListId>(reinterpret_cast<u64*>(reference_list) - core->asts.attachment_lists.begin());
 }
 
 ReferenceList* reference_list_from_id(CoreData* core, ReferenceListId id) noexcept

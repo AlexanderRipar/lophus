@@ -24,7 +24,7 @@ struct AstPool
 
 	ReservedVec<SourceId> source_builder;
 
-	ReservedVec<u32> attachment_lists;
+	ReservedVec<u64> attachment_lists;
 };
 
 
@@ -464,8 +464,6 @@ struct TypecheckValue;
 
 struct TypecheckActivation;
 
-
-
 struct Typechecker
 {
 	ReservedByteStack activations;
@@ -532,7 +530,7 @@ struct CoreData
 
 
 
-static constexpr u64 MAX_MEMORY_RANGE_REQUIREMENTS_COUNT = 3;
+static constexpr u64 MAX_MEMORY_RANGE_REQUIREMENTS_COUNT = 2;
 
 struct MemoryRangeRequirement
 {
