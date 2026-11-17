@@ -7,11 +7,7 @@
 
 static s64 print_node_header(PrintSink sink, CoreData* core, const AstNode* node, s32 depth) noexcept
 {
-	const Range<char8> type_evaluated_tag = has_flag(node, AstFlag::Any_IsTypeEvaluated)
-		? range::from_literal_string(" #TE")
-		: range::from_literal_string("");
-
-	s64 total_written = print(sink, "%[< %]%[]%", "", (depth + 1) * 2, tag_name(node->tag), type_evaluated_tag);
+	s64 total_written = print(sink, "%[< %]%", "", (depth + 1) * 2, tag_name(node->tag));
 
 	if (total_written < 0)
 		return -1;
