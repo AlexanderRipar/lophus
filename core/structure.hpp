@@ -5,13 +5,11 @@
 
 #include "../infra/types.hpp"
 #include "../infra/range.hpp"
-#include "../infra/hash.hpp"
 #include "../infra/container/id_map.hpp"
 #include "../infra/container/reserved_vec.hpp"
 #include "../infra/container/reserved_byte_stack.hpp"
 #include "../infra/minos/minos.hpp"
 
-#include <cstddef>
 #include <csetjmp>
 
 struct AstPool
