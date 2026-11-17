@@ -463,6 +463,10 @@ bool run_compilation(CoreData* core, bool main_is_std) noexcept
 
 	const u64 ticks_per_second = minos::timestamp_ticks_per_second();
 
+	u64 last_report_time = start_time;
+
+	u64 last_report_processed_bytes = 0;
+
 	u64 end_time = 0;
 
 	u64 i = 0;
@@ -485,16 +489,36 @@ bool run_compilation(CoreData* core, bool main_is_std) noexcept
 		i += 1;
 
 		end_time = minos::timestamp_utc();
+
+		if (repeats != 0 && end_time - last_report_time > 5 * ticks_per_second)
+		{
+			const u64 elapsed_ms = ((end_time - last_report_time) * 1000) / ticks_per_second;
+
+			const u64 mib_per_s_times_1000 = (((processed_bytes - last_report_processed_bytes) / (1024 * 1024)) * 1000 * 1000) / elapsed_ms;
+
+			const u64 mib_per_s = mib_per_s_times_1000 / 1000;
+
+			const u64 extra_kib_per_s = mib_per_s_times_1000 % 1000;
+
+			print(minos::standard_file_handle(minos::StdFileName::StdErr), "Processing %.%[>03] MiB/s\n", mib_per_s, extra_kib_per_s);
+
+			last_report_processed_bytes = processed_bytes;
+			last_report_time = end_time;
+		}
 	}
-	while (i < repeats && (timeout_secs == 0 || (end_time - start_time) < timeout_secs * ticks_per_second));
+	while (i < repeats && (timeout_secs == 0 || end_time - start_time < timeout_secs * ticks_per_second));
 
 	if (repeats != 0)
 	{
 		const u64 elapsed_ms = ((end_time - start_time) * 1000) / ticks_per_second;
 
-		const u64 mib_per_s = (processed_bytes / (1024 * 1024)) / (elapsed_ms / 1000);
+		const u64 mib_per_s_times_1000 = ((processed_bytes / (1024 * 1024)) * 1000 * 1000) / elapsed_ms;
 
-		print(minos::standard_file_handle(minos::StdFileName::StdErr), "Processed % bytes over % iterations in % milliseconds (% MiB/s)\n", processed_bytes, i, elapsed_ms, mib_per_s);
+		const u64 mib_per_s = mib_per_s_times_1000 / 1000;
+
+		const u64 extra_kib_per_s = mib_per_s_times_1000 % 1000;
+
+		print(minos::standard_file_handle(minos::StdFileName::StdErr), "Processed % bytes over % iterations in % milliseconds (%.%[>03] MiB/s)\n", processed_bytes, i, elapsed_ms, mib_per_s, extra_kib_per_s);
 	}
 
 	return true;
