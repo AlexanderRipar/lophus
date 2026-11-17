@@ -90,6 +90,13 @@ static constexpr u32 KNOWN_FILES_BY_IDENTITY_VALUES_RESERVE = (static_cast<u32>(
 
 static constexpr u32 KNOWN_FILES_BY_IDENTITY_VALUES_COMMIT_INCREMENT_COUNT = static_cast<u32>(1) << 11;
 
+static constexpr u32 SOURCE_BUFFER_RESERVE = static_cast<u32>(1) << 26;
+
+
+
+static constexpr u32 ERROR_BUFFER_SIZE = 65536;
+
+
 
 bool SourceFileByPathIterator::has_next() const noexcept
 {
@@ -249,6 +256,15 @@ void SourceFileByIdAlloc::dealloc([[maybe_unused]] u32 id) noexcept
 
 
 
+static Range<char8> source_file_path(CoreData* core, SourceFile* source_file) noexcept
+{
+	SourceFileByIdEntry* const id_entry = reinterpret_cast<SourceFileByIdEntry*>(reinterpret_cast<byte*>(source_file) - offsetof(SourceFileByIdEntry, data));
+
+	SourceFileByPathEntry* const path_entry = core->reader.known_files_by_path.value_from(id_entry->path_entry_index);
+
+	return Range{ path_entry->path, path_entry->path_bytes };
+}
+
 static SourceFile* source_file_from_source_id(CoreData* core, SourceId source_id) noexcept
 {
 	ASSERT_OR_IGNORE(source_id != SourceId::INVALID);
@@ -305,14 +321,80 @@ static SourceFile* source_file_from_source_id(CoreData* core, SourceId source_id
 	return &entries[lo].data;
 }
 
-static Range<char8> source_file_path(CoreData* core, SourceFile* source_file) noexcept
+
+
+static Range<char8> read_source_file_content(CoreData* core, SourceFile* source_file) noexcept
 {
-	SourceFileByIdEntry* const id_entry = reinterpret_cast<SourceFileByIdEntry*>(reinterpret_cast<byte*>(source_file) - offsetof(SourceFileByIdEntry, data));
+	const SourceFileId source_file_id = id_from_source_file(core, source_file);
 
-	SourceFileByPathEntry* const path_entry = core->reader.known_files_by_path.value_from(id_entry->path_entry_index);
+	if (source_file_id == core->reader.buffer_source_file_id)
+		return Range{ core->reader.buffer_begin, core->reader.buffer_used };
 
-	return Range{ path_entry->path, path_entry->path_bytes };
+	minos::FileInfo fileinfo;
+
+	if (!minos::file_get_info(get(source_file->file), &fileinfo))
+	{
+		const Range<char8> filepath = source_file_path(core, source_file);
+
+		panic("Could not get info on source file `%`. (0x%[|X])\n", filepath, minos::last_error());
+	}
+
+	// Add 31 bytes onto the buffer's end so we can load into a 256-bit
+	// register at any point inside of it without worrying about segfaulting.
+	const u64 buffer_size = fileinfo.bytes + 31;
+
+	if (buffer_size > core->reader.buffer_reserve)
+	{
+		const Range<char8> filepath = source_file_path(core, source_file);
+
+		panic("The size of the source file `%` (% bytes) is larger than the configured maximum of % bytes.\n", fileinfo.bytes, filepath, core->reader.buffer_reserve - 31);
+	}
+
+	// Only commit additional memory if the currently committed memory is too
+	// small. Doing this is not strictly necessary, but sometimes avoids a
+	// syscall.
+	if (buffer_size > core->reader.buffer_commit)
+	{
+		if (!minos::mem_commit(core->reader.buffer_begin, buffer_size))
+		{
+			const Range<char8> filepath = source_file_path(core, source_file);
+
+			panic("Failed to commit % bytes of memory for reading source file `%`. (0x%[|X])\n", buffer_size, filepath, minos::last_error());
+		}
+
+		const u32 page_mask = minos::page_bytes() - 1;
+
+		core->reader.buffer_commit = static_cast<u32>(buffer_size + page_mask) & ~page_mask;
+	}
+
+	u32 bytes_read;
+
+	if (!minos::file_read(get(source_file->file), MutRange{ core->reader.buffer_begin, fileinfo.bytes }.as_mut_byte_range(), 0, &bytes_read))
+	{
+		const Range<char8> filepath = source_file_path(core, source_file);
+
+		panic("Could not read source file `%`. (0x%[|X])\n", filepath, minos::last_error());
+	}
+
+	if (bytes_read != fileinfo.bytes)
+	{
+		const Range<char8> filepath = source_file_path(core, source_file);
+
+		panic("Could only read % out of % bytes from source file `%`. (0x%[|X])\n", bytes_read, fileinfo.bytes, filepath, minos::last_error());
+	}
+
+	// Null terminate the buffer we just read in for quick scanning.
+	core->reader.buffer_begin[fileinfo.bytes] = '\0';
+
+	// The file size includes the null terminator.
+	const u32 buffer_used = static_cast<u32>(fileinfo.bytes + 1);
+
+	core->reader.buffer_used = buffer_used;
+
+	return Range{ core->reader.buffer_begin, buffer_used };
 }
+
+
 
 static SourceLocation build_source_location(Range<char8> filepath, Range<char8> content, u32 offset) noexcept
 {
@@ -365,28 +447,13 @@ static SourceLocation build_source_location(Range<char8> filepath, Range<char8> 
 
 static SourceLocation source_location_from_source_file_and_source_id(CoreData* core, SourceFile* source_file, SourceId source_id) noexcept
 {
-	minos::FileInfo fileinfo;
-
 	Range<char8> filepath = source_file_path(core, source_file);
 
-	if (!minos::file_get_info(get(source_file->file), &fileinfo))
-		panic("Could not get info on source file % while trying to re-read it for error reporting (0x%[|X])\n", filepath, minos::last_error());
+	const Range<char8> content = read_source_file_content(core, source_file);
 
-	char8* const buffer = static_cast<char8*>(malloc(fileinfo.bytes));
+	const u32 offset = static_cast<u32>(source_id) - static_cast<u32>(source_file->source_id_base);
 
-	u32 bytes_read;
-
-	if (!minos::file_read(get(source_file->file), MutRange{ buffer, fileinfo.bytes }.as_mut_byte_range(), 0, &bytes_read))
-		panic("Could not read source file % while trying to re-read it for error reporting (0x%[|X])\n", filepath, minos::last_error());
-
-	if (bytes_read != fileinfo.bytes)
-		panic("Could only read % out of % bytes from source file % while trying to re-read it for error reporting (0x%[|X])\n", bytes_read, fileinfo.bytes, filepath, minos::last_error());
-
-	SourceLocation location = build_source_location(filepath, Range{ buffer, fileinfo.bytes }, static_cast<u32>(source_id) - static_cast<u32>(source_file->source_id_base));
-
-	free(buffer);
-
-	return location;
+	return build_source_location(filepath, content, offset);
 }
 
 
@@ -403,7 +470,8 @@ MemoryRequirements source_reader_memory_requirements([[maybe_unused]] const Conf
 	reqs.ranges[0].size = KNOWN_FILES_BY_PATH_LOOKUP_RESERVE
 	                    + KNOWN_FILES_BY_PATH_VALUES_RESERVE
 	                    + KNOWN_FILES_BY_IDENTITY_LOOKUP_RESERVE
-	                    + KNOWN_FILES_BY_IDENTITY_VALUES_RESERVE;
+	                    + KNOWN_FILES_BY_IDENTITY_VALUES_RESERVE
+						+ SOURCE_BUFFER_RESERVE;
 	reqs.ranges[0].max_offset = UINT64_MAX;
 
 	return reqs;
@@ -411,7 +479,7 @@ MemoryRequirements source_reader_memory_requirements([[maybe_unused]] const Conf
 
 void source_reader_init(CoreData* core, MemoryAllocation allocation) noexcept
 {
-	ASSERT_OR_IGNORE(allocation.ranges[0].count() == KNOWN_FILES_BY_PATH_LOOKUP_RESERVE + KNOWN_FILES_BY_PATH_VALUES_RESERVE + KNOWN_FILES_BY_IDENTITY_LOOKUP_RESERVE + KNOWN_FILES_BY_IDENTITY_VALUES_RESERVE);
+	ASSERT_OR_IGNORE(allocation.ranges[0].count() == KNOWN_FILES_BY_PATH_LOOKUP_RESERVE + KNOWN_FILES_BY_PATH_VALUES_RESERVE + KNOWN_FILES_BY_IDENTITY_LOOKUP_RESERVE + KNOWN_FILES_BY_IDENTITY_VALUES_RESERVE + SOURCE_BUFFER_RESERVE);
 
 	SourceReader* const reader = &core->reader;
 
@@ -429,12 +497,20 @@ void source_reader_init(CoreData* core, MemoryAllocation allocation) noexcept
 	const MutRange<byte> by_identity_values_memory = allocation.ranges[0].mut_subrange(offset, KNOWN_FILES_BY_IDENTITY_VALUES_RESERVE);
 	offset += KNOWN_FILES_BY_IDENTITY_VALUES_RESERVE;
 
+	const MutRange<byte> source_buffer_memory = allocation.ranges[0].mut_subrange(offset, SOURCE_BUFFER_RESERVE);
+	offset += SOURCE_BUFFER_RESERVE;
+
 	ASSERT_OR_IGNORE(allocation.ranges[0].count() == offset);
 
 	reader->known_files_by_path.init(by_path_lookup_memory, KNOWN_FILES_BY_PATH_LOOKUP_INITIAL_COMMIT_COUNT, SourceFileByPathAlloc{ core });
 	reader->known_files_by_identity.init(by_identity_lookup_memory, KNOWN_FILES_BY_IDENTITY_LOOKUP_INITIAL_COMMIT_COUNT, SourceFileByIdAlloc{ core });
 	reader->path_entries.init(by_path_values_memory, KNOWN_FILES_BY_PATH_VALUES_COMMIT_INCREMENT_COUNT);
 	reader->id_entries.init(by_identity_values_memory, KNOWN_FILES_BY_IDENTITY_VALUES_COMMIT_INCREMENT_COUNT);
+	reader->buffer_begin = reinterpret_cast<char8*>(source_buffer_memory.begin());
+	reader->buffer_used = 0;
+	reader->buffer_commit = 0;
+	reader->buffer_reserve = static_cast<u32>(source_buffer_memory.count());
+	reader->buffer_source_file_id = SourceFileId::INVALID;
 	reader->curr_source_id_base = 1;
 	reader->source_file_count = 0;
 
@@ -477,10 +553,18 @@ SourceFileRead read_source_file(CoreData* core, Range<char8> filepath) noexcept
 
 	path_entry->id_entry_index = core->reader.known_files_by_identity.id_from(id_entry);
 
+	// This indicates that we have a hit. Return the existing read with no
+	// content (it has already been processed) and close the newly opened file
+	// handle.
 	if (is_some(id_entry->data.file))
-		return SourceFileRead{ &id_entry->data, {} };
+	{
+		minos::file_close(file);
 
-	// File has not been read in yet. Do so.
+		return SourceFileRead{ &id_entry->data, {} };
+	}
+
+	// File has not been read in yet. Set up the just created id entry and read
+	// the file's content.
 
 	id_entry->path_entry_index = core->reader.known_files_by_path.id_from(path_entry);
 	id_entry->data.file = some(file);
@@ -489,36 +573,18 @@ SourceFileRead read_source_file(CoreData* core, Range<char8> filepath) noexcept
 	id_entry->data.source_id_base = SourceId{ core->reader.curr_source_id_base };
 	id_entry->data.has_error = false;
 
-	if (fileinfo.bytes + core->reader.curr_source_id_base > UINT32_MAX)
-		panic("Could not read source file % as the maximum total capacity of 4gb of source code was exceeded.\n", filepath);
+	if (fileinfo.bytes + 1 + core->reader.curr_source_id_base > UINT32_MAX)
+		panic("Could not read source file `%` as the maximum total capacity of 4gb of source code was exceeded.\n", filepath);
 
-	// Allow for one extra byte so `parse` can use one-past-end for
-	// `Token::END_OF_FILE` without extra work.
+	// Allow for one extra byte of source id space so `parse` can use
+	// one-past-end for `Token::END_OF_FILE` without extra work.
 	core->reader.curr_source_id_base += static_cast<u32>(fileinfo.bytes) + 1;
 
 	core->reader.source_file_count += 1;
 
-	char8* const content = static_cast<char8*>(malloc(fileinfo.bytes + 1));
+	const Range<char8> content = read_source_file_content(core, &id_entry->data);
 
-	if (content == nullptr)
-		panic("Could not allocate buffer for reading source file % (0x%[|X])\n", filepath, minos::last_error());
-
-	content[fileinfo.bytes] = '\0';
-
-	u32 bytes_read;
-
-	if (!minos::file_read(file, MutRange{ content, fileinfo.bytes }.as_mut_byte_range(), 0, &bytes_read))
-		panic("Could not read source file % (0x%[|X])\n", filepath, minos::last_error());
-
-	if (bytes_read != fileinfo.bytes)
-		panic("Could only read % out of % bytes from source file % (0x%[|X])\n", bytes_read, fileinfo.bytes, filepath, minos::last_error());
-
-	return SourceFileRead{ &id_entry->data, Range{ content, fileinfo.bytes + 1 } };
-}
-
-void release_read([[maybe_unused]] CoreData* core, SourceFileRead read) noexcept
-{
-	free(const_cast<char8*>(read.content.begin()));
+	return SourceFileRead{ &id_entry->data, content };
 }
 
 SourceLocation source_location_from_source_id(CoreData* core, SourceId source_id) noexcept

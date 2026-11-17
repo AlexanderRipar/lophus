@@ -1810,18 +1810,20 @@ struct SourceFile
 };
 
 // Combination of a `SourceFile` and its contents. This is returned by
-// `read_source_file` and must be freed by `release_read` as soon as the file's
-// contents are no longer needed. The `SourceFile` remains valid even after the
-// call to `release_read`.
+// `read_source_file`. If the file identified by the path passed to
+// `read_source_file` has already been read, `content` is empty. Otherwise,
+// `content` contains the file's null-terminated content.
+// Note that `content` remains valid only until the next call to
+// `read_source_file` or `source_location_from_source_id`.
 struct SourceFileRead
 {
 	// Pointer to the `SourceFile` associated with this read.
 	SourceFile* source_file;
 
 	// Content read from the file. This is only valid if for the initial read,
-	// which can be determined by checking for `begin() != nullptr`.
-	// Otherwise, the file has already been parsed into the AST rooted at that
-	// id, meaning that its contents are not actually required.
+	// which can be determined by checking for `content.begin() != nullptr`.
+	// Otherwise, the file has already been parsed into an AST with root
+	// `source_file->ast`, meaning that the file's contents are not required.
 	Range<char8> content;
 };
 
@@ -1866,14 +1868,7 @@ struct SourceLocation
 // Due to the way this function interacts with `parse` in `import_file`,
 // `source_file->ast` will be `AstNodeId::INVALID` if and only if this is
 // the first read of the file (meaning `content` contains the file's contents).
-// If this is a first read, `release_read` must be called once the file's
-// content is no longer needed.
 SourceFileRead read_source_file(CoreData* core, Range<char8> filepath) noexcept;
-
-// Releases the contents and other associated resources of a `SourceFileRead`.
-// The `SourceFile` pointed to by the `source_file` member is however left
-// untouched.
-void release_read(CoreData* core, SourceFileRead read) noexcept;
 
 // Converts `source_id` to a `SourceLocation`.
 // If `source_id` is `SourceId::INVALID`, a dummy location indicating the

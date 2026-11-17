@@ -245,6 +245,16 @@ struct SourceReader
 
 	ReservedVec<SourceFileByIdEntry> id_entries;
 
+	char8* buffer_begin;
+
+	u32 buffer_used;
+
+	u32 buffer_commit;
+
+	u32 buffer_reserve;
+
+	SourceFileId buffer_source_file_id;
+
 	u32 curr_source_id_base;
 
 	u32 source_file_count;
