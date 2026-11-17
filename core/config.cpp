@@ -19,6 +19,8 @@
 
 #define META_PRINT_SINK(name, path, default_value, helptext) ConfigMetadataEntry{ ConfigMetadataTag::PrintSink, offsetof(Config, path), name, helptext, { default_value } }
 
+#define META_ENUM(name, path, default_value, base_value, enumerants, helptext) ConfigMetadataEntry{ ConfigMetadataTag::Enum, offsetof(Config, path), name, helptext, { default_value, base_value, enumerants } }
+
 #define META_DYNAMIC(name, path, helptext) ConfigMetadataEntry{ ConfigMetadataTag::Dynamic, offsetof(Config, path), name, helptext, {} }
 
 enum class ConfigMetadataTag : u8
@@ -31,6 +33,7 @@ enum class ConfigMetadataTag : u8
 	Path,
 	PrintSink,
 	Dynamic,
+	Enum,
 };
 
 union ConfigMetadataAttach
@@ -52,6 +55,15 @@ union ConfigMetadataAttach
 	
 	Range<char8> print_sink_path;
 
+	struct
+	{
+		u32 default_value;
+
+		u32 base_value;
+
+		Range<const char8*> enumerants;
+	} enumeration;
+
 	u64 child_count;
 
 	constexpr ConfigMetadataAttach() noexcept : integer{ 0, 0, 0 } {}
@@ -61,6 +73,11 @@ union ConfigMetadataAttach
 	constexpr ConfigMetadataAttach(bool boolean) noexcept : boolean{ boolean } {}
 
 	constexpr ConfigMetadataAttach(Range<char8> stringish) noexcept : string{ stringish } {}
+
+	template<typename Enum>
+	constexpr ConfigMetadataAttach(Enum default_value, Enum base_value, Range<const char8*> enumerants) noexcept : enumeration{ static_cast<u32>(default_value), static_cast<u32>(base_value), enumerants } {
+		static_assert(sizeof(Enum) == sizeof(u32), "Only 32-bit enumeration types are supported as enum configuration parameters.");
+	}
 
 	constexpr ConfigMetadataAttach(u64 child_count) noexcept : child_count{ child_count } {}
 };
@@ -162,11 +179,20 @@ struct ConfigMetadata
 		ConfigMetadataEntry source_tab_size;
 	} diagnostics;
 
+	struct
+	{
+		ConfigMetadataEntry self_;
+
+		ConfigMetadataEntry repeats;
+
+		ConfigMetadataEntry timeout_secs;
+	} benchmark;
+
 	ConfigMetadataEntry defines;
 
-	ConfigMetadataEntry compile_all;
+	ConfigMetadataEntry mode;
 
-	ConfigMetadataEntry parse_only;
+	ConfigMetadataEntry compile_all;
 };
 
 struct TomlConfigMappingContext
@@ -185,6 +211,13 @@ struct TomlConfigMappingContext
 };
 
 
+
+static constexpr const char8* COMPILE_MODES[] = {
+	"full",
+	"parse",
+	"resolve-names",
+	"typecheck",
+};
 
 static constexpr ConfigMetadata init_metadata() noexcept
 {
@@ -225,8 +258,13 @@ static constexpr ConfigMetadata init_metadata() noexcept
 
 	rst.defines = META_DYNAMIC("defines", defines, "Definitions made accessible to the program under compilation via `std.comp_env().*.definitions`. May contain arbitrary nested values");
 
+	rst.benchmark.self_ = META_TABLE("benchmark", benchmark, "Compiler Benchmarking Configuration");
+	rst.benchmark.repeats = META_INTEGER("repeats", benchmark.repeats, 0, 0, INT64_MAX, "Number of times the benchmark suite will be repeated");
+	rst.benchmark.timeout_secs = META_INTEGER("timeout-secs", benchmark.timeout_secs, 0, 0, INT64_MAX, "When set, the benchmark suite is stopped when this timeout is reached. This is ignored when 'benchmark.repeats' is not set");
+
+	rst.mode = META_ENUM("mode", mode, CompileMode::Full, CompileMode::Full, Range{ COMPILE_MODES }, "Compilation Mode");
+
 	rst.compile_all = META_BOOLEAN("compile-all", compile_all, false, "Whether to compile all top-level definitions. If this is `true`, all top-level definitions of imported files are compiled. If it is `false`, only definitions used by public symbols are compiled");
-	rst.parse_only = META_BOOLEAN("parse-only", parse_only, false, "If this is set only the file identified by `entrypoint.path` is parsed. No further processing occurs");
 
 	return rst;
 }
@@ -354,6 +392,8 @@ static bool map_defaults_to_config(TomlConfigMappingContext* ctx, const ConfigMe
 
 	*meta += 1;
 
+	void* const dst = reinterpret_cast<byte*>(ctx->out) + curr->offset;
+
 	switch (curr->tag)
 	{
 	case ConfigMetadataTag::Table:
@@ -371,36 +411,36 @@ static bool map_defaults_to_config(TomlConfigMappingContext* ctx, const ConfigMe
 
 	case ConfigMetadataTag::Integer:
 	{
-		ASSERT_OR_IGNORE(curr->offset + sizeof(s64) < sizeof(Config));
+		ASSERT_OR_IGNORE(curr->offset + sizeof(s64) <= sizeof(Config));
 
-		ASSERT_OR_IGNORE(curr->attach.integer.min < curr->attach.integer.value && curr->attach.integer.max > curr->attach.integer.value);
+		ASSERT_OR_IGNORE(curr->attach.integer.min <= curr->attach.integer.value && curr->attach.integer.max >= curr->attach.integer.value);
 
-		*reinterpret_cast<s64*>(reinterpret_cast<byte*>(ctx->out) + curr->offset) = curr->attach.integer.value;
+		*static_cast<s64*>(dst) = curr->attach.integer.value;
 
 		return true;
 	}
 
 	case ConfigMetadataTag::String:
 	{
-		ASSERT_OR_IGNORE(curr->offset + sizeof(Range<char8>) < sizeof(Config));
+		ASSERT_OR_IGNORE(curr->offset + sizeof(Range<char8>) <= sizeof(Config));
 
-		*reinterpret_cast<Range<char8>*>(reinterpret_cast<byte*>(ctx->out) + curr->offset) = curr->attach.string;
+		*static_cast<Range<char8>*>(dst) = curr->attach.string;
 
 		return true;
 	}
 
 	case ConfigMetadataTag::Boolean:
 	{
-		ASSERT_OR_IGNORE(curr->offset + sizeof(bool) < sizeof(Config));
+		ASSERT_OR_IGNORE(curr->offset + sizeof(bool) <= sizeof(Config));
 
-		*reinterpret_cast<bool*>(reinterpret_cast<byte*>(ctx->out) + curr->offset) = curr->attach.boolean;
+		*static_cast<bool*>(dst) = curr->attach.boolean;
 
 		return true;
 	}
 
 	case ConfigMetadataTag::Path:
 	{
-		ASSERT_OR_IGNORE(curr->offset + sizeof(Range<char8>) < sizeof(Config));
+		ASSERT_OR_IGNORE(curr->offset + sizeof(Range<char8>) <= sizeof(Config));
 
 		const TreeSchemaValue default_value = ts_value_from_string_unnamed(0, 0, curr->attach.print_sink_path);
 
@@ -409,14 +449,14 @@ static bool map_defaults_to_config(TomlConfigMappingContext* ctx, const ConfigMe
 		if (!absolute_path_from_config_path(ctx, &default_value, curr, &value))
 			return false;
 
-		*reinterpret_cast<Range<char8>*>(reinterpret_cast<byte*>(ctx->out) + curr->offset) = value;
+		*static_cast<Range<char8>*>(dst) = value;
 
 		return true;
 	}
 
 	case ConfigMetadataTag::PrintSink:
 	{
-		ASSERT_OR_IGNORE(curr->offset + sizeof(ConfigPrintSink) < sizeof(Config));
+		ASSERT_OR_IGNORE(curr->offset + sizeof(ConfigPrintSink) <= sizeof(Config));
 
 		const TreeSchemaValue default_value = ts_value_from_string_unnamed(0, 0, curr->attach.print_sink_path);
 
@@ -425,18 +465,25 @@ static bool map_defaults_to_config(TomlConfigMappingContext* ctx, const ConfigMe
 		if (!print_sink_from_config_path(ctx, &default_value, curr, &value))
 			return false;
 
-		*reinterpret_cast<ConfigPrintSink*>(reinterpret_cast<byte*>(ctx->out) + curr->offset) = value;
+		*static_cast<ConfigPrintSink*>(dst) = value;
 
 		return true;
 	}
 
 	case ConfigMetadataTag::Dynamic:
 	{
-		ASSERT_OR_IGNORE(curr->offset + sizeof(Maybe<const TreeSchemaTable*>) < sizeof(Config));
+		ASSERT_OR_IGNORE(curr->offset + sizeof(Maybe<const TreeSchemaTable*>) <= sizeof(Config));
 
-		*reinterpret_cast<Maybe<const TreeSchemaTable*>*>(reinterpret_cast<byte*>(ctx->out) + curr->offset) = none<const TreeSchemaTable*>();
+		*static_cast<Maybe<const TreeSchemaTable*>*>(dst) = none<const TreeSchemaTable*>();
 
 		return true;
+	}
+
+	case ConfigMetadataTag::Enum:
+	{
+		ASSERT_OR_IGNORE(curr->offset + sizeof(u32) <= sizeof(Config));
+
+		*reinterpret_cast<u32*>(reinterpret_cast<byte*>(ctx->out) + curr->offset) = curr->attach.enumeration.default_value;
 	}
 
 	case ConfigMetadataTag::INVALID:
@@ -524,7 +571,7 @@ static bool map_toml_to_config(TomlConfigMappingContext* ctx, const TreeSchemaVa
 
 	case ConfigMetadataTag::Integer:
 	{
-		ASSERT_OR_IGNORE(curr->offset + sizeof(s64) < sizeof(Config));
+		ASSERT_OR_IGNORE(curr->offset + sizeof(s64) <= sizeof(Config));
 
 		if (toml->name_and_tag.attachment() != TreeSchemaValueTag::Integer)
 			return config_error(ctx, toml->source_line, toml->source_column, "Config parameter `%` must be an integer.\n", curr->name);
@@ -544,7 +591,7 @@ static bool map_toml_to_config(TomlConfigMappingContext* ctx, const TreeSchemaVa
 
 	case ConfigMetadataTag::String:
 	{
-		ASSERT_OR_IGNORE(curr->offset + sizeof(Range<char8>) < sizeof(Config));
+		ASSERT_OR_IGNORE(curr->offset + sizeof(Range<char8>) <= sizeof(Config));
 
 		if (toml->name_and_tag.attachment() != TreeSchemaValueTag::String)
 			return config_error(ctx, toml->source_line, toml->source_column, "Config parameter `%` must be a string.\n", curr->name);
@@ -558,7 +605,7 @@ static bool map_toml_to_config(TomlConfigMappingContext* ctx, const TreeSchemaVa
 
 	case ConfigMetadataTag::Boolean:
 	{
-		ASSERT_OR_IGNORE(curr->offset + sizeof(bool) < sizeof(Config));
+		ASSERT_OR_IGNORE(curr->offset + sizeof(bool) <= sizeof(Config));
 
 		if (toml->name_and_tag.attachment() != TreeSchemaValueTag::Boolean)
 			return config_error(ctx, toml->source_line, toml->source_column, "Config parameter `%` must be a string.\n", curr->name);
@@ -572,13 +619,13 @@ static bool map_toml_to_config(TomlConfigMappingContext* ctx, const TreeSchemaVa
 
 	case ConfigMetadataTag::Path:
 	{
-		ASSERT_OR_IGNORE(curr->offset + sizeof(Range<char8>) < sizeof(Config));
+		ASSERT_OR_IGNORE(curr->offset + sizeof(Range<char8>) <= sizeof(Config));
 
 		if (toml->name_and_tag.attachment() != TreeSchemaValueTag::String)
 			return config_error(ctx, toml->source_line, toml->source_column, "Config parameter `%` must be a string.\n", curr->name);
 
 		Range<char8> value;
-		
+
 		if (!absolute_path_from_config_path(ctx, toml, curr, &value))
 			return false;
 
@@ -589,7 +636,7 @@ static bool map_toml_to_config(TomlConfigMappingContext* ctx, const TreeSchemaVa
 
 	case ConfigMetadataTag::PrintSink:
 	{
-		ASSERT_OR_IGNORE(curr->offset + sizeof(ConfigPrintSink) < sizeof(Config));
+		ASSERT_OR_IGNORE(curr->offset + sizeof(ConfigPrintSink) <= sizeof(Config));
 
 		if (toml->name_and_tag.attachment() != TreeSchemaValueTag::String)
 			return config_error(ctx, toml->source_line, toml->source_column, "Config parameter `%` must be a string.\n", curr->name);
@@ -606,12 +653,43 @@ static bool map_toml_to_config(TomlConfigMappingContext* ctx, const TreeSchemaVa
 
 	case ConfigMetadataTag::Dynamic:
 	{
-		ASSERT_OR_IGNORE(curr->offset + sizeof(Maybe<const TreeSchemaTable*>) < sizeof(Config));
+		ASSERT_OR_IGNORE(curr->offset + sizeof(Maybe<const TreeSchemaTable*>) <= sizeof(Config));
 
 		if (toml->name_and_tag.attachment() != TreeSchemaValueTag::Table)
 			return config_error(ctx, toml->source_line, toml->source_column, "Config parameter `%` must be a TOML table.\n", curr->name);
 
 		*reinterpret_cast<Maybe<const TreeSchemaTable*>*>(reinterpret_cast<byte*>(ctx->out) + curr->offset) = some<const TreeSchemaTable*>(toml->value.table);
+
+		return true;
+	}
+
+	case ConfigMetadataTag::Enum:
+	{
+		ASSERT_OR_IGNORE(curr->offset + sizeof(u32) <= sizeof(Config));
+
+		if (toml->name_and_tag.attachment() != TreeSchemaValueTag::String)
+			return config_error(ctx, toml->source_line, toml->source_column, "Config parameter `%` must be an enumerant string.\n", curr->name);
+
+		const Range<char8> value = toml->value.string;
+
+		u64 i = 0;
+
+		const Range<const char8*> enumerants = curr->attach.enumeration.enumerants;
+
+		while (i != enumerants.count())
+		{
+			const Range<char8> enumerant = range::from_cstring(enumerants[i]);
+
+			if (enumerant.count() == value.count() && range::mem_equal(enumerant, value))
+				break;
+
+			i += 1;
+		}
+
+		if (i == enumerants.count())
+			return config_error(ctx, toml->source_line, toml->source_column, "Config parameter `%` must be an enumerant string.\n", curr->name);
+
+		*reinterpret_cast<u32*>(reinterpret_cast<byte*>(ctx->out) + curr->offset) = static_cast<u32>(i + curr->attach.enumeration.base_value);
 
 		return true;
 	}
@@ -730,7 +808,7 @@ static void print_config_element(PrintSink sink, const Config* config, const Con
 
 	case ConfigMetadataTag::Integer:
 	{
-		ASSERT_OR_IGNORE(curr->offset + sizeof(s64) < sizeof(Config));
+		ASSERT_OR_IGNORE(curr->offset + sizeof(s64) <= sizeof(Config));
 
 		const s64 value = *reinterpret_cast<const s64*>(reinterpret_cast<const byte*>(config) + curr->offset);
 
@@ -742,7 +820,7 @@ static void print_config_element(PrintSink sink, const Config* config, const Con
 	case ConfigMetadataTag::String:
 	case ConfigMetadataTag::Path:
 	{
-		ASSERT_OR_IGNORE(curr->offset + sizeof(Range<char8>) < sizeof(Config));
+		ASSERT_OR_IGNORE(curr->offset + sizeof(Range<char8>) <= sizeof(Config));
 
 		const Range<char8> value = *reinterpret_cast<const Range<char8>*>(reinterpret_cast<const byte*>(config) + curr->offset);
 
@@ -753,7 +831,7 @@ static void print_config_element(PrintSink sink, const Config* config, const Con
 
 	case ConfigMetadataTag::Boolean:
 	{
-		ASSERT_OR_IGNORE(curr->offset + sizeof(bool) < sizeof(Config));
+		ASSERT_OR_IGNORE(curr->offset + sizeof(bool) <= sizeof(Config));
 
 		const bool value = *reinterpret_cast<const bool*>(reinterpret_cast<const byte*>(config) + curr->offset);
 
@@ -764,7 +842,7 @@ static void print_config_element(PrintSink sink, const Config* config, const Con
 
 	case ConfigMetadataTag::PrintSink:
 	{
-		ASSERT_OR_IGNORE(curr->offset + sizeof(ConfigPrintSink) < sizeof(Config));
+		ASSERT_OR_IGNORE(curr->offset + sizeof(ConfigPrintSink) <= sizeof(Config));
 
 		const ConfigPrintSink value = *reinterpret_cast<const ConfigPrintSink*>(reinterpret_cast<const byte*>(config) + curr->offset);
 
@@ -775,7 +853,7 @@ static void print_config_element(PrintSink sink, const Config* config, const Con
 
 	case ConfigMetadataTag::Dynamic:
 	{
-		ASSERT_OR_IGNORE(curr->offset + sizeof(Maybe<const TreeSchemaTable*>) < sizeof(Config));
+		ASSERT_OR_IGNORE(curr->offset + sizeof(Maybe<const TreeSchemaTable*>) <= sizeof(Config));
 
 		const Maybe<const TreeSchemaTable*> value = *reinterpret_cast<const Maybe<const TreeSchemaTable*>*>(reinterpret_cast<const byte*>(config) + curr->offset);
 
@@ -791,6 +869,21 @@ static void print_config_element(PrintSink sink, const Config* config, const Con
 		{
 			(void) print(sink, "= none\n");
 		}
+
+		return;
+	}
+
+	case ConfigMetadataTag::Enum:
+	{
+		ASSERT_OR_IGNORE(curr->offset + sizeof(u32) <= sizeof(Config));
+
+		const u32 value = *reinterpret_cast<const u32*>(reinterpret_cast<const byte*>(config) + curr->offset) - curr->attach.enumeration.base_value;
+
+		ASSERT_OR_IGNORE(value < curr->attach.enumeration.enumerants.count());
+
+		const Range<char8> name = range::from_cstring(curr->attach.enumeration.enumerants[value]);
+
+		print(sink, "= %\n", name);
 
 		return;
 	}

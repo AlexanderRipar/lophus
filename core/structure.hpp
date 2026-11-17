@@ -483,10 +483,47 @@ struct Typechecker
 
 
 
-struct CoreData
+static constexpr u64 MAX_MEMORY_RANGE_REQUIREMENTS_COUNT = 2;
+
+static constexpr u64 CORE_MEMBER_COUNT = 10;
+
+struct MemoryRangeRequirement
+{
+	u64 size;
+
+	u64 max_offset;
+};
+
+struct MemoryRequirements
+{
+	u32 count;
+
+	MemoryRangeRequirement ranges[MAX_MEMORY_RANGE_REQUIREMENTS_COUNT];
+};
+
+struct MemoryAllocation
+{
+	MutRange<byte> ranges[MAX_MEMORY_RANGE_REQUIREMENTS_COUNT];
+};
+
+struct RangeAllocation
+{
+	u64 begin;
+
+	u64 size;
+};
+
+struct CoreMemoryLayout
 {
 	u64 allocation_size;
 
+	RangeAllocation allocations[CORE_MEMBER_COUNT * MAX_MEMORY_RANGE_REQUIREMENTS_COUNT];
+};
+
+
+
+struct CoreData
+{
 	const Config* config;
 
 	CompHeap heap;
@@ -526,29 +563,8 @@ struct CoreData
 	PrintSink imported_code2s_sink;
 
 	PrintSink imported_types_sink;
-};
 
-
-
-static constexpr u64 MAX_MEMORY_RANGE_REQUIREMENTS_COUNT = 2;
-
-struct MemoryRangeRequirement
-{
-	u64 size;
-
-	u64 max_offset;
-};
-
-struct MemoryRequirements
-{
-	u32 count;
-
-	MemoryRangeRequirement ranges[MAX_MEMORY_RANGE_REQUIREMENTS_COUNT];
-};
-
-struct MemoryAllocation
-{
-	MutRange<byte> ranges[MAX_MEMORY_RANGE_REQUIREMENTS_COUNT];
+	CoreMemoryLayout memory_layout;
 };
 
 #endif // CORE_STRUCTURE_INCLUDE_GUARD

@@ -5,4 +5,7 @@ std.prelude.path = 'std/prelude.evl'
 # logging.imports.code2s = '$stderr'
 # logging.imports.asts = '$stderr'
 
-parse-only = true
+benchmark.repeats = 100000
+benchmark.timeout-secs = 180
+
+mode = 'parse'

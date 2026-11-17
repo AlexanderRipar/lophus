@@ -7,15 +7,6 @@
 #include "../infra/inplace_sort.hpp"
 #include "../diag/diag.hpp"
 
-struct RangeAllocation
-{
-	u64 begin;
-
-	u64 size;
-};
-
-
-
 bool comp_heap_validate_config(const Config* config, PrintSink sink) noexcept;
 
 bool ast_pool_validate_config(const Config* config, PrintSink sink) noexcept;
@@ -88,6 +79,51 @@ using memory_requirements_func = MemoryRequirements (*) (const Config* config) n
 
 using init_func = void (*) (CoreData* core, MemoryAllocation allocation) noexcept;
 
+static constexpr validate_config_func VALIDATE_CONFIG_FUNCS[] = {
+	&comp_heap_validate_config,
+	&temp_stack_validate_config,
+	&ast_pool_validate_config,
+	&error_sink_validate_config,
+	&identifier_pool_validate_config,
+	&lexical_analyser_validate_config,
+	&type_pool_validate_config,
+	&parser_validate_config,
+	&source_reader_validate_config,
+	&code2_validate_config,
+};
+
+static constexpr memory_requirements_func MEMORY_REQUIREMENTS_FUNCS[] = {
+	&comp_heap_memory_requirements,
+	&temp_stack_memory_requirements,
+	&ast_pool_memory_requirements,
+	&error_sink_memory_requirements,
+	&identifier_pool_memory_requirements,
+	&lexical_analyser_memory_requirements,
+	&type_pool_memory_requirements,
+	&parser_memory_requirements,
+	&source_reader_memory_requirements,
+	&code2_memory_requirements,
+};
+
+static constexpr init_func INIT_FUNCS[] = {
+	&comp_heap_init,
+	&temp_stack_init,
+	&ast_pool_init,
+	&error_sink_init,
+	&identifier_pool_init,
+	&lexical_analyser_init,
+	&type_pool_init,
+	&parser_init,
+	&source_reader_init,
+	&code2_init,
+};
+
+static_assert(array_count(VALIDATE_CONFIG_FUNCS) == CORE_MEMBER_COUNT);
+
+static_assert(array_count(MEMORY_REQUIREMENTS_FUNCS) == CORE_MEMBER_COUNT);
+
+static_assert(array_count(INIT_FUNCS) == CORE_MEMBER_COUNT);
+
 
 
 struct MemoryRangeRequirementOffsetComparator
@@ -114,63 +150,21 @@ static u32 id_requirements_index_from_ptr(const MemoryRangeRequirement* ptr, con
 
 
 
-CoreData* create_core_data(const Config* config) noexcept
+static CoreMemoryLayout check_config(const Config* config) noexcept
 {
-	static constexpr validate_config_func VALIDATE_CONFIG_FUNCS[] = {
-		&comp_heap_validate_config,
-		&temp_stack_validate_config,
-		&ast_pool_validate_config,
-		&error_sink_validate_config,
-		&identifier_pool_validate_config,
-		&lexical_analyser_validate_config,
-		&type_pool_validate_config,
-		&parser_validate_config,
-		&source_reader_validate_config,
-		&code2_validate_config,
-	};
+	CoreMemoryLayout memory_layout;
 
-	static constexpr memory_requirements_func MEMORY_REQUIREMENTS_FUNCS[] = {
-		&comp_heap_memory_requirements,
-		&temp_stack_memory_requirements,
-		&ast_pool_memory_requirements,
-		&error_sink_memory_requirements,
-		&identifier_pool_memory_requirements,
-		&lexical_analyser_memory_requirements,
-		&type_pool_memory_requirements,
-		&parser_memory_requirements,
-		&source_reader_memory_requirements,
-		&code2_memory_requirements,
-	};
-
-	static constexpr init_func INIT_FUNCS[] = {
-		&comp_heap_init,
-		&temp_stack_init,
-		&ast_pool_init,
-		&error_sink_init,
-		&identifier_pool_init,
-		&lexical_analyser_init,
-		&type_pool_init,
-		&parser_init,
-		&source_reader_init,
-		&code2_init,
-	};
-
-	static_assert(array_count(VALIDATE_CONFIG_FUNCS) == array_count(MEMORY_REQUIREMENTS_FUNCS));
-
-	static_assert(array_count(VALIDATE_CONFIG_FUNCS) == array_count(INIT_FUNCS));
-
-	static constexpr u32 MEMBER_COUNT = static_cast<u32>(array_count(MEMORY_REQUIREMENTS_FUNCS));
-
+	// First, print the config if requested.
 	if (config->logging.config_sink.name_and_enabled.attachment())
 		print_config(config->logging.config_sink.sink, config);
 
-
+	// Let every core member validate the given config.
 
 	bool is_valid_config = true;
 
 	const minos::FileHandle config_validation_log_file = minos::standard_file_handle(minos::StdFileName::StdErr);
 
-	for (u64 i = 0; i != MEMBER_COUNT; ++i)
+	for (u64 i = 0; i != CORE_MEMBER_COUNT; ++i)
 	{
 		if (!VALIDATE_CONFIG_FUNCS[i](config, print_make_sink(config_validation_log_file)))
 			is_valid_config = false;
@@ -179,14 +173,14 @@ CoreData* create_core_data(const Config* config) noexcept
 	if (!is_valid_config)
 		minos::exit_process(1);
 
+	// Let every core member report its memory requirements.
 
+	MemoryRequirements memory_requirements[CORE_MEMBER_COUNT];
 
-	MemoryRequirements memory_requirements[MEMBER_COUNT];
-
-	for (u32 i = 0; i != MEMBER_COUNT; ++i)
+	for (u32 i = 0; i != CORE_MEMBER_COUNT; ++i)
 		memory_requirements[i] = MEMORY_REQUIREMENTS_FUNCS[i](config);
 
-	MemoryRangeRequirement* range_requirements_buf[MAX_MEMORY_RANGE_REQUIREMENTS_COUNT * MEMBER_COUNT];
+	MemoryRangeRequirement* range_requirements_buf[MAX_MEMORY_RANGE_REQUIREMENTS_COUNT * CORE_MEMBER_COUNT];
 
 	u64 range_requirements_count = 0;
 
@@ -210,15 +204,13 @@ CoreData* create_core_data(const Config* config) noexcept
 
 	u64 total_allocation_size = sizeof(CoreData);
 
-	RangeAllocation range_allocations[MEMBER_COUNT * MAX_MEMORY_RANGE_REQUIREMENTS_COUNT];
-
 	for (const MemoryRangeRequirement* req : id_requirements)
 	{
 		total_allocation_size = (total_allocation_size + page_mask) & ~page_mask;
 
 		const u32 reverse_index = id_requirements_index_from_ptr(req, memory_requirements);
 
-		range_allocations[reverse_index] = RangeAllocation{ total_allocation_size, req->size };
+		memory_layout.allocations[reverse_index] = RangeAllocation{ total_allocation_size, req->size };
 
 		total_allocation_size += req->size;
 
@@ -226,20 +218,20 @@ CoreData* create_core_data(const Config* config) noexcept
 			panic("Could not allocate memory ranges within maximum offset constraints.\n");
 	}
 
-	void* const memory = minos::mem_reserve(total_allocation_size);
+	memory_layout.allocation_size = total_allocation_size;
 
-	if (memory == nullptr)
-		panic("Failed to reserve memory for `CoreData` (0x%[|X]).\n", minos::last_error());
+	return memory_layout;
+}
 
-	if (!minos::mem_commit(memory, (sizeof(CoreData) + page_mask) & ~page_mask))
+static void init_core_data(CoreData* core, const Config* config, const CoreMemoryLayout* memory_layout) noexcept
+{
+	const u64 page_mask = minos::page_bytes() - 1;
+
+	if (!minos::mem_commit(core, (sizeof(CoreData) + page_mask) & ~page_mask))
 		panic("Failed to commit memory for `CoreData` (0x%[|X]).\n", minos::last_error());
 
-
-
-	CoreData* const core = static_cast<CoreData*>(memory);
 	core->config = config;
-	core->allocation_size = total_allocation_size;
-
+	core->memory_layout = *memory_layout;
 
 
 	const bool log_imported_asts = config->logging.imports.asts_sink.name_and_enabled.attachment();
@@ -259,26 +251,51 @@ CoreData* create_core_data(const Config* config) noexcept
 
 
 
-	for (u64 i = 0; i != MEMBER_COUNT; ++i)
+	for (u64 i = 0; i != CORE_MEMBER_COUNT; ++i)
 	{
 		MemoryAllocation allocation;
 
-		for (u64 j = 0; j != memory_requirements[i].count; ++j)
+		for (u64 j = 0; j != MAX_MEMORY_RANGE_REQUIREMENTS_COUNT; ++j)
 		{
-			const RangeAllocation range_allocation = range_allocations[i * MAX_MEMORY_RANGE_REQUIREMENTS_COUNT + j];
+			const RangeAllocation range_allocation = memory_layout->allocations[i * MAX_MEMORY_RANGE_REQUIREMENTS_COUNT + j];
 
-			allocation.ranges[j] = MutRange{ static_cast<byte*>(memory) + range_allocation.begin, range_allocation.size };
+			allocation.ranges[j] = MutRange{ reinterpret_cast<byte*>(core) + range_allocation.begin, range_allocation.size };
 		}
 
 		INIT_FUNCS[i](core, allocation);
 	}
+}
+
+CoreData* create_core_data(const Config* config) noexcept
+{
+	const CoreMemoryLayout memory_layout = check_config(config);
+
+	void* const memory = minos::mem_reserve(memory_layout.allocation_size);
+
+	if (memory == nullptr)
+		panic("Failed to reserve memory for `CoreData` (0x%[|X]).\n", minos::last_error());
+
+	CoreData* const core = static_cast<CoreData*>(memory);
+
+	init_core_data(core, config, &memory_layout);
 
 	return core;
 }
 
 void release_core_data(CoreData* core) noexcept
 {
-	minos::mem_unreserve(core, core->allocation_size);
+	minos::mem_unreserve(core, core->memory_layout.allocation_size);
+}
+
+void reset_core_data(CoreData* core) noexcept
+{
+	const Config* const config = core->config;
+
+	const CoreMemoryLayout memory_layout = core->memory_layout;
+
+	minos::mem_decommit(core, memory_layout.allocation_size);
+
+	init_core_data(core, config, &memory_layout);
 }
 
 
@@ -348,39 +365,23 @@ static bool file_type_from_ast_definitions(CoreData* core, AstNode* ast, TypeId 
 	return is_ok;
 }
 
-static Maybe<TypeId> import_file_or_prelude(CoreData* core, Range<char8> path, bool is_prelude, bool is_std) noexcept
+static bool import_file_or_prelude(CoreData* core, Range<char8> path, bool is_prelude, bool is_std, CompileMode mode) noexcept
 {
-	const u64 start_time = minos::exact_timestamp();
-
 	SourceFileRead read = read_source_file(core, path);
 
 	if (read.source_file->has_error)
-		return none<TypeId>();
+		return false;
 
 	if (read.content.begin() == nullptr)
 		some(read.source_file->type);
 
-	const u32 repeats = core->config->parse_only ? 100 : 1;
+	const Maybe<AstNode*> opt_ast = parse(core, read.content, read.source_file->source_id_base, is_std);
 
-	Maybe<AstNode*> opt_ast = none<AstNode*>();
-
-	for (u32 i = 0, n = 1; i != repeats; ++i, n++)
+	if (is_none(opt_ast))
 	{
-		if (i != 0)
-		{
-			core->asts.nodes.reset();
-			core->asts.sources.reset();
-			core->asts.attachment_lists.reset();
-		}
+		read.source_file->has_error = true;
 
-		opt_ast = parse(core, read.content, read.source_file->source_id_base, is_std);
-
-		if (is_none(opt_ast))
-		{
-			read.source_file->has_error = true;
-
-			return none<TypeId>();
-		}
+		return false;
 	}
 
 	AstNode* const ast = get(opt_ast);
@@ -396,21 +397,8 @@ static Maybe<TypeId> import_file_or_prelude(CoreData* core, Range<char8> path, b
 	read.source_file->ast = id_from_ast_node(core, ast);
 	read.source_file->type = file_type;
 
-	if (core->config->parse_only)
-	{
-		const u64 end_time = minos::exact_timestamp();
-
-		const u64 microseconds = (end_time - start_time) * 1000000 / minos::exact_timestamp_ticks_per_second();
-
-		minos::FileInfo path_info;
-
-		if (!minos::path_get_info(path, &path_info))
-			panic("minos::path_get_info(%) failed.\n", path);
-
-		print(minos::standard_file_handle(minos::StdFileName::StdErr), "Imported % (% bytes) in %us.\n", path, path_info.bytes, microseconds);
-
-		return some(file_type);
-	}
+	if (mode == CompileMode::Parse)
+		return true;
 
 	if (is_prelude)
 	{
@@ -418,7 +406,7 @@ static Maybe<TypeId> import_file_or_prelude(CoreData* core, Range<char8> path, b
 		{
 			read.source_file->has_error = true;
 
-			return none<TypeId>();
+			return false;
 		}
 	}
 	else
@@ -427,36 +415,87 @@ static Maybe<TypeId> import_file_or_prelude(CoreData* core, Range<char8> path, b
 		{
 			read.source_file->has_error = true;
 
-			return none<TypeId>();
+			return false;
 		}
 	}
 
 	log_ast(core, ast);
 
+	if (mode == CompileMode::ResolveNames)
+		return true;
+
 	if (!file_type_from_ast_definitions(core, ast, file_type))
 	{
 		read.source_file->has_error = true;
 
-		return none<TypeId>();
+		return false;
 	}
 
-	return some(file_type);
+	ASSERT_OR_IGNORE(mode == CompileMode::Typecheck || mode == CompileMode::Full);
+
+	return true;
+}
+
+static bool run_single_compilation(CoreData* core, bool main_is_std) noexcept
+{
+	const CompileMode mode = core->config->mode;
+
+	// If we are only parsing, skip the prelude import. It isn't required and
+	// kind of skews the measurement.
+	if (mode != CompileMode::Parse)
+	{
+		if (!import_file_or_prelude(core, core->config->std.prelude.filepath, true, true, mode))
+			return false;
+	}
+
+	if (!import_file_or_prelude(core, core->config->entrypoint.filepath, false, main_is_std, mode))
+		return false;
+
+	return true;
 }
 
 bool run_compilation(CoreData* core, bool main_is_std) noexcept
 {
-	if (!core->config->parse_only)
+	const u64 repeats = static_cast<u64>(core->config->benchmark.repeats);
+	const u64 timeout_secs = static_cast<u64>(core->config->benchmark.timeout_secs);
+
+	const u64 start_time = minos::timestamp_utc();
+
+	const u64 ticks_per_second = minos::timestamp_ticks_per_second();
+
+	u64 end_time = 0;
+
+	u64 i = 0;
+
+	u64 processed_bytes = 0;
+
+	do
 	{
-		const Maybe<TypeId> prelude_type = import_file_or_prelude(core, core->config->std.prelude.filepath, true, true);
+		if (i != 0)
+			reset_core_data(core);
 
-		if (is_none(prelude_type))
+		if (!run_single_compilation(core, main_is_std))
 			return false;
+
+		// This is very much *not* clean, but it does the job: The `SourceId`
+		// is just continuous byte index into all of the read source files,
+		// plus one spacing byte per file.
+		processed_bytes += core->reader.curr_source_id_base - core->reader.source_file_count;
+
+		i += 1;
+
+		end_time = minos::timestamp_utc();
 	}
+	while (i < repeats && (timeout_secs == 0 || (end_time - start_time) < timeout_secs * ticks_per_second));
 
-	const Maybe<TypeId> main_file_type = import_file_or_prelude(core, core->config->entrypoint.filepath, false, main_is_std);
+	if (repeats != 0)
+	{
+		const u64 elapsed_ms = ((end_time - start_time) * 1000) / ticks_per_second;
 
-	if (is_none(main_file_type))
-		return false;
+		const u64 mib_per_s = (processed_bytes / (1024 * 1024)) / (elapsed_ms / 1000);
+
+		print(minos::standard_file_handle(minos::StdFileName::StdErr), "Processed % bytes over % iterations in % milliseconds (% MiB/s)\n", processed_bytes, i, elapsed_ms, mib_per_s);
+	}
 
 	return true;
 }
@@ -467,7 +506,7 @@ void* address_from_core_id(CoreData* core, CoreId id) noexcept
 {
 	ASSERT_OR_IGNORE((static_cast<u64>(id) << COMP_HEAP_MIN_ALLOCATION_SIZE_LOG2) >= sizeof(CoreData));
 
-	ASSERT_OR_IGNORE((static_cast<u64>(id) << COMP_HEAP_MIN_ALLOCATION_SIZE_LOG2) < core->allocation_size);
+	ASSERT_OR_IGNORE((static_cast<u64>(id) << COMP_HEAP_MIN_ALLOCATION_SIZE_LOG2) < core->memory_layout.allocation_size);
 
 	return reinterpret_cast<byte*>(core) + (static_cast<u64>(id) << COMP_HEAP_MIN_ALLOCATION_SIZE_LOG2);
 }
@@ -476,7 +515,7 @@ CoreId core_id_from_address(CoreData* core, const void* memory) noexcept
 {
 	ASSERT_OR_IGNORE(memory >= core + 1);
 
-	ASSERT_OR_IGNORE(memory < reinterpret_cast<byte*>(core) + core->allocation_size);
+	ASSERT_OR_IGNORE(memory < reinterpret_cast<byte*>(core) + core->memory_layout.allocation_size);
 
 	return static_cast<CoreId>((static_cast<const byte*>(memory) - reinterpret_cast<byte*>(core)) >> COMP_HEAP_MIN_ALLOCATION_SIZE_LOG2);
 }

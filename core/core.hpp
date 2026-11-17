@@ -223,6 +223,15 @@ struct ConfigPrintSink
 	PrintSink sink;
 };
 
+enum class CompileMode : u32
+{
+	INVALID,
+	Full,
+	Parse,
+	ResolveNames,
+	Typecheck,
+};
+
 // Structure holding config parameters used to parameterize the further
 // compilation process.
 // This is filled in by `create_config` and must only be read afterwards.
@@ -289,11 +298,18 @@ struct Config
 		s64 source_tab_size;
 	} diagnostics;
 
+	struct
+	{
+		s64 repeats;
+
+		s64 timeout_secs;
+	} benchmark;
+
 	Maybe<const TreeSchemaTable*> defines;
 
-	bool compile_all;
+	CompileMode mode;
 
-	bool parse_only;
+	bool compile_all;
 };
 
 bool config_from_toml_file(Range<char8> filepath, PrintSink error_sink, Config* out_config, TreeSchemaAllocator* out_ts_alloc) noexcept;
@@ -3579,6 +3595,8 @@ enum class CoreId : u32
 CoreData* create_core_data(const Config* config) noexcept;
 
 void release_core_data(CoreData* core) noexcept;
+
+void reset_core_data(CoreData* core) noexcept;
 
 bool run_compilation(CoreData* core, bool main_is_std) noexcept;
 
