@@ -518,6 +518,21 @@ void source_reader_init(CoreData* core, MemoryAllocation allocation) noexcept
 	(void) reader->id_entries.reserve();
 }
 
+void source_reader_cleanup(CoreData* core) noexcept
+{
+	SourceFileByIdEntry* curr = core->reader.id_entries.begin();
+
+	SourceFileByIdEntry* const end = core->reader.id_entries.end();
+
+	while (curr != end)
+	{
+		if (is_some(curr->data.file))
+			minos::file_close(get(curr->data.file));
+
+		curr += 1;
+	}
+}
+
 
 
 SourceFileRead read_source_file(CoreData* core, Range<char8> filepath) noexcept

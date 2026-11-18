@@ -73,11 +73,34 @@ void code2_init(CoreData* core, MemoryAllocation allocation) noexcept;
 
 
 
+void comp_heap_cleanup([[maybe_unused]] CoreData* core) noexcept {}
+
+void ast_pool_cleanup([[maybe_unused]] CoreData* core) noexcept {}
+
+void error_sink_cleanup([[maybe_unused]] CoreData* core) noexcept {}
+
+void identifier_pool_cleanup([[maybe_unused]] CoreData* core) noexcept {}
+
+void lexical_analyser_cleanup([[maybe_unused]] CoreData* core) noexcept {}
+
+void parser_cleanup([[maybe_unused]] CoreData* core) noexcept {}
+
+void source_reader_cleanup([[maybe_unused]] CoreData* core) noexcept;
+
+void type_pool_cleanup([[maybe_unused]] CoreData* core) noexcept {}
+
+void temp_stack_cleanup([[maybe_unused]] CoreData* core) noexcept {}
+
+void code2_cleanup([[maybe_unused]] CoreData* core) noexcept {}
+
+
 using validate_config_func = bool (*) (const Config* config, PrintSink sink) noexcept;
 
 using memory_requirements_func = MemoryRequirements (*) (const Config* config) noexcept;
 
 using init_func = void (*) (CoreData* core, MemoryAllocation allocation) noexcept;
+
+using cleanup_func = void (*) (CoreData* core) noexcept;
 
 static constexpr validate_config_func VALIDATE_CONFIG_FUNCS[] = {
 	&comp_heap_validate_config,
@@ -118,11 +141,26 @@ static constexpr init_func INIT_FUNCS[] = {
 	&code2_init,
 };
 
+static constexpr cleanup_func CLEANUP_FUNCS[] = {
+	&comp_heap_cleanup,
+	&temp_stack_cleanup,
+	&ast_pool_cleanup,
+	&error_sink_cleanup,
+	&identifier_pool_cleanup,
+	&lexical_analyser_cleanup,
+	&type_pool_cleanup,
+	&parser_cleanup,
+	&source_reader_cleanup,
+	&code2_cleanup,
+};
+
 static_assert(array_count(VALIDATE_CONFIG_FUNCS) == CORE_MEMBER_COUNT);
 
 static_assert(array_count(MEMORY_REQUIREMENTS_FUNCS) == CORE_MEMBER_COUNT);
 
 static_assert(array_count(INIT_FUNCS) == CORE_MEMBER_COUNT);
+
+static_assert(array_count(CLEANUP_FUNCS) == CORE_MEMBER_COUNT);
 
 
 
@@ -266,6 +304,12 @@ static void init_core_data(CoreData* core, const Config* config, const CoreMemor
 	}
 }
 
+static void cleanup_core_data(CoreData* core) noexcept
+{
+	for (cleanup_func fn : CLEANUP_FUNCS)
+		fn(core);
+}
+
 CoreData* create_core_data(const Config* config) noexcept
 {
 	const CoreMemoryLayout memory_layout = check_config(config);
@@ -284,6 +328,8 @@ CoreData* create_core_data(const Config* config) noexcept
 
 void release_core_data(CoreData* core) noexcept
 {
+	cleanup_core_data(core);
+
 	minos::mem_unreserve(core, core->memory_layout.allocation_size);
 }
 
@@ -292,6 +338,8 @@ void reset_core_data(CoreData* core) noexcept
 	const Config* const config = core->config;
 
 	const CoreMemoryLayout memory_layout = core->memory_layout;
+
+	cleanup_core_data(core);
 
 	minos::mem_decommit(core, memory_layout.allocation_size);
 
