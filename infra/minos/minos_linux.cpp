@@ -806,6 +806,9 @@ void minos::mem_decommit(void* ptr, u64 bytes) noexcept
 
 	ASSERT_OR_IGNORE((bytes & (page_bytes() - 1)) == 0);
 
+	if (madvise(ptr, bytes, MADV_DONTNEED))
+		panic("madvise(MADV_DONTNEED) failed (0x%[|X] - %)\n", last_error(), strerror(last_error()));
+
 	if (mprotect(ptr, bytes, PROT_NONE) != 0)
 		panic("mprotect(PROT_NONE) failed (0x%[|X] - %)\n", last_error(), strerror(last_error()));
 }
