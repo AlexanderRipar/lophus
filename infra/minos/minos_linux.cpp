@@ -305,7 +305,7 @@ struct MinosGlobalIoUrings
 	MinosIoUring rings[MINOS_IO_URING_MAX_COUNT];
 };
 
-MinosGlobalIoUrings g_io_urings;
+MinosGlobalIoUrings g_io_urings{};
 
 [[nodiscard]] static s32 syscall_io_uring_setup(u32 entry_count, io_uring_params* params) noexcept
 {
