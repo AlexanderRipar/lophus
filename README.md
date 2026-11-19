@@ -609,45 +609,117 @@ To build this project, you will need
 - One of the [supported C++ compilers](#supported-compilers)
 
 
-## Building For Your Platform
+## Using the `make-all` Scripts
 
-Once `cmake` is installed configure your build system as follows:
+The simplest way to build the project is using one of `make-all.ps1` or
+`make-all.sh`. The former is a powershell script, while the latter is a bash
+script. These attempt to build the targets given to them as arguments using all
+the supported compilers they can find on the system. To build all available
+targets pass the single argument `all`.
 
-- For gcc on linux: `cmake -S . -B build/linux-gcc-(rel|dbg) -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=(release|debug)`
-- For clang on linux: `cmake -S . -B build/linux-clang-(rel|dbg) -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=(release|debug)`
-- For msvc on windows: `cmake -S . -B build/win32-msvc-(rel|dbg) -DCMAKE_CXX_COMPILER=msvc -DCMAKE_C_COMPILER=msvc`
-- For clang-cl on windows: `cmake -S . -B build/win32-clangcl-(rel|dbg) -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -Tclangcl`
+## Using `cmake` Directly
 
-Note that the exact build directories can of course be set to anything of your
-liking, but the given values correspond to those used by `make-all.ps1`,
-making it possible to reuse the same build configuration when you decide to use
-this wrapper.
+Alternatively, builds can be run via `cmake`. This is a two-step process:
+First, the build system has to be configured. This only has to be done once for
+each build system configuration. Secondly, the configured build system can be
+used to run a build.
 
-The `-DCMAKE_BUILD_TYPE` parameter selects whether to build in debug or release
-mode. This parameter does not work with windows' build system. Instead, the
-`cmake --build` command described below can set the flag `--config=release` to
-build in release mode.
+### Configuring Build Systems Using `cmake`
 
-Note that CMakeLists.txt configures release builds to include debug
-information. 
-
-Once the build system is configured run cmake again to actually perform your
-build:
+The following are the build system configurations used by `make-all.ps1`.
 
 ```
-cmake --build <build-directory-from-before> <optionally --config=release on windows>
+# linux gcc debug
+cmake -S . -B build/linux-gcc-dbg -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=debug
+
+# linux gcc release
+cmake -S . -B build/linux-gcc-rel -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=release
+
+# linux clang debug
+cmake -S . -B build/linux-clang-dbg -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=debug
+
+# linux clang release
+cmake -S . -B build/linux-clang-dbg -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=release
+
+# windows msvc debug
+cmake -S . -B build/win32-msvc-dbg -DCMAKE_CXX_COMPILER=msvc -DCMAKE_C_COMPILER=msvc
+
+# windows msvc release (Redundant for purely manual runs; See below)
+cmake -S . -B build/win32-msvc-rel -DCMAKE_CXX_COMPILER=msvc -DCMAKE_C_COMPILER=msvc
+
+# windows clang-cl debug
+cmake -S . -B build/win32-clangcl-dbg -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -Tclangcl
+
+# windows clang-cl release (Redundant for purely manual runs; See below)
+cmake -S . -B build/win32-clangcl-rel -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -Tclangcl
+```
+
+- `-S` defines the source directory. This must be the project's root directory
+  (where this README is).
+- `-B` defines the build directory. Build system configuration, temporary files
+  as well as the build's outputs are written into this directory. To
+  distinguish between different builds, it is easiest to specify separete
+  directories for each configuration. By setting this to a subdirectory of
+  `build`, it will be ignored by git.
+- `-DCMAKE_CXX_COMPILER` defines which C++ compiler to use for the build.
+- `-DCMAKE_C_COMPILER` defines which C compiler to use for the build.
+- `-DCMAKE_BUILD_TYPE` defines the type of build. This should be either `debug`
+  or `release`.
+  Release builds in this project are configured to include debug information.
+  When using the `vsbuild` build system (the default under windows), `cmake`
+  does not distinguish between build types at configuration configuration time.
+  Instead, every single build can have its build type set by passing the
+  `--config=(debug|release)` flag. The default in this case is `debug`.
+  `make-all.ps1` nonetheless creates separate build directories for each
+  mode to allow easily running builds in parallel.
+
+### Running Configured `cmake` Build Systems
+
+Once a build system has been configured, it can be invoked as follows:
+
+```
+cmake --build <build-directory>
 ```
 
 This will create a binary called `lophus` (or `lophus.exe` on windows)
-somewhere inside your build directory (the exact location depends on the
-selected compiler and build system).
+somewhere inside your build directory. The exact location depends on the build
+system.
 
-To try out the resulting compiler on the source.evl file found in the sample
-directory, run
+### Common `cmake` Options
+
+`cmake --build` allows selecting which targets to build via the `--target`
+parameter.  More than one target can be specified as a space-separated list:
 
 ```
-<build-directory-from-before>/<path-to-lophus> -config sample/config.toml
+cmake --build <build-directory> --target (all|clean|lophus|test|run-tests)...
 ```
+
+- `all` builds lophus and the test suite. This is the default target.
+  When using `vsbuild` (the default on windows), this is called `ALL_BUILD`
+  instead.
+- `clean` removes previously generated build artifacts.
+- `lophus` builds the lophus executable.
+- `test` builds the test suite.
+- `run-tests` builds the test-suite if necessary and then runs it. This is the
+  intended way to run tests.
+
+To get a release build when using `vsbuild` as the build system, add
+`--config release`.
+
+
+## Running Lophus
+
+To try out the freshly built compiler, run
+
+```
+<build-directory>/<path-to-lophus> -config sample/config.toml
+```
+
+The exact path to the built executable inside the build directory varies
+between build systems. When using `make` (the default on linux), it is found
+under `<build-directory>/lophus`. When using `vsbuild` (the default on
+windows), it is found under `<build-directory>/Debug/lophus.exe` or
+`<build-directory>/Release/lophus.exe`, depending on the build type. 
 
 
 ## Running Tests
@@ -657,22 +729,17 @@ the `run-tests` target. By default this is not enabled to speed up quick
 rebuilds.
 
 
-## Multi-Compiler and -Platform Build Support
-
-If you want to build the project on all supported compilers that are available
-on your system, you can use `make-all.ps1`. This is a wrapper around cmake
-which invokes all the available [supported compilers](#supported-compilers) it
-can find.
-If you test a new build configuration, please add it to the script, as well as
-the [list of supported compilers](#supported-compilers).
-
-
 ## Supported Compilers
 
-The following is a list of the compilers and platforms under which builds are known to succeed.
+The following is a list of the compilers and platforms under which builds are
+known to succeed.
 
-| Platform   | Compiler |       Versions      |
-|------------|----------|---------------------|
-| Windows 10 | msvc     | 19.33, 19.39, 19.44 |
-| Ubuntu     | clang    | 18.1                |
-| Ubuntu     | gcc      | 13.3                |
+|      Platform      | Compiler |       Versions      |
+|--------------------|----------|---------------------|
+| Ubuntu 24.04 (wsl) | clang    | 18.1                |
+| Ubuntu 24.04 (wsl) | gcc      | 13.3                |
+| Windows 10 & 11    | msvc     | 19.33, 19.39, 19.44 |
+| Windows 10 & 11    | clang-cl | 21.1.5              |
+
+Generally, builds *should* succeed on any recent version of `gcc`, `clang`,
+`msvc` or `clang-cl`.
