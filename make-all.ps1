@@ -19,22 +19,22 @@ if ($IsLinux)
 	$specs = @(
 		@{
 			jobname = 'linux-clang-dbg'
-			command = 'wsl -- cmake -S . -B build/clang-dbg -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=debug' +
+			command = 'cmake -S . -B build/clang-dbg -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=debug' +
 			           ' `&`& cmake --build build/clang-dbg --target ' + $targets + ' 2`>`&1'
 		},
 		@{
 			jobname = 'linux-clang-rel'
-			command = 'wsl -- cmake -S . -B build/clang-rel -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=release' +
+			command = 'cmake -S . -B build/clang-rel -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=release' +
 			           ' `&`& cmake --build build/clang-rel --target ' + $targets + ' 2`>`&1'
 		},
 		@{
 			jobname = 'linux-gcc-dbg'
-			command = 'wsl -- cmake -S . -B build/gcc-dbg -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc  -DCMAKE_BUILD_TYPE=debug' +
+			command = 'cmake -S . -B build/gcc-dbg -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc  -DCMAKE_BUILD_TYPE=debug' +
 			           ' `&`& cmake --build build/gcc-dbg --target ' + $targets + ' 2`>`&1'
 		},
 		@{
 			jobname = 'linux-gcc-rel'
-			command = 'wsl -- cmake -S . -B build/gcc-rel -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc  -DCMAKE_BUILD_TYPE=release' +
+			command = 'cmake -S . -B build/gcc-rel -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc  -DCMAKE_BUILD_TYPE=release' +
 			           ' `&`& cmake --build build/gcc-rel --target ' + $targets + ' 2`>`&1'
 		}
 	)
