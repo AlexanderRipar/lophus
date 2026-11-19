@@ -94,10 +94,6 @@ static constexpr u32 SOURCE_BUFFER_RESERVE = static_cast<u32>(1) << 26;
 
 
 
-static constexpr u32 ERROR_BUFFER_SIZE = 65536;
-
-
-
 bool SourceFileByPathIterator::has_next() const noexcept
 {
 	ASSERT_OR_IGNORE(curr <= end);
