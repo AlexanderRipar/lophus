@@ -491,9 +491,8 @@ bool comp_heap_gc_mark(CoreData* core, MutRange<byte> memory) noexcept
 	else if (memory.count() == 0)
 	{
 		// We do not have a header, and our allocation is zero-sized. This
-		// means the allocation size has been padded to 1 byte to allow shadow
-		// data to function properly. Adjust `memory` to reflect the extra
-		// "padding".
+		// means the allocation size has been padded to 1 byte.
+		// Adjust `memory` to reflect the extra "padding".
 
 		memory = MutRange<byte>{ memory.begin(), memory.end() + 1 };
 	}

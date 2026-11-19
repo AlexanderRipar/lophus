@@ -79,7 +79,6 @@ static const char8* error_message_of(CompileError error) noexcept
 		"Reached `unreachable`.\n",                                                                                                                     // UnreachableReached
 		"The given type builder already contains a definition with the same name.\n",                                                                   // UserDefinedTypeDuplicateMemberName
 		"Circular dependency of global definition onto itself detected.\n",                                                                             // CircularGlobalInitialization
-		"Access of uninitialized shadow data.\n",                                                                                                       // UninitializedShadowAccess
 		"No impl matching the supplied argument types for the given trait found.\n",                                                                    // TraitCallMissingImpl
 		"Encountered an invalid pointer into the compile-time heap.\n",                                                                                 // BadHeapPointer
 		"The callee expression on the right-hand-side of `impl` must be a trait.\n",                                                                    // ImplInvalidTraitCallee
@@ -378,7 +377,6 @@ static constexpr const char8* COMPILE_ERROR_NAMES[] = {
 	"UnreachableReached",
 	"UserDefinedTypeDuplicateMemberName",
 	"CircularGlobalInitialization",
-	"UninitializedShadowAccess",
 	"TraitCallMissingImpl",
 	"BadHeapPointer",
 	"ImplInvalidTraitCallee",

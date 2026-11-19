@@ -137,29 +137,6 @@ struct ConfigMetadata
 		{
 			ConfigMetadataEntry self_;
 
-			ConfigMetadataEntry reserve;
-
-			ConfigMetadataEntry commit_increment;
-		} addresses;
-
-		struct
-		{
-			ConfigMetadataEntry self_;
-
-			ConfigMetadataEntry reserve;
-
-			ConfigMetadataEntry commit_increment;
-		} layouts;
-	} shadow_store;
-
-	struct
-	{
-		ConfigMetadataEntry self_;
-
-		struct
-		{
-			ConfigMetadataEntry self_;
-
 			ConfigMetadataEntry asts;
 
 			ConfigMetadataEntry code2s;
@@ -236,14 +213,6 @@ static constexpr ConfigMetadata init_metadata() noexcept
 	rst.heap.self_ = META_TABLE("heap", heap, "Managed heap configuration");
 	rst.heap.reserve = META_INTEGER("reserve", heap.reserve, 1 << 30, 1 << 12, static_cast<s64>(1) << 31, "Size the managed heap's small allocation section can grow to, in bytes");
 	rst.heap.commit_increment = META_INTEGER("commit-increment", heap.commit_increment, 1 << 18, 1 << 12, static_cast<s64>(1) << 31, "Number of bytes the managed heap is grown by at a time");
-
-	rst.shadow_store.self_ = META_TABLE("shadow-store", shadow_store, "Shadow store configuration for holding zero-sized values");
-	rst.shadow_store.addresses.self_ = META_TABLE("addresses", shadow_store.addresses, "Allocation information for the shadow store address table. This holds association between addresses and their shadow data");
-	rst.shadow_store.addresses.reserve = META_INTEGER("reserve", shadow_store.addresses.reserve, 1 << 24, 1 << 12, static_cast<s64>(1) << 31, "Maximum number of entries allowed in the shadow store's address table");
-	rst.shadow_store.addresses.commit_increment = META_INTEGER("commit-increment", shadow_store.addresses.commit_increment, 1 << 14, 1 << 12, static_cast<s64>(1) << 31, "Number of entries added to the shadow store's address table upon filling up");
-	rst.shadow_store.layouts.self_ = META_TABLE("layouts", shadow_store.layouts, "Allocation information for the shadow store layout table. This holds the layouts of shadow store's address table entries");
-	rst.shadow_store.layouts.reserve = META_INTEGER("reserve", shadow_store.layouts.reserve, 1 << 24, 1 << 12, static_cast<s64>(1) << 31, "Maximum number of entries allowed in the shadow store's layout table");
-	rst.shadow_store.layouts.commit_increment = META_INTEGER("reserve", shadow_store.layouts.commit_increment, 1 << 14, 1 << 12, static_cast<s64>(1) << 31, "Number of entries added to the shadow store's layout table upon filling up");
 
 	rst.logging.self_ = META_TABLE("logging", logging, "Logging configuration");
 	rst.logging.imports.self_ = META_TABLE("imports", logging.imports, "File import logging parameters");

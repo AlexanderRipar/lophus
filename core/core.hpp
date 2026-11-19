@@ -264,23 +264,6 @@ struct Config
 	{
 		struct
 		{
-			u64 reserve;
-
-			u64 commit_increment;
-		} addresses;
-
-		struct
-		{
-			u64 reserve;
-
-			u64 commit_increment;
-		} layouts;
-	} shadow_store;
-
-	struct
-	{
-		struct
-		{
 			ConfigPrintSink asts_sink;
 
 			ConfigPrintSink code2s_sink;
@@ -1975,7 +1958,6 @@ enum class CompileError
 	UnreachableReached,
 	UserDefinedTypeDuplicateMemberName,
 	CircularGlobalInitialization,
-	UninitializedShadowAccess,
 	TraitCallMissingImpl,
 	BadHeapPointer,
 	ImplInvalidTraitCallee,
@@ -2148,11 +2130,6 @@ enum class TypeId : u32
 	INVALID = 0,
 };
 
-enum class ShadowLayoutId : u32
-{
-	INVALID = 0,
-};
-
 // Tag for discriminating between different kinds of types.
 // The layout of the structural information stored for a type depends on its
 // tag. For all tags other than `TypeTag::Composite`, this data can accessed by
@@ -2283,8 +2260,6 @@ struct TypeMetrics
 	// the type must only be allocated at addresses that are multiples of this
 	// alignment (i.e., have the low `log2(align)` bits set to zero).
 	u32 align;
-
-	bool is_shadow;
 };
 
 struct PendingTypeAndValue

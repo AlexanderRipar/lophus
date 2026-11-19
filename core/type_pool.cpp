@@ -63,12 +63,8 @@ enum class CompositeKind : u8
 enum class CompositeFlags : u8
 {
 	EMPTY = 0,
-
 	Signature_IsFunc                 = 0x01,
-
 	User_IsOpen                      = 0x01,
-
-	Any_IsShadow                     = 0x02,
 };
 
 static constexpr CompositeFlags operator&(CompositeFlags lhs, CompositeFlags rhs) noexcept
@@ -2500,7 +2496,7 @@ bool type_metrics_from_id(CoreData* core, TypeId type_id, TypeMetrics* out) noex
 	case TypeTag::Divergent:
 	case TypeTag::Undefined:
 	{
-		*out = TypeMetrics{ 0, 0, 1, false };
+		*out = TypeMetrics{ 0, 0, 1 };
 
 		return true;
 	}
@@ -2509,35 +2505,35 @@ bool type_metrics_from_id(CoreData* core, TypeId type_id, TypeMetrics* out) noex
 	case TypeTag::TypeInfo:
 	case TypeTag::TypeBuilder:
 	{
-		*out = TypeMetrics{ 4, 4, 4, true };
+		*out = TypeMetrics{ 4, 4, 4 };
 
 		return true;
 	}
 
 	case TypeTag::Definition:
 	{
-		*out = TypeMetrics{ sizeof(DefinitionValue), sizeof(DefinitionValue), alignof(DefinitionValue), true };
+		*out = TypeMetrics{ sizeof(DefinitionValue), sizeof(DefinitionValue), alignof(DefinitionValue) };
 
 		return true;
 	}
 
 	case TypeTag::CompInteger:
 	{
-		*out = TypeMetrics{ sizeof(CompIntegerValue), sizeof(CompIntegerValue), alignof(CompIntegerValue), true };
+		*out = TypeMetrics{ sizeof(CompIntegerValue), sizeof(CompIntegerValue), alignof(CompIntegerValue) };
 
 		return true;
 	}
 
 	case TypeTag::CompFloat:
 	{
-		*out = TypeMetrics{ sizeof(CompFloatValue), sizeof(CompFloatValue), alignof(CompFloatValue), true };
+		*out = TypeMetrics{ sizeof(CompFloatValue), sizeof(CompFloatValue), alignof(CompFloatValue) };
 
 		return true;
 	}
 
 	case TypeTag::Boolean:
 	{
-		*out = TypeMetrics{ 1, 1, 1, false };
+		*out = TypeMetrics{ 1, 1, 1 };
 
 		return true;
 	}
@@ -2551,28 +2547,28 @@ bool type_metrics_from_id(CoreData* core, TypeId type_id, TypeMetrics* out) noex
 
 		const u32 pow2_bytes = next_pow2(bytes);
 
-		*out = TypeMetrics{ pow2_bytes, pow2_bytes, pow2_bytes, false };
+		*out = TypeMetrics{ pow2_bytes, pow2_bytes, pow2_bytes };
 
 		return true;
 	}
 
 	case TypeTag::Slice:
 	{
-		*out = TypeMetrics{ 16, 16, 8, false };
+		*out = TypeMetrics{ 16, 16, 8 };
 
 		return true;
 	}
 
 	case TypeTag::Signature:
 	{
-		*out = TypeMetrics{ sizeof(CallableValue), sizeof(CallableValue), alignof(CallableValue), true };
+		*out = TypeMetrics{ sizeof(CallableValue), sizeof(CallableValue), alignof(CallableValue) };
 
 		return true;
 	}
 
 	case TypeTag::Ptr:
 	{
-		*out = TypeMetrics{ 8, 8, 8, false };
+		*out = TypeMetrics{ 8, 8, 8 };
 
 		return true;
 	}
@@ -2586,7 +2582,7 @@ bool type_metrics_from_id(CoreData* core, TypeId type_id, TypeMetrics* out) noex
 		if (!type_metrics_from_id(core, array->element_type, &element_metrics))
 			return false;
 
-		*out = TypeMetrics{ element_metrics.stride * (array->element_count - 1) + element_metrics.size, (element_metrics.stride * array->element_count), element_metrics.align, element_metrics.is_shadow };
+		*out = TypeMetrics{ element_metrics.stride * (array->element_count - 1) + element_metrics.size, (element_metrics.stride * array->element_count), element_metrics.align };
 
 		return true;
 	}
@@ -2595,19 +2591,17 @@ bool type_metrics_from_id(CoreData* core, TypeId type_id, TypeMetrics* out) noex
 	{
 		const CompositeType* const composite = reinterpret_cast<const CompositeType*>(structure->attach);
 
-		const bool is_shadow = (composite->flags & CompositeFlags::Any_IsShadow) == CompositeFlags::Any_IsShadow;
-
 		if (composite->kind == CompositeKind::User)
 		{
 			ASSERT_OR_IGNORE((composite->flags & CompositeFlags::User_IsOpen) == CompositeFlags::EMPTY);
 
 			const CompositeUserExtraData* const user = reinterpret_cast<const CompositeUserExtraData*>(composite + 1);
 
-			*out = TypeMetrics{ user->size, user->stride, user->align, is_shadow };
+			*out = TypeMetrics{ user->size, user->stride, user->align };
 		}
 		else
 		{
-			*out = TypeMetrics{ 0, 0, 1, is_shadow };
+			*out = TypeMetrics{ 0, 0, 1 };
 		}
 
 		return true;

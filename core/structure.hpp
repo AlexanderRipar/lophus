@@ -351,89 +351,6 @@ struct TempStack
 
 
 
-struct ShadowStoreKey;
-
-struct ShadowStoreEntry;
-
-struct ShadowStoreIterator
-{
-	CoreData* core;
-
-	u32 curr;
-
-	u32 end;
-
-	bool has_next() const noexcept;
-
-	ShadowStoreEntry* next() noexcept;
-};
-
-struct ShadowStoreAlloc
-{
-	CoreData* core;
-
-	ShadowStoreEntry* value_from_id(u32 id) noexcept;
-
-	const ShadowStoreEntry* value_from_id(u32 id) const noexcept;
-
-	u32 id_from_value(const ShadowStoreEntry* value) const noexcept;
-
-	ShadowStoreIterator values() noexcept;
-
-	ShadowStoreEntry* alloc(ShadowStoreKey key, u32 key_hash) noexcept;
-
-	void dealloc(u32 id) noexcept;
-};
-
-struct ShadowLayoutKey;
-
-struct ShadowLayoutEntry;
-
-struct ShadowLayoutIterator
-{
-	CoreData* core;
-
-	u32 curr;
-
-	u32 end;
-
-	bool has_next() const noexcept;
-
-	ShadowLayoutEntry* next() noexcept;
-};
-
-struct ShadowLayoutAlloc
-{
-	CoreData* core;
-
-	ShadowLayoutEntry* value_from_id(u32 id) noexcept;
-
-	const ShadowLayoutEntry* value_from_id(u32 id) const noexcept;
-
-	u32 id_from_value(const ShadowLayoutEntry* value) const noexcept;
-
-	ShadowLayoutIterator values() noexcept;
-
-	ShadowLayoutEntry* alloc(ShadowLayoutKey key, u32 key_hash) noexcept;
-
-	void dealloc(u32 id) noexcept;
-};
-
-struct ShadowStore
-{
-	IdMap<ShadowStoreKey, ShadowStoreEntry, ShadowStoreAlloc> address_map;
-
-	IdMap<ShadowLayoutKey, ShadowLayoutEntry, ShadowLayoutAlloc> layout_map;
-
-	Maybe<ShadowStoreEntry*> address_entries_freelist_head;
-
-	ReservedVec<ShadowStoreEntry> address_entries;
-
-	ReservedVec<CoreId> layout_ids;
-};
-
-
-
 struct Code2Fixup;
 
 #ifdef COMPILER_MSVC
@@ -539,8 +456,6 @@ struct CoreData
 	SourceReader reader;
 
 	TypePool types;
-
-	ShadowStore shadow;
 
 	LexicalAnalyser lex;
 

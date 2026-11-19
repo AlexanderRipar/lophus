@@ -200,9 +200,6 @@ static FFISysVTypeDesc sysv_classify_composite_type(CoreData* core, TypeId type,
 		if (info.is_global || metrics.size == 0)
 			continue;
 
-		if (metrics.is_shadow)
-			TODO("Support / Forbid shadow data types in FFI.");
-
 		const u64 begin_offset = base_offset + static_cast<u64>(info.offset);
 
 		const u64 end_offset = begin_offset + metrics.size;
