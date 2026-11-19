@@ -1015,6 +1015,36 @@ static void print_config_help_element(PrintSink sink, const ConfigMetadataEntry*
 		return;
 	}
 
+	case ConfigMetadataTag::Enum:
+	{
+		const u32 base_value = curr->attach.enumeration.base_value;
+		const u32 default_value = curr->attach.enumeration.default_value;
+		const Range<const char8*> enumerants = curr->attach.enumeration.enumerants;
+
+		print(sink, "%[< %]- %\n%[< %]%\n%[< %]type:    enum\n%[< %]default: '%'\n%[< %]values:  ",
+			"", (indent + 1) * 4 - 2,
+			curr->name,
+			"", (indent + 1) * 4,
+			curr->helptext,
+			"", (indent + 1) * 4,
+			"", (indent + 1) * 4,
+			enumerants[default_value - base_value],
+			"", (indent + 1) * 4
+		);
+
+		for (u64 i = 0; i != enumerants.count(); ++i)
+		{
+			if (i != 0)
+				print(sink, ", ");
+
+			print(sink, "'%'", enumerants[i]);
+		}
+
+		print(sink, "\n\n");
+
+		return;
+	}
+
 	case ConfigMetadataTag::INVALID:
 		; // Fallthrough to unreachable.
 	}
