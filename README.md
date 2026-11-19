@@ -37,10 +37,11 @@ let main = proc(args: [][]u8) -> void => {
 
 We can see here the general structure of a definition in `lophus`: The keyword
 `let`, followed by a name, an optional type prefixed by `:` (absent in the
-above case), and a value prefixed by `=` - which is again optional. \
+above case), and a value prefixed by `=` - which is again optional.
+
 In the above case, the value of main is a `proc` - procedure - taking as its
 single argument a slice of slices of u8s, which is accessible as `args` in the
-procedure's body. Its return type is void. \
+procedure's body. Its return type is void.
 
 We can also already see that there are no semicolons or statement terminators
 of any kind. Instead the syntax is designed to make it unambiguous where
@@ -58,7 +59,7 @@ let main = proc(args: [][]u8) -> void => std.print("Hello World!\n")
 ```
 
 Generally, most language constructs can be used in most places, since they are
-generally expressions and not statements in the traditional sense. \
+generally expressions and not statements in the traditional sense.
 `if` can thus also be used like the ternary `?:` operator in many other
 languages:
 
@@ -70,7 +71,7 @@ let x = if condition() then 1 else 2
 ## Mutability
 
 Variables declared using `let` are by default immutable. This means that their
-value cannot be altered after they are defined. \
+value cannot be altered after they are defined.
 To create a mutable variable the keyword `mut` is used instead of `let`:
 
 ```
@@ -88,7 +89,8 @@ members of a variable.
 
 Along with this concept there is also that of the distinction between functions
 (`func`) and procedures (`proc`). This is similar to that found in Nim, in that
-`func`s may not access mutable global data, while `proc`s may. \
+`func`s may not access mutable global data, while `proc`s may.
+
 Interestingly, a pure function is then a `func` which only takes
 value-arguments or immutable reference-arguments (i.e., pointers, slices, or
 types containing them as members).
@@ -279,7 +281,7 @@ The basic built-in types are as follows:
 - Varargs - `...<arg-type>` to support variadic functions.
 - Compile-time integers - `CompInteger`. This is the type assigned to integer
   literals. It is also a first-class citizen of the language, meaning e.g.
-  `1 + 2` still results in a value of type `CompInteger`. \
+  `1 + 2` still results in a value of type `CompInteger`.
   Unlike other types, this one supports implicit conversion to integer types.
 - Compile-time floats - `CompFloat`, following the same semantics as
   `CompInteger` but for floating-point literals.
@@ -296,13 +298,13 @@ The basic built-in types are as follows:
 Note that there is no dedicated character type. This is meant to drive home the
 point that there is no such thing as a simple "character", but rather only
 concepts such as code-units and -points in modern encodings (i.e., Unicode).
-And even their usefulness is debatable. \
+And even their usefulness is debatable.
 Instead, treating text as a slice of unsigned integers of an appropriate
 bit-width is encouraged.
 
 All types that have elements apart from arrays also support a `mut` between the
 type introducer and the element type - as an example, `*mut u32` in case of a
-pointer. \
+pointer.
 This decouples the mutability of these reference types from that of their
 referenced data:
 
@@ -410,7 +412,7 @@ equivalence that can be most easily understood by how it is implemented:
   `complete_type` gets reused.
 - The results of calls to type-valued functions whose return type is marked
   with the `distinct` operator are considered distinct as when bound to an
-  identifier. \
+  identifier.
   However, they are still considered equivalent to the same call *not* bound to
   an identifier.
 
@@ -542,7 +544,7 @@ let my_other_vec: Vec2 = .{ 1.0, 71.3 }
 
 This is currently still up for consideration. I believe it should be based on
 `trait`s, similar to those found in Rust or Haskell's `class`es. Traits in this
-concept express a relation over types. \
+concept express a relation over types.
 A good example to consider seems to be that of iteration, noting that the
 following is just a mess of ideas that are not even internally consistent at
 this point:
@@ -588,7 +590,8 @@ for i <- my_slice where my_slice: []u8 = some_slice()
 
 Functional contracts, supported in the form of pre- and postconditions, are
 supported by the keywords `requires` and `ensures` respectively (both initially
-inspired by Midori). \
+inspired by Midori).
+
 These can follow a function type and define the permissible values of inputs
 and global state, or the possible resulting return value and global state
 repsectively. The current intention is to runtime-check them in debug mode,
@@ -610,28 +613,40 @@ To build this project, you will need
 
 Once `cmake` is installed configure your build system as follows:
 
-- For msvc: `cmake -S . -B build/msvc -DCMAKE_CXX_COMPILER=msvc -DCMAKE_C_COMPILER=msvc`
-- For gcc: `cmake -S . -B build/gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc`
-- For clang: `cmake -S . -B build/clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang`
+- For gcc on linux: `cmake -S . -B build/linux-gcc-(rel|dbg) -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=(release|debug)`
+- For clang on linux: `cmake -S . -B build/linux-clang-(rel|dbg) -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=(release|debug)`
+- For msvc on windows: `cmake -S . -B build/win32-msvc-(rel|dbg) -DCMAKE_CXX_COMPILER=msvc -DCMAKE_C_COMPILER=msvc`
+- For clang-cl on windows: `cmake -S . -B build/win32-clangcl-(rel|dbg) -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -Tclangcl`
 
 Note that the exact build directories can of course be set to anything of your
-liking, but the given values correspond to those used by `build-all.ps1`,
+liking, but the given values correspond to those used by `make-all.ps1`,
 making it possible to reuse the same build configuration when you decide to use
 this wrapper.
 
-Once the build system is configured run cmake again to actually perform your build:
+The `-DCMAKE_BUILD_TYPE` parameter selects whether to build in debug or release
+mode. This parameter does not work with windows' build system. Instead, the
+`cmake --build` command described below can set the flag `--config=release` to
+build in release mode.
+
+Note that CMakeLists.txt configures release builds to include debug
+information. 
+
+Once the build system is configured run cmake again to actually perform your
+build:
 
 ```
-cmake --build <build-directory-from-before>
+cmake --build <build-directory-from-before> <optionally --config=release on windows>
 ```
 
-This will create a binary compiled in debug mode somewhere inside your build
-directory (the exact location depends on your compiler). \
-To run the resulting compiler on the source.evl file found in the sample
-directory, use
+This will create a binary called `lophus` (or `lophus.exe` on windows)
+somewhere inside your build directory (the exact location depends on the
+selected compiler and build system).
+
+To try out the resulting compiler on the source.evl file found in the sample
+directory, run
 
 ```
-<build-directory-from-before>/<path-to-exe> -config sample/config.toml
+<build-directory-from-before>/<path-to-lophus> -config sample/config.toml
 ```
 
 
@@ -639,15 +654,15 @@ directory, use
 
 The project's test suite can be run as part of the cmake build by specifying
 the `run-tests` target. By default this is not enabled to speed up quick
-rebuilds, even though the test suite clocks in at under one second in total. 
+rebuilds.
 
 
 ## Multi-Compiler and -Platform Build Support
 
-If you want to build the project on all available supported compilers and
-platforms, you can use `make-all.ps1`. This is a wrapper around cmake which
-invokes all the available [supported compilers](#supported-compilers) on your
-system. \
+If you want to build the project on all supported compilers that are available
+on your system, you can use `make-all.ps1`. This is a wrapper around cmake
+which invokes all the available [supported compilers](#supported-compilers) it
+can find.
 If you test a new build configuration, please add it to the script, as well as
 the [list of supported compilers](#supported-compilers).
 
