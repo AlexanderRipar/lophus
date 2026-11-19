@@ -46,11 +46,8 @@ set(CORE_SOURCES
 	core/error_sink.cpp
 	core/foreign_function_interface.cpp
 	core/identifier_pool.cpp
-	core/interpreter.cpp
 	core/lexical_analyser.cpp
-	core/opcode_pool.cpp
 	core/parse.cpp
-	core/shadow_store.cpp
 	core/source_reader.cpp
 	core/temp_stack.cpp
 	core/typecheck.cpp
@@ -63,7 +60,6 @@ set(DIAG_SOURCES
 	diag/diag_helpers.cpp
 	diag/print_ast.cpp
 	diag/print_code2.cpp
-	diag/print_opcodes.cpp
 	diag/print_type.cpp
 )
 
