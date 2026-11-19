@@ -1200,6 +1200,11 @@ void lexical_analyser_init(CoreData* core, [[maybe_unused]] MemoryAllocation all
 	lex->has_error = false;
 }
 
+void lexical_analyser_cleanup(CoreData* core) noexcept
+{
+	(void) core;
+}
+
 
 
 bool set_prelude_scope(CoreData* core, AstNode* prelude, SourceFileId file_id) noexcept

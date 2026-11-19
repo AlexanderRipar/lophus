@@ -160,6 +160,11 @@ void identifier_pool_init(CoreData* core, MemoryAllocation allocation) noexcept
 	(void) core->identifiers.entries.reserve(sizeof(IdentifierEntry));
 }
 
+void identifier_pool_cleanup(CoreData* core) noexcept
+{
+	(void) core;
+}
+
 
 
 IdentifierId id_from_identifier(CoreData* core, Range<char8> identifier) noexcept

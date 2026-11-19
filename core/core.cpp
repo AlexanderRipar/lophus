@@ -9,6 +9,8 @@
 
 bool comp_heap_validate_config(const Config* config, PrintSink sink) noexcept;
 
+bool temp_stack_validate_config(const Config* config, PrintSink sink) noexcept;
+
 bool ast_pool_validate_config(const Config* config, PrintSink sink) noexcept;
 
 bool error_sink_validate_config(const Config* config, PrintSink sink) noexcept;
@@ -17,19 +19,19 @@ bool identifier_pool_validate_config(const Config* config, PrintSink sink) noexc
 
 bool lexical_analyser_validate_config(const Config* config, PrintSink sink) noexcept;
 
+bool type_pool_validate_config(const Config* config, PrintSink sink) noexcept;
+
 bool parser_validate_config(const Config* config, PrintSink sink) noexcept;
 
 bool source_reader_validate_config(const Config* config, PrintSink sink) noexcept;
-
-bool type_pool_validate_config(const Config* config, PrintSink sink) noexcept;
-
-bool temp_stack_validate_config(const Config* config, PrintSink sink) noexcept;
 
 bool code2_validate_config(const Config* config, PrintSink sink) noexcept;
 
 
 
 MemoryRequirements comp_heap_memory_requirements(const Config* config) noexcept;
+
+MemoryRequirements temp_stack_memory_requirements(const Config* config) noexcept;
 
 MemoryRequirements ast_pool_memory_requirements(const Config* config) noexcept;
 
@@ -39,19 +41,19 @@ MemoryRequirements identifier_pool_memory_requirements(const Config* config) noe
 
 MemoryRequirements lexical_analyser_memory_requirements(const Config* config) noexcept;
 
+MemoryRequirements type_pool_memory_requirements(const Config* config) noexcept;
+
 MemoryRequirements parser_memory_requirements(const Config* config) noexcept;
 
 MemoryRequirements source_reader_memory_requirements(const Config* config) noexcept;
-
-MemoryRequirements type_pool_memory_requirements(const Config* config) noexcept;
-
-MemoryRequirements temp_stack_memory_requirements(const Config* config) noexcept;
 
 MemoryRequirements code2_memory_requirements([[maybe_unused]] const Config* config) noexcept;
 
 
 
 void comp_heap_init(CoreData* core, MemoryAllocation allocation) noexcept;
+
+void temp_stack_init(CoreData* core, MemoryAllocation allocation) noexcept;
 
 void ast_pool_init(CoreData* core, MemoryAllocation allocation) noexcept;
 
@@ -61,37 +63,36 @@ void identifier_pool_init(CoreData* core, MemoryAllocation allocation) noexcept;
 
 void lexical_analyser_init(CoreData* core, MemoryAllocation allocation) noexcept;
 
+void type_pool_init(CoreData* core, MemoryAllocation allocation) noexcept;
+
 void parser_init(CoreData* core, MemoryAllocation allocation) noexcept;
 
 void source_reader_init(CoreData* core, MemoryAllocation allocation) noexcept;
-
-void type_pool_init(CoreData* core, MemoryAllocation allocation) noexcept;
-
-void temp_stack_init(CoreData* core, MemoryAllocation allocation) noexcept;
 
 void code2_init(CoreData* core, MemoryAllocation allocation) noexcept;
 
 
 
-void comp_heap_cleanup([[maybe_unused]] CoreData* core) noexcept {}
+void comp_heap_cleanup(CoreData* core) noexcept;
 
-void ast_pool_cleanup([[maybe_unused]] CoreData* core) noexcept {}
+void temp_stack_cleanup(CoreData* core) noexcept;
 
-void error_sink_cleanup([[maybe_unused]] CoreData* core) noexcept {}
+void ast_pool_cleanup(CoreData* core) noexcept;
 
-void identifier_pool_cleanup([[maybe_unused]] CoreData* core) noexcept {}
+void error_sink_cleanup(CoreData* core) noexcept;
 
-void lexical_analyser_cleanup([[maybe_unused]] CoreData* core) noexcept {}
+void identifier_pool_cleanup(CoreData* core) noexcept;
 
-void parser_cleanup([[maybe_unused]] CoreData* core) noexcept {}
+void lexical_analyser_cleanup(CoreData* core) noexcept;
 
-void source_reader_cleanup([[maybe_unused]] CoreData* core) noexcept;
+void type_pool_cleanup(CoreData* core) noexcept;
 
-void type_pool_cleanup([[maybe_unused]] CoreData* core) noexcept {}
+void parser_cleanup(CoreData* core) noexcept;
 
-void temp_stack_cleanup([[maybe_unused]] CoreData* core) noexcept {}
+void source_reader_cleanup(CoreData* core) noexcept;
 
-void code2_cleanup([[maybe_unused]] CoreData* core) noexcept {}
+void code2_cleanup(CoreData* core) noexcept;
+
 
 
 using validate_config_func = bool (*) (const Config* config, PrintSink sink) noexcept;

@@ -229,6 +229,11 @@ void error_sink_init(CoreData* core, MemoryAllocation allocation) noexcept
 		errors->sink = core->config->diagnostics.sink.sink;
 }
 
+void error_sink_cleanup(CoreData* core) noexcept
+{
+	(void) core;
+}
+
 
 
 void record_error(CoreData* core, SourceId source_id, CompileError error) noexcept

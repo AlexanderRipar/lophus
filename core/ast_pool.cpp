@@ -311,6 +311,11 @@ void ast_pool_init(CoreData* core, MemoryAllocation allocation) noexcept
 	(void) asts->attachment_lists.reserve();
 }
 
+void ast_pool_cleanup(CoreData* core) noexcept
+{
+	(void) core;
+}
+
 
 
 AstNodeId id_from_ast_node(CoreData* core, AstNode* node) noexcept

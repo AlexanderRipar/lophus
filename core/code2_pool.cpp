@@ -1582,3 +1582,8 @@ void code2_init(CoreData* core, MemoryAllocation allocation) noexcept
 
 	core->code2.fixups.init(allocation.ranges[1], FIXUPS_COMMIT_INCREMENT_COUNT);
 }
+
+void code2_cleanup(CoreData* core) noexcept
+{
+	(void) core;
+}

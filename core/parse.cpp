@@ -2936,6 +2936,11 @@ void parser_init(CoreData* core, [[maybe_unused]] MemoryAllocation allocation) n
 		identifier_set_attachment(core, keyword.range(), keyword.attachment());
 }
 
+void parser_cleanup(CoreData* core) noexcept
+{
+	(void) core;
+}
+
 
 
 Maybe<AstNode*> parse(CoreData* core, Range<char8> content, SourceId source_id_base, bool is_std) noexcept

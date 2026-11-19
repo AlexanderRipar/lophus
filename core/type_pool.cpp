@@ -1671,6 +1671,11 @@ void type_pool_init(CoreData* core, MemoryAllocation allocation) noexcept
 	}
 }
 
+void type_pool_cleanup(CoreData* core) noexcept
+{
+	(void) core;
+}
+
 
 
 TypeId type_create_simple([[maybe_unused]] CoreData* core, TypeTag tag) noexcept

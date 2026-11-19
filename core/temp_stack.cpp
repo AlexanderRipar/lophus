@@ -27,6 +27,11 @@ void temp_stack_init(CoreData* core, MemoryAllocation allocation) noexcept
 	core->temp.memory.init(allocation.ranges[0], TEMP_STACK_COMMIT_INCREMENT);
 }
 
+void temp_stack_cleanup(CoreData* core) noexcept
+{
+	(void) core;
+}
+
 
 
 u64 temp_stack_mark(CoreData* core) noexcept

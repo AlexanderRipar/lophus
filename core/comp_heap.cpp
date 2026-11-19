@@ -325,6 +325,11 @@ void comp_heap_init(CoreData* core, MemoryAllocation allocation) noexcept
 	memset(core->heap.freelists, 0, sizeof(core->heap.freelists));
 }
 
+void comp_heap_cleanup(CoreData* core) noexcept
+{
+	(void) core;
+}
+
 
 
 Maybe<void*> comp_heap_alloc(CoreData* core, u64 size, u64 align) noexcept
