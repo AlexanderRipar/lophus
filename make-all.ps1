@@ -140,7 +140,8 @@ while ($jobs.Count -ne 0)
 											 "^-- Generating done \(\d+(\.\d+)?s\)$",
 											 "^-- Build files have been written to: ",
 											 "^\s*Creating library ",
-											 "^\s*Assembling ").Line
+											 "^\s*Assembling ",
+											 "^g?make(\[\d+\])?: \*\*\* ").Line
 
 		if ($completed_job.Name.Contains('msvc') -or $completed_job.Name.Contains('clangcl'))
 		{
