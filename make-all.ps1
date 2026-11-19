@@ -5,7 +5,7 @@ param(
 
 if ($targets.Count -eq 0)
 {
-	"Usage: $PSCommandPath [targets...]"
+	"Usage: $PSCommandPath targets..."
 
 	exit 1
 }
