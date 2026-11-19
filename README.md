@@ -612,10 +612,22 @@ To build this project, you will need
 ## Using the `make-all` Scripts
 
 The simplest way to build the project is using one of `make-all.ps1` or
-`make-all.sh`. The former is a powershell script, while the latter is a bash
-script. These attempt to build the targets given to them as arguments using all
-the supported compilers they can find on the system. To build all available
-targets pass the single argument `all`.
+`make-all.sh`, found in the `scripts` directory.
+
+These two are more or less equivalent, with the former being in powershell
+and running on either windows or linux, and the latter being written in bash
+for linux.
+
+```
+scripts/make-all.(sh|ps1) all
+```
+
+These scripts attempt to build the targets given to them using all the
+supported compilers they can find on the system. To build all available targets
+pass the single argument `all`.
+
+On windows, `make-all.ps1` tries to run gcc and clang via wsl.
+
 
 ## Using `cmake` Directly
 
