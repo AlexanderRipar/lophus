@@ -2692,7 +2692,7 @@ static bool lock_type_single(CoreData* core, Code2Block* block, Code2* code, May
 
 			if (size == 4)
 			{
-				f32 f32_value;
+				f32 f32_value = 0.0F;
 
 				if (!pop_value_as(core, &f32_value))
 					ASSERT_UNREACHABLE;
@@ -2708,7 +2708,7 @@ static bool lock_type_single(CoreData* core, Code2Block* block, Code2* code, May
 			{
 				ASSERT_OR_IGNORE(size == 8);
 
-				f64 f64_value;
+				f64 f64_value = 0.0;
 
 				if (!pop_value_as(core, &f64_value))
 					ASSERT_UNREACHABLE;
