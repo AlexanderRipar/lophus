@@ -12,15 +12,9 @@ if ($targets.Count -eq 0)
 
 $targets = ' ' + ($targets -join ' ') + ' '
 
-$warnings = @()
-
 if ($IsLinux)
 {
-	$no_msvc_warning = "Currently running on linux only supports running g++ and clang.`nIf you are running from wsl and want to include msvc, exit wsl and rerun this script."
-
-	Write-Warning $no_msvc_warning
-
-	$warnings += $no_msvc_warning
+	Write-Warning "Currently running on linux only supports running g++ and clang.`nIf you are running from wsl and want to include msvc, exit wsl and rerun this script."
 
 	$specs = @(
 		@{
@@ -174,11 +168,6 @@ while ($jobs.Count -ne 0)
 	}
 
 	Remove-Job $completed_job
-}
-
-if ($warnings.Count -ne 0)
-{
-	Write-Host "`nThe following warnings were generated:`n    - $($warnings -join "`n    - ")" -ForegroundColor Yellow
 }
 
 if ($failed_jobs.Count -ne 0)
