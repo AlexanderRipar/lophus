@@ -226,12 +226,12 @@ static constexpr ConfigMetadata init_metadata() noexcept
 	rst.self_ = META_ROOT_TABLE();
 
 	rst.entrypoint.self_ = META_TABLE("entrypoint", entrypoint, "Entrypoint configuration");
-	rst.entrypoint.path = META_PATH("path", entrypoint.filepath, range::from_literal_string("main.evl"), "Relative path of the source file containing the program's entrypoint");
+	rst.entrypoint.path = META_PATH("path", entrypoint.filepath, range::from_literal_string("main.lophus"), "Relative path of the source file containing the program's entrypoint");
 	rst.entrypoint.symbol = META_STRING("symbol", entrypoint.symbol, range::from_literal_string("main"), "Symbol name of the program's entrypoint function");
 
 	rst.std.self_ = META_TABLE("std", std, "Standard library configuration");
 	rst.std.prelude.self_ = META_TABLE("prelude", std.prelude, "Prelude parameters");
-	rst.std.prelude.path = META_PATH("path", std.prelude.filepath, range::from_literal_string("std/prelude.evl"), "Path to the file containing the prelude that is made available to all sources");
+	rst.std.prelude.path = META_PATH("path", std.prelude.filepath, range::from_literal_string("std/prelude.lophus"), "Path to the file containing the prelude that is made available to all sources");
 
 	rst.heap.self_ = META_TABLE("heap", heap, "Managed heap configuration");
 	rst.heap.reserve = META_INTEGER("reserve", heap.reserve, 1 << 30, 1 << 12, static_cast<s64>(1) << 31, "Size the managed heap's small allocation section can grow to, in bytes");

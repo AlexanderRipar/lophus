@@ -163,7 +163,7 @@ static Config dummy_config(Range<char8> filepath, bool expect_failure, TreeSchem
 {
 	Config config = config_defaults();
 	config.compile_all = true;
-	config.std.prelude.filepath = range::from_literal_string("../sample/std/prelude.evl");
+	config.std.prelude.filepath = range::from_literal_string("../sample/std/prelude.lophus");
 	config.entrypoint.filepath = filepath;
 
 	config.diagnostics.sink = expect_failure
@@ -265,8 +265,10 @@ void integration_tests() noexcept
 
 		const Range<char8> filename = range::from_cstring(rst.filename);
 
-		// Skip files that do not end in `.evl`.
-		if (filename.count() < 4 || !range::mem_equal(filename.subrange(filename.count() - 4), range::from_literal_string(".evl")))
+		// Skip files that do not end in `.lophus`.
+		const Range<char8> lophus_extension = range::from_literal_string(".lophus");
+
+		if (filename.count() < lophus_extension.count() || !range::mem_equal(filename.subrange(filename.count() - lophus_extension.count()), lophus_extension))
 		{
 			status = minos::directory_enumeration_next(dir, &rst);
 
