@@ -1,10 +1,11 @@
+[CmdletBinding(PositionalBinding=$false)]
 param(
+	[string[]] $builds = @('*-*'),
 	[parameter(ValueFromRemainingArguments = $true)]
 	[string[]] $targets
 )
 
-if ($targets.Count -eq 0)
-{
+if ($targets.Count -eq 0) {
 	"Usage: $PSCommandPath targets..."
 
 	exit 1
@@ -12,8 +13,7 @@ if ($targets.Count -eq 0)
 
 $targets = ' ' + ($targets -join ' ') + ' '
 
-if ($IsLinux)
-{
+if ($IsLinux) {
 	Write-Warning "Currently running on linux only supports running g++ and clang.`nIf you are running from wsl and want to include msvc, exit wsl and rerun this script."
 
 	$specs = @(
@@ -38,9 +38,7 @@ if ($IsLinux)
 			           ' `&`& cmake --build build/gcc-rel --target ' + $targets + ' 2`>`&1'
 		}
 	)
-}
-elseif ($IsWindows)
-{
+} elseif ($IsWindows) {
 	$specs = @(
 		@{
 			jobname = 'linux-clang-dbg'
@@ -83,18 +81,34 @@ elseif ($IsWindows)
 			      ' && cmake --build build/win32-clangcl-rel --config release --target ' + ($targets -creplace ' all ', ' ALL_BUILD ') + ' 2>&1'
 		}
 	)
-}
-else
-{
+} else {
 	Write-Error "Your OS is currently not supported."
 
 	exit 1
 }
 
+[string[]]$cleaned_builds = $builds | foreach {
+	[string[]]$parts = $_ -split '-' | foreach { $cleaned_part = $_ -replace '\s', ''; if ($cleaned_part -eq '*') { '.*' } else { $cleaned_part } }
+
+	if ($parts.Count -eq 0 -or $parts.Count -gt 3) {
+		Write-Error "Target '$_' was not in the expected format '[<platform>-](<compiler>|*)-(<buildtype>|*)'"
+
+		exit 1
+	}
+
+	if ($parts.Count -eq 2) {
+		$parts = @('.*') + $parts
+	}
+
+	"($($parts -join '-'))"
+}
+
+[string]$builds_regex = "^($($cleaned_builds -join '|'))$"
+
 # Start one asynchronous job for each build.
-$jobs = $specs | Foreach-Object {
+$jobs = $specs | where { $_.jobname -match $builds_regex } | foreach {
 	Start-Job `
-		-ScriptBlock { $input | Foreach-Object {
+		-ScriptBlock { $input | foreach {
 			# While this does not preserve the ANSI escape sequences in gcc's
 			# output, it at least makes them disappear instead of creating
 			# mojibake.
@@ -112,11 +126,10 @@ $jobs = $specs | Foreach-Object {
 
 $failed_jobs = @()
 
-while ($jobs.Count -ne 0)
-{
+while ($jobs.Count -ne 0) {
 	$completed_job = Wait-Job -Job $jobs -Any
 
-	$jobs = $jobs | Where-Object { $_ -ne $completed_job }
+	$jobs = $jobs | where { $_ -ne $completed_job }
 
 	$job_result = Receive-Job $completed_job
 
@@ -143,13 +156,10 @@ while ($jobs.Count -ne 0)
 											 "^\s*Assembling ",
 											 "^g?make(\[\d+\])?: \*\*\* ").Line
 
-		if ($completed_job.Name.Contains('msvc') -or $completed_job.Name.Contains('clangcl'))
-		{
-			$job_output = ($job_output -replace '^  ') -replace '\s*\[.+\.vcxproj\]$' -replace '^(?<tgt>.+)\.vcxproj -> .+', 'Built target ${tgt}'
-		}
-		else
-		{
-			$job_output = $job_output -replace '^\[\s*\d+%\] '
+		$job_output = if ($completed_job.Name.Contains('msvc') -or $completed_job.Name.Contains('clangcl')) {
+			$job_output -replace '^  ' -replace '\s*\[.+\.vcxproj\]$' -replace '^(?<tgt>.+)\.vcxproj -> .+', 'Built target ${tgt}'
+		} else {
+			$job_output -replace '^\[\s*\d+%\] '
 		}
 	}
 
