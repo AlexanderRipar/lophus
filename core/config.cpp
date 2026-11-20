@@ -462,6 +462,8 @@ static bool map_defaults_to_config(TomlConfigMappingContext* ctx, const ConfigMe
 		ASSERT_OR_IGNORE(curr->offset + sizeof(u32) <= sizeof(Config));
 
 		*reinterpret_cast<u32*>(reinterpret_cast<byte*>(ctx->out) + curr->offset) = curr->attach.enumeration.default_value;
+
+		return true;
 	}
 
 	case ConfigMetadataTag::INVALID:
