@@ -1,10 +1,6 @@
 entrypoint.path = 'cpp-translations/parse.cpp.lophus'
 
-std.prelude.path = 'std/prelude.evl'
+std.prelude.path = 'std/prelude.lophus'
 
-# logging.imports.code2s = '$stderr'
-# logging.imports.asts = '$stderr'
-
-benchmark.repeats = 10000
-
-mode = 'parse'
+logging.imports.asts = '$stderr'
+logging.imports.code2s = '$stderr'

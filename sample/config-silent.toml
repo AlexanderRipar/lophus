@@ -1,6 +1,6 @@
-entrypoint.filepath = 'source.evl'
+entrypoint.filepath = 'source.toml'
 
-std.filepath = 'std/std.evl'
+std.filepath = 'std/std.toml'
 
 logging.asts.enable = true
 logging.asts.log-file = 'output/ast_output.txt'
