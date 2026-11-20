@@ -557,6 +557,9 @@ bool run_compilation(CoreData* core, bool main_is_std) noexcept
 	}
 	while (i < repeats && (timeout_secs == 0 || end_time - start_time < timeout_secs * ticks_per_second));
 
+	if (core->config->logging.internals.identifier_pool_sink.name_and_enabled.attachment())
+		identifier_pool_metrics(core, core->config->logging.internals.identifier_pool_sink.sink);
+
 	if (repeats != 0)
 	{
 		const u64 elapsed_ms = ((end_time - start_time) * 1000) / ticks_per_second;

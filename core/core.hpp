@@ -272,6 +272,11 @@ struct Config
 		} imports;
 
 		ConfigPrintSink config_sink;
+
+		struct
+		{
+			ConfigPrintSink identifier_pool_sink;
+		} internals;
 	} logging;
 
 	struct

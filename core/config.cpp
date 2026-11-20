@@ -145,6 +145,13 @@ struct ConfigMetadata
 		} imports;
 
 		ConfigMetadataEntry config;
+
+		struct
+		{
+			ConfigMetadataEntry self_;
+
+			ConfigMetadataEntry identifier_pool;
+		} internals;
 	} logging;
 
 	struct
@@ -220,6 +227,8 @@ static constexpr ConfigMetadata init_metadata() noexcept
 	rst.logging.imports.code2s = META_PRINT_SINK("code2s", logging.imports.code2s_sink, range::from_literal_string("$none"), "File typechecker opcodes are written to when files are imported");
 	rst.logging.imports.types = META_PRINT_SINK("types", logging.imports.types_sink, range::from_literal_string("$none"), "File top-level types are written to when files are imported");
 	rst.logging.config = META_PRINT_SINK("config", logging.config_sink, range::from_literal_string("$none"), "File the parsed configuration gets written to");
+	rst.logging.internals.self_ = META_TABLE("internals", logging.internals, "Logging of compiler internals");
+	rst.logging.internals.identifier_pool = META_PRINT_SINK("identifier-pool", logging.internals.identifier_pool_sink, range::from_literal_string("$none"), "File identifier pool metrics get written to");
 
 	rst.diagnostics.self_ = META_TABLE("diagnostics", diagnostics, "Error message configuration");
 	rst.diagnostics.file = META_PRINT_SINK("path", diagnostics.sink, range::from_literal_string("$stderr"), "File errors generated during compilation are written to");
