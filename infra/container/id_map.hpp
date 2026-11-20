@@ -22,6 +22,8 @@ struct IdMapMetrics
 
 	u32 psl_rehash_count;
 
+	u32 rehash_count;
+
 	u8 psl_histogram[64];
 
 	u32 longest_runs[8];
@@ -75,7 +77,9 @@ private:
 
 	// Number of rehashes caused by psl overruns. Only tracked for metrics
 	// reporting.
-	u8 m_lookup_psl_rehash_count;
+	u8 m_psl_rehash_count;
+
+	u8 m_rehash_count;
 
 	Alloc m_alloc;
 
@@ -113,6 +117,8 @@ private:
 
 	void rehash() noexcept
 	{
+		m_rehash_count += 1;
+
 		if (m_lookup_commit == m_lookup_capacity)
 			panic("Could not rehash IdMap lookup as no additional capacity was available\n");
 
@@ -289,7 +295,7 @@ public:
 		m_lookup_used = 0;
 		m_lookup_commit = lookup_commit;
 		m_lookup_capacity = static_cast<u32>(lookup_memory.count() / sizeof(*m_lookups));
-		m_lookup_psl_rehash_count = 0;
+		m_psl_rehash_count = 0;
 		m_alloc = alloc;
 	}
 
@@ -348,7 +354,7 @@ public:
 
 			if (to_insert.psl == MAX_PSL)
 			{
-				m_lookup_psl_rehash_count += 1;
+				m_psl_rehash_count += 1;
 
 				rehash();
 
@@ -545,7 +551,8 @@ public:
 
 		out->lookup_commit = m_lookup_commit;
 		out->lookup_used = lookup_used;
-		out->psl_rehash_count = m_lookup_psl_rehash_count;
+		out->psl_rehash_count = m_psl_rehash_count;
+		out->rehash_count = m_rehash_count;
 	}
 };
 

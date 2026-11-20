@@ -214,11 +214,13 @@ void identifier_pool_metrics(const CoreData* core, PrintSink sink) noexcept
 		"Used:  .  .  .  .  .  .  .  .  .  .  %\n"
 		"Committed:   .  .  .  .  .  .  .  .  %\n"
 		"Fingerprint collisions in Probe Seq: %\n"
+		"Rehashes:    .  .  .  .  .  .  .  .  %\n"
 		"Rehashes due to probe seq overruns:  %\n"
 		"Probe seq length distribution:\n",
 		metrics.lookup_used,
 		metrics.lookup_commit,
 		metrics.relevant_hash_fingerprint_collisions,
+		metrics.rehash_count,
 		metrics.psl_rehash_count
 	);
 
