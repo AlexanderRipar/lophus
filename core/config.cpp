@@ -514,14 +514,23 @@ static bool map_toml_to_config(TomlConfigMappingContext* ctx, const TreeSchemaVa
 
 			bool has_match = false;
 
-			for (const ConfigMetadataEntry* match = curr + 1; match != end; ++match)
+			const ConfigMetadataEntry* match = curr + 1;
+
+			while (match != end)
 			{
+				ASSERT_OR_IGNORE(match < end);
+
 				if (string_equal(subkey->name_and_tag.range(), range::from_cstring(match->name)))
 				{
 					has_match = true;
 
 					break;
 				}
+
+				if (match->tag == ConfigMetadataTag::Table)
+					match += match->attach.child_count;
+				else
+					match += 1;
 			}
 
 			if (!has_match)
