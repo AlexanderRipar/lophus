@@ -200,3 +200,83 @@ Range<char8> identifier_name_from_id(const CoreData* core, IdentifierId id) noex
 
 	return Range<char8>{ entry->m_chars, entry->m_length };
 }
+
+
+
+void identifier_pool_metrics(const CoreData* core, PrintSink sink) noexcept
+{
+	IdMapMetrics metrics;
+
+	core->identifiers.map.compute_metrics(&metrics);
+
+	print(sink,
+		"########## Identifier Pool Metrics ##########\n"
+		"Used:  .  .  .  .  .  .  .  .  .  .  %\n"
+		"Committed:   .  .  .  .  .  .  .  .  %\n"
+		"Fingerprint collisions in Probe Seq: %\n"
+		"Rehashes due to probe seq overruns:  %\n"
+		"Probe seq length distribution:\n",
+		metrics.lookup_used,
+		metrics.lookup_commit,
+		metrics.relevant_hash_fingerprint_collisions,
+		metrics.psl_rehash_count
+	);
+
+	u32 max_psl_bucket_count = 0;
+
+	u64 max_nonzero_psl_index = 0;
+
+	for (u64 i = 0; i != array_count(metrics.psl_histogram); ++i)
+	{
+		if (max_psl_bucket_count < metrics.psl_histogram[i])
+			max_psl_bucket_count = metrics.psl_histogram[i];
+
+		if (metrics.psl_histogram[i] != 0)
+			max_nonzero_psl_index = i;
+	}
+
+	for (u64 i = 0; i != max_nonzero_psl_index + 1; ++i)
+	{
+		u32 bar_size = metrics.psl_histogram[i] * 80 / max_psl_bucket_count;
+
+		if (bar_size == 0 && metrics.psl_histogram[i] != 0)
+			bar_size = 1;
+
+		print(sink, "\t%[> 2] - %[> 6] |%[>#%]\n", i, metrics.psl_histogram[i], "", bar_size);
+	}
+
+	print(sink, "Run lengths (% overlong):\n", metrics.overlong_runs);
+
+	u32 max_run_bucket_count = 0;
+
+	u64 max_nonzero_run_index = 0;
+
+	for (u64 i = 0; i != array_count(metrics.run_histogram); ++i)
+	{
+		if (max_run_bucket_count < metrics.run_histogram[i])
+			max_run_bucket_count = metrics.run_histogram[i];
+
+		if (metrics.run_histogram[i] != 0)
+			max_nonzero_run_index = i;
+	}
+
+	for (u64 i = 1; i != max_nonzero_run_index + 1; ++i)
+	{
+		u32 bar_size = metrics.run_histogram[i] * 80 / max_run_bucket_count;
+
+		if (bar_size == 0 && metrics.run_histogram[i] != 0)
+			bar_size = 1;
+
+		print(sink, "\t%[> 2] - %[> 6] |%[>#%]\n", i, metrics.run_histogram[i], "", bar_size);
+	}
+
+	if (metrics.overlong_runs != 0)
+	{
+		print(sink, "Longest overlong run lengths:\n");
+
+		const u64 count = metrics.overlong_runs < array_count(metrics.longest_runs) ? metrics.overlong_runs : array_count(metrics.longest_runs);
+
+		for (u64 i = 0; i != count; ++i)
+			print(sink, "\t%\n", metrics.longest_runs[i]);
+	}
+}

@@ -422,6 +422,7 @@ void identifier_set_attachment(CoreData* core, Range<char8> identifier, u8 attac
 // `id_and_attachment_from_identifier`.
 Range<char8> identifier_name_from_id(const CoreData* core, IdentifierId id) noexcept;
 
+void identifier_pool_metrics(const CoreData* core, PrintSink sink) noexcept;
 
 
 
