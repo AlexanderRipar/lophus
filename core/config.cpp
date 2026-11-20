@@ -198,6 +198,7 @@ struct TomlConfigMappingContext
 
 static constexpr const char8* COMPILE_MODES[] = {
 	"full",
+	"read",
 	"parse",
 	"resolve-names",
 	"typecheck",

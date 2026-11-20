@@ -422,7 +422,10 @@ static bool import_file_or_prelude(CoreData* core, Range<char8> path, bool is_pr
 		return false;
 
 	if (read.content.begin() == nullptr)
-		some(read.source_file->type);
+		return true;
+
+	if (mode == CompileMode::Read)
+		return true;
 
 	const Maybe<AstNode*> opt_ast = parse(core, read.content, read.source_file->source_id_base, is_std);
 

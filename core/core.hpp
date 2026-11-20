@@ -227,6 +227,7 @@ enum class CompileMode : u32
 {
 	INVALID,
 	Full,
+	Read,
 	Parse,
 	ResolveNames,
 	Typecheck,
