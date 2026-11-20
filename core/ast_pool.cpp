@@ -465,7 +465,7 @@ ReferenceList* alloc_reference_list(CoreData* core, u32 entry_count) noexcept
 
 	ASSERT_OR_IGNORE(size <= UINT32_MAX);
 
-	ReferenceList* const list = static_cast<ReferenceList*>(core->asts.attachment_lists.reserve_exact(static_cast<u32>(size)));
+	ReferenceList* const list = static_cast<ReferenceList*>(core->asts.attachment_lists.reserve_padded(static_cast<u32>(size)));
 	list->count = entry_count;
 
 	return list;
