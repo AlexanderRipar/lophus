@@ -10,6 +10,25 @@
 #include <type_traits>
 #include <cstring>
 
+struct IdMapMetrics
+{
+	u32 relevant_hash_fingerprint_collisions;
+
+	u32 lookup_commit;
+
+	u32 lookup_used;
+
+	u32 overlong_runs;
+
+	u32 psl_rehash_count;
+
+	u8 psl_histogram[64];
+
+	u32 longest_runs[8];
+
+	u32 run_histogram[64];
+};
+
 // Maps `K`s to `V`s, which get interned in `Alloc`.
 //
 // The required interface is as follows:
@@ -53,6 +72,10 @@ private:
 	u32 m_lookup_commit;
 
 	u32 m_lookup_capacity;
+
+	// Number of rehashes caused by psl overruns. Only tracked for metrics
+	// reporting.
+	u8 m_lookup_psl_rehash_count;
 
 	Alloc m_alloc;
 
@@ -266,6 +289,7 @@ public:
 		m_lookup_used = 0;
 		m_lookup_commit = lookup_commit;
 		m_lookup_capacity = static_cast<u32>(lookup_memory.count() / sizeof(*m_lookups));
+		m_lookup_psl_rehash_count = 0;
 		m_alloc = alloc;
 	}
 
@@ -324,6 +348,8 @@ public:
 
 			if (to_insert.psl == MAX_PSL)
 			{
+				m_lookup_psl_rehash_count += 1;
+
 				rehash();
 
 				return needs_allocation
@@ -444,6 +470,82 @@ public:
 		remove_from_lookups(lookup);
 
 		return true;
+	}
+
+	void compute_metrics(IdMapMetrics* out) const noexcept
+	{
+		static_assert(sizeof(out->psl_histogram) / sizeof(out->psl_histogram[0]) == MAX_PSL);
+
+		memset(out, 0, sizeof(*out));
+
+		u32 run_length = 0;
+
+		const LookupEntry* curr = m_lookups;
+
+		const LookupEntry* const end = curr + m_lookup_commit;
+
+		u32 relevant_hash_fingerprints[MAX_PSL];
+
+		u32 lookup_used = 0;
+
+		while (curr != end)
+		{
+			const LookupEntry entry = *curr;
+
+			curr += 1;
+
+			if (is_empty_lookup(entry))
+			{
+				if (run_length >= array_count(out->run_histogram))
+				{
+					out->overlong_runs += 1;
+
+					// Add the run length to the longest runs if there is
+					// space.
+
+					s32 min_index = -1;
+					u32 min = ~static_cast<u32>(0);
+
+					for (u32 i = 0; i != array_count(out->longest_runs); ++i)
+					{
+						if (min > out->longest_runs[i])
+						{
+							min_index = static_cast<s32>(i);
+							min = out->longest_runs[i];
+						}
+					}
+
+					if (min_index >= 0)
+						out->longest_runs[min_index] = run_length;
+				}
+				else if (run_length != 0)
+				{
+					out->run_histogram[run_length] += 1;
+				}
+
+				run_length = 0;
+			}
+			else
+			{
+				run_length += 1;
+
+				lookup_used += 1;
+
+				out->psl_histogram[entry.psl] += 1;
+
+				for (u8 i = 0; i != entry.psl; ++i)
+				{
+					if (relevant_hash_fingerprints[i] == entry.hash_fingerprint)
+						out->relevant_hash_fingerprint_collisions += 1;
+				}
+
+				relevant_hash_fingerprints[entry.psl] = entry.hash_fingerprint;
+			}
+		}
+
+		out->lookup_commit = m_lookup_commit;
+		out->lookup_used = lookup_used;
+		out->psl_rehash_count = m_lookup_psl_rehash_count;
 	}
 };
 
