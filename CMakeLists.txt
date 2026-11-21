@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.22)
 
 project(compil0r CXX)
 
+option(MONOBUILD "Build lophus-lib from monobuild.cpp instead of from individual source files." OFF)
+
 if (WIN32)
 	enable_language(ASM_MASM)
 else()
@@ -142,7 +144,13 @@ function(prepare_executable NAME)
 	target_link_libraries(${NAME} PRIVATE lophus-lib)
 endfunction()
 
-prepare_object_library(lophus-lib ${CORE_SOURCES} ${DIAG_SOURCES} ${INFRA_SOURCES} ${FFI_ASM_SOURCES})
+if (MONOBUILD)
+	set(LOPHUS_LIB_SOURCES monobuild.cpp ${FFI_ASM_SOURCES})
+else()
+	set(LOPHUS_LIB_SOURCES ${CORE_SOURCES} ${DIAG_SOURCES} ${INFRA_SOURCES} ${FFI_ASM_SOURCES})
+endif()
+
+prepare_object_library(lophus-lib ${LOPHUS_LIB_SOURCES})
 
 prepare_executable(lophus main.cpp ${INTERFACE_HEADERS})
 
