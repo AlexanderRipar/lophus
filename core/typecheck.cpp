@@ -689,6 +689,14 @@ static bool evaluate_binary_arithmetic_integer_op(CoreData* core, Code2* code, u
 
 	const u8 size = static_cast<u8>(bits / 8);
 
+	if (size > 8)
+	{
+		TODO(
+			"Figure out how this can be true. gcc says it is sometimes 16, but I don't understand how it comes to that conclusion. "
+			"This TODO fixes that warning and also puts a clear failure-case here in case gcc was right. Annoying, but what can one do."
+		);
+	}
+
 	const Range<byte> lhs_value{ static_cast<const byte*>(lhs), size };
 
 	const Range<byte> rhs_value{ static_cast<const byte*>(rhs), size };
