@@ -192,7 +192,10 @@ static FFISysVTypeDesc sysv_classify_composite_type(CoreData* core, TypeId type,
 		if (!next(&it, &info))
 			ASSERT_UNREACHABLE;
 
-		TypeMetrics metrics;
+		// Zero-initialized to stop gcc complaining. I don't know why it can't
+		// seem to work with `ASSERT_UNREACHABLE` in this particular source
+		// file.
+		TypeMetrics metrics{}; 
 
 		if (!type_metrics_from_id(core, info.type_and_value.complete.type, &metrics))
 			ASSERT_UNREACHABLE;

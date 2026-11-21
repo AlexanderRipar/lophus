@@ -336,16 +336,19 @@ static inline u32 strhash_ymm_fnv1a(const byte* begin, const byte* end) noexcept
 	// Use the fnv1a factor here. No basis for this, just some number.
 	const __m256i factors = _mm256_set1_epi32(16777619);
 
+	// Causes _mm256_shuffle_epi8 to place a zero byte.
+	constexpr s8 SHFL0 = static_cast<s8>(-128);
+
 	const __m256i shuffle_mask = _mm256_set_epi8(
-		0x80u, 0x80u, 0x80u, 0x07u, 0x80u, 0x80u, 0x80u, 0x06u,
-		0x80u, 0x80u, 0x80u, 0x05u, 0x80u, 0x80u, 0x80u, 0x04u,
-		0x80u, 0x80u, 0x80u, 0x03u, 0x80u, 0x80u, 0x80u, 0x02u,
-		0x80u, 0x80u, 0x80u, 0x01u, 0x80u, 0x80u, 0x80u, 0x00u
+		SHFL0, SHFL0, SHFL0, 0x07u, SHFL0, SHFL0, SHFL0, 0x06u,
+		SHFL0, SHFL0, SHFL0, 0x05u, SHFL0, SHFL0, SHFL0, 0x04u,
+		SHFL0, SHFL0, SHFL0, 0x03u, SHFL0, SHFL0, SHFL0, 0x02u,
+		SHFL0, SHFL0, SHFL0, 0x01u, SHFL0, SHFL0, SHFL0, 0x00u
 	);
 
 	const byte* curr = begin;
 
-	__m256i hashes = _mm256_set1_epi32(2166136261);
+	__m256i hashes = _mm256_set1_epi32(static_cast<u32>(2166136261));
 
 	__m256i spread_bytes;
 
@@ -526,7 +529,7 @@ static inline u32 strhash_ymm_mix(const byte* begin, const byte* end) noexcept
 	// Use the fnv1a factor here. No basis for this, just some number.
 	const __m256i factor = _mm256_set1_epi32(16777619);
 
-	__m256i accumulator = _mm256_set1_epi32(2166136261);
+	__m256i accumulator = _mm256_set1_epi32(static_cast<u32>(2166136261));
 
 	while (ptr + sizeof(__m256i) < end)
 	{
