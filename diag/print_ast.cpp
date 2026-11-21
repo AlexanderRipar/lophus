@@ -29,7 +29,7 @@ static s64 print_node_header(PrintSink sink, CoreData* core, const AstNode* node
 		{
 			const Range<char8> name = identifier_name_from_id(core, attach->identifier_id);
 
-			const s64 written = print(sink, " [% |", name);
+			const s64 written = print(sink, " [% | ", name);
 
 			if (written < 0)
 				return -1;
@@ -39,12 +39,14 @@ static s64 print_node_header(PrintSink sink, CoreData* core, const AstNode* node
 
 		s64 written;
 
-		if (attach->binding.kind == NameBindingKind::Global)
-			written = print(sink, " g%@%]", attach->binding.global.rank, static_cast<u32>(attach->binding.global.file_id));
+		if (attach->binding.kind == NameBindingKind::INVALID) // For unresolved ASTs.
+			written = print(sink, "-]");
+		else if (attach->binding.kind == NameBindingKind::Global)
+			written = print(sink, "g%@%]", attach->binding.global.rank, static_cast<u32>(attach->binding.global.file_id));
 		else if (attach->binding.kind == NameBindingKind::Scoped)
-			written = print(sink, " s%@%]", attach->binding.scoped.rank, attach->binding.scoped.out);
+			written = print(sink, "s%@%]", attach->binding.scoped.rank, attach->binding.scoped.out);
 		else if (attach->binding.kind == NameBindingKind::Closed)
-			written = print(sink, " c%]", attach->binding.closed.rank_in_closure);
+			written = print(sink, "c%]", attach->binding.closed.rank_in_closure);
 		else
 			ASSERT_UNREACHABLE;
 
