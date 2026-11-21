@@ -265,7 +265,12 @@ struct Config
 	{
 		struct
 		{
-			ConfigPrintSink asts_sink;
+			struct
+			{
+				ConfigPrintSink unresolved_sink;
+
+				ConfigPrintSink resolved_sink;
+			} asts;
 
 			ConfigPrintSink code2s_sink;
 

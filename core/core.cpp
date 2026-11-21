@@ -272,24 +272,6 @@ static void init_core_data(CoreData* core, const Config* config, const CoreMemor
 	core->config = config;
 	core->memory_layout = *memory_layout;
 
-
-	const bool log_imported_asts = config->logging.imports.asts_sink.name_and_enabled.attachment();
-	core->log_imported_asts = log_imported_asts;
-	if (log_imported_asts)
-		core->imported_asts_sink = config->logging.imports.asts_sink.sink;
-
-	const bool log_imported_code2s = config->logging.imports.code2s_sink.name_and_enabled.attachment();
-	core->log_imported_code2s = log_imported_code2s;
-	if (log_imported_code2s)
-		core->imported_code2s_sink = config->logging.imports.code2s_sink.sink;
-
-	const bool log_imported_types = config->logging.imports.types_sink.name_and_enabled.attachment();
-	core->log_imported_types = log_imported_types;
-	if (log_imported_types)
-		core->imported_types_sink = config->logging.imports.types_sink.sink;
-
-
-
 	for (u64 i = 0; i != CORE_MEMBER_COUNT; ++i)
 	{
 		MemoryAllocation allocation;
@@ -349,25 +331,36 @@ void reset_core_data(CoreData* core) noexcept
 
 
 
-static void log_ast(CoreData* core, AstNode* ast) noexcept
+static void log_resolved_ast(CoreData* core, AstNode* ast) noexcept
 {
-	if (!core->log_imported_asts)
+	if (!core->config->logging.imports.asts.resolved_sink.name_and_enabled.attachment())
 		return;
 
-	if (diag::print_ast(core->imported_asts_sink, core, ast) < 0)
-		panic("Failed to print imported AST.");
+	if (diag::print_ast(core->config->logging.imports.asts.resolved_sink.sink, core, ast) < 0)
+		panic("Failed to print imported resolved AST.");
+}
+
+static void log_unresolved_ast(CoreData* core, AstNode* ast) noexcept
+{
+	if (!core->config->logging.imports.asts.unresolved_sink.name_and_enabled.attachment())
+		return;
+
+	if (diag::print_ast(core->config->logging.imports.asts.unresolved_sink.sink, core, ast) < 0)
+		panic("Failed to print imported resolved AST.");
 }
 
 static void log_code2(CoreData* core, Code2Id block_id) noexcept
 {
-	if (!core->log_imported_code2s)
+	if (!core->config->logging.imports.code2s_sink.name_and_enabled.attachment())
 		return;
 
 	Code2Block* const block = code2_block_from_id(core, block_id);
 
-	if (diag::print_code2(core->imported_code2s_sink, core, block) < 0)
+	if (diag::print_code2(core->config->logging.imports.code2s_sink.sink, core, block) < 0)
 		panic("Failed to print imported Code2.");
 }
+
+
 
 static bool file_type_from_ast_definitions(CoreData* core, AstNode* ast, TypeId file_type) noexcept
 {
@@ -449,6 +442,8 @@ static bool import_file_or_prelude(CoreData* core, Range<char8> path, bool is_pr
 	read.source_file->ast = id_from_ast_node(core, ast);
 	read.source_file->type = file_type;
 
+	log_unresolved_ast(core, ast);
+
 	if (mode == CompileMode::Parse)
 		return true;
 
@@ -471,7 +466,7 @@ static bool import_file_or_prelude(CoreData* core, Range<char8> path, bool is_pr
 		}
 	}
 
-	log_ast(core, ast);
+	log_resolved_ast(core, ast);
 
 	if (mode == CompileMode::ResolveNames)
 		return true;

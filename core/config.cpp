@@ -137,7 +137,14 @@ struct ConfigMetadata
 		{
 			ConfigMetadataEntry self_;
 
-			ConfigMetadataEntry asts;
+			struct
+			{
+				ConfigMetadataEntry self_;
+
+				ConfigMetadataEntry unresolved;
+
+				ConfigMetadataEntry resolved;
+			} asts;
 
 			ConfigMetadataEntry code2s;
 
@@ -224,7 +231,9 @@ static constexpr ConfigMetadata init_metadata() noexcept
 
 	rst.logging.self_ = META_TABLE("logging", logging, "Logging configuration");
 	rst.logging.imports.self_ = META_TABLE("imports", logging.imports, "File import logging parameters");
-	rst.logging.imports.asts = META_PRINT_SINK("asts", logging.imports.asts_sink, range::from_literal_string("$none"), "File abstract syntax trees are written to when files are imported");
+	rst.logging.imports.asts.self_ = META_TABLE("asts", logging.imports.asts, "Configuration for logging of abstract syntax trees at different stages");
+	rst.logging.imports.asts.unresolved = META_PRINT_SINK("unresolved", logging.imports.asts.unresolved_sink, range::from_literal_string("$none"), "File abstract syntax trees are written to when files are imported. This is done before name resolution");
+	rst.logging.imports.asts.resolved = META_PRINT_SINK("resolved", logging.imports.asts.resolved_sink, range::from_literal_string("$none"), "File abstract syntax trees are written to when files are imported. This is done after name resolution");
 	rst.logging.imports.code2s = META_PRINT_SINK("code2s", logging.imports.code2s_sink, range::from_literal_string("$none"), "File typechecker opcodes are written to when files are imported");
 	rst.logging.imports.types = META_PRINT_SINK("types", logging.imports.types_sink, range::from_literal_string("$none"), "File top-level types are written to when files are imported");
 	rst.logging.config = META_PRINT_SINK("config", logging.config_sink, range::from_literal_string("$none"), "File the parsed configuration gets written to");

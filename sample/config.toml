@@ -2,5 +2,5 @@ entrypoint.path = 'cpp-translations/parse.cpp.lophus'
 
 std.prelude.path = 'std/prelude.lophus'
 
-logging.imports.asts = '$stderr'
+logging.imports.asts.resolved = '$stderr'
 logging.imports.code2s = '$stderr'

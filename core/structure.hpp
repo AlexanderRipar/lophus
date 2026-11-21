@@ -463,20 +463,6 @@ struct CoreData
 
 	Typechecker typecheck;
 
-
-
-	bool log_imported_asts;
-
-	bool log_imported_code2s;
-
-	bool log_imported_types;
-
-	PrintSink imported_asts_sink;
-
-	PrintSink imported_code2s_sink;
-
-	PrintSink imported_types_sink;
-
 	CoreMemoryLayout memory_layout;
 };
 
