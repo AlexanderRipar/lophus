@@ -24,17 +24,17 @@ if ($IsLinux) {
 		},
 		@{
 			jobname = 'linux-clang-rel'
-			command = 'cmake -S . -B build/clang-rel -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=release' +
+			command = 'cmake -S . -B build/clang-rel -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=release -DMONOBUILD=ON' +
 			           ' `&`& cmake --build build/clang-rel --target ' + $targets + ' 2`>`&1'
 		},
 		@{
 			jobname = 'linux-gcc-dbg'
-			command = 'cmake -S . -B build/gcc-dbg -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc  -DCMAKE_BUILD_TYPE=debug' +
+			command = 'cmake -S . -B build/gcc-dbg -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=debug' +
 			           ' `&`& cmake --build build/gcc-dbg --target ' + $targets + ' 2`>`&1'
 		},
 		@{
 			jobname = 'linux-gcc-rel'
-			command = 'cmake -S . -B build/gcc-rel -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc  -DCMAKE_BUILD_TYPE=release' +
+			command = 'cmake -S . -B build/gcc-rel -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=release -DMONOBUILD=ON' +
 			           ' `&`& cmake --build build/gcc-rel --target ' + $targets + ' 2`>`&1'
 		}
 	)
@@ -47,17 +47,17 @@ if ($IsLinux) {
 		},
 		@{
 			jobname = 'linux-clang-rel'
-			command = 'wsl -- cmake -S . -B build/linux-clang-rel -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=release' +
+			command = 'wsl -- cmake -S . -B build/linux-clang-rel -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=release -DMONOBUILD=ON' +
 			           ' `&`& cmake --build build/linux-clang-rel --target ' + $targets + ' 2`>`&1'
 		},
 		@{
 			jobname = 'linux-gcc-dbg'
-			command = 'wsl -- cmake -S . -B build/linux-gcc-dbg -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc  -DCMAKE_BUILD_TYPE=debug' +
+			command = 'wsl -- cmake -S . -B build/linux-gcc-dbg -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=debug' +
 			           ' `&`& cmake --build build/linux-gcc-dbg --target ' + $targets + ' 2`>`&1'
 		},
 		@{
 			jobname = 'linux-gcc-rel'
-			command = 'wsl -- cmake -S . -B build/linux-gcc-rel -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc  -DCMAKE_BUILD_TYPE=release' +
+			command = 'wsl -- cmake -S . -B build/linux-gcc-rel -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=release -DMONOBUILD=ON' +
 			           ' `&`& cmake --build build/linux-gcc-rel --target ' + $targets + ' 2`>`&1'
 		},
 		@{
@@ -67,7 +67,7 @@ if ($IsLinux) {
 		},
 		@{
 			jobname = 'win32-msvc-rel'
-			command = 'cmake -S . -B build/win32-msvc-rel -DCMAKE_CXX_COMPILER=msvc -DCMAKE_C_COMPILER=msvc' +
+			command = 'cmake -S . -B build/win32-msvc-rel -DCMAKE_CXX_COMPILER=msvc -DCMAKE_C_COMPILER=msvc -DMONOBUILD=ON' +
 			      ' && cmake --build build/win32-msvc-rel --config release --target ' + ($targets -creplace ' all ', ' ALL_BUILD ') + ' 2>&1'
 		},
 		@{
@@ -77,7 +77,7 @@ if ($IsLinux) {
 		},
 		@{
 			jobname = 'win32-clangcl-rel'
-			command = 'cmake -S . -B build/win32-clangcl-rel -DCMAKE_CXX_COMPILER=cclang++ -DCMAKE_C_COMPILER=clang -Tclangcl' +
+			command = 'cmake -S . -B build/win32-clangcl-rel -DCMAKE_CXX_COMPILER=cclang++ -DCMAKE_C_COMPILER=clang -Tclangcl -DMONOBUILD=ON' +
 			      ' && cmake --build build/win32-clangcl-rel --config release --target ' + ($targets -creplace ' all ', ' ALL_BUILD ') + ' 2>&1'
 		}
 	)
