@@ -1,0 +1,5 @@
+entrypoint.path = '../cpp-translations/parse.cpp.lophus'
+
+mode = 'parse'
+
+logging.imports.asts.unresolved = 'parse.cpp.lophus.current-ast'

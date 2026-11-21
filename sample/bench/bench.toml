@@ -1,0 +1,4 @@
+entrypoint.path = '../cpp-translations/parse.cpp.lophus'
+
+mode = 'parse'
+benchmark.repeats = 15000

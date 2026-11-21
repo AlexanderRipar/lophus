@@ -3,3 +3,7 @@ build*/
 test_output.txt
 test/minos_fs_data/dynamic_data/*
 !test/minos_fs_data/dynamic_data/.gitkeep
+
+# Consistency check AST for benchmarking. No need to commit this, it can always
+# be regenerated for a given commit.
+sample/bench/parse.cpp.lophus.current-ast
