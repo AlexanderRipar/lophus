@@ -104,6 +104,7 @@ if ($IsLinux) {
 }
 
 [string]$builds_regex = "^($($cleaned_builds -join '|'))$"
+$prev_working_directory = $PWD
 
 # Start one asynchronous job for each build.
 $jobs = $specs | where { $_.jobname -match $builds_regex } | foreach {
@@ -116,7 +117,8 @@ $jobs = $specs | where { $_.jobname -match $builds_regex } | foreach {
 			@{ output = Invoke-Expression $_.command; exitcode = $LASTEXITCODE }
 		} } `
 		-Name $_.jobname `
-		-InputObject $_
+		-InputObject $_ `
+		-WorkingDirectory "$PSScriptRoot/.."
 }
 
 # Receive job results separately for each job, as we otherwise get an
@@ -168,24 +170,23 @@ while ($jobs.Count -ne 0) {
 	Write-Output "################# $($completed_job.Name) #################"
 	Write-Output ''
 
-	if ($job_output)
-	{
+	if ($job_output) {
 		Write-Output $job_output
 	}
 
-	if ($job_result.exitcode -ne 0)
-	{
+	if ($job_result.exitcode -ne 0) {
 		$failed_jobs += "$($completed_job.Name) ($($job_result.exitcode))"
 	}
 
 	Remove-Job $completed_job
 }
 
-if ($failed_jobs.Count -ne 0)
-{
+if ($failed_jobs.Count -ne 0) {
 	Write-Host "`nThe following builds failed:`n    - $($failed_jobs -join "`n    - ")" -ForegroundColor Red
-}
-else
-{
+
+	exit 1
+} else {
 	Write-Host "`nAll builds succeeded" -ForegroundColor Green
+
+	exit 0
 }
