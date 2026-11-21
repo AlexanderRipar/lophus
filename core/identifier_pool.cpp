@@ -169,12 +169,12 @@ void identifier_pool_cleanup(CoreData* core) noexcept
 
 IdentifierId id_from_identifier(CoreData* core, Range<char8> identifier) noexcept
 {
-	return static_cast<IdentifierId>(core->identifiers.map.id_from(identifier, fnv1a(identifier.as_byte_range())) + static_cast<u32>(IdentifierId::FirstNatural));
+	return static_cast<IdentifierId>(core->identifiers.map.id_from(identifier, strhash(reinterpret_cast<const byte*>(identifier.begin()), reinterpret_cast<const byte*>(identifier.end()))) + static_cast<u32>(IdentifierId::FirstNatural));
 }
 
 IdentifierId id_and_attachment_from_identifier(CoreData* core, Range<char8> identifier, u8* out_token) noexcept
 {
-	const IdentifierEntry* const entry = core->identifiers.map.value_from(identifier, fnv1a(identifier.as_byte_range()));
+	const IdentifierEntry* const entry = core->identifiers.map.value_from(identifier, strhash(reinterpret_cast<const byte*>(identifier.begin()), reinterpret_cast<const byte*>(identifier.end())));
 
 	*out_token = entry->m_attachment;
 
@@ -185,7 +185,7 @@ void identifier_set_attachment(CoreData* core, Range<char8> identifier, u8 attac
 {
 	ASSERT_OR_IGNORE(attachment != 0);
 
-	IdentifierEntry* const entry = core->identifiers.map.value_from(identifier, fnv1a(identifier.as_byte_range()));
+	IdentifierEntry* const entry = core->identifiers.map.value_from(identifier, strhash(reinterpret_cast<const byte*>(identifier.begin()), reinterpret_cast<const byte*>(identifier.end())));
 
 	ASSERT_OR_IGNORE(entry->m_attachment == 0);
 
