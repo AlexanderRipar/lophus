@@ -91,6 +91,7 @@ function(set_common_target_options NAME)
 		)
 
 		target_compile_options(${NAME} PRIVATE
+			"$<$<COMPILE_LANGUAGE:CXX>:/arch:AVX2>"
 			"$<$<COMPILE_LANGUAGE:CXX>:/W4>"
 			"$<$<COMPILE_LANGUAGE:CXX>:/wd4200>" # nonstandard extension used: zero-sized array in struct/union
 			"$<$<COMPILE_LANGUAGE:CXX>:/wd4201>" # nonstandard extension used: nameless struct/union
@@ -104,6 +105,7 @@ function(set_common_target_options NAME)
 			-Wextra
 			-g
 			-pg
+			-mavx2
 		)
 		target_link_options(${NAME} PRIVATE -pg)
 	elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
@@ -115,6 +117,7 @@ function(set_common_target_options NAME)
 			-Wno-gnu-anonymous-struct # anonymous structs are a GNU extension
 			-Wno-nested-anon-types    # anonymous types declared in an anonymous union are an extension
 			-g
+			-mavx2
 
 			# Suppress `clang: warning: argument unused during compilation: '-D NDEBUG'` for assembly
 			# in release builds. No idea how to get rid of the `-DNDEBUG`, but hey, this works I guess.
