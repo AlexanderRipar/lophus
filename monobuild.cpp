@@ -1,3 +1,5 @@
+#define INTERNAL static
+
 #include "core/ast_pool.cpp"
 #include "core/code2_pool.cpp"
 #include "core/comp_heap.cpp"

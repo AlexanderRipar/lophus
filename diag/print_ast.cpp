@@ -109,7 +109,7 @@ static s64 print_node_header(PrintSinkHandle sink, CoreData* core, const AstNode
 	return total_written;
 }
 
-s64 diag::print_ast(PrintSinkHandle unbuffered_sink, CoreData* core, AstNode* root) noexcept
+INTERNAL s64 diag::print_ast(PrintSinkHandle unbuffered_sink, CoreData* core, AstNode* root) noexcept
 {
 	char8 buffer[16384];
 	PrintSink buffered_sink = print_make_buffered_sink(unbuffered_sink, MutRange{ buffer });

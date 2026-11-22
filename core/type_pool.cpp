@@ -1619,12 +1619,12 @@ static TypeStructure* make_structure_hash(CoreData* core, TypeTag tag, Range<byt
 
 
 
-bool type_pool_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSinkHandle sink) noexcept
+INTERNAL bool type_pool_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSinkHandle sink) noexcept
 {
 	return true;
 }
 
-MemoryRequirements type_pool_memory_requirements([[maybe_unused]] const Config* config) noexcept
+INTERNAL MemoryRequirements type_pool_memory_requirements([[maybe_unused]] const Config* config) noexcept
 {
 	MemoryRequirements reqs;
 	reqs.count = 1;
@@ -1634,7 +1634,7 @@ MemoryRequirements type_pool_memory_requirements([[maybe_unused]] const Config* 
 	return reqs;
 }
 
-void type_pool_init(CoreData* core, MemoryAllocation allocation) noexcept
+INTERNAL void type_pool_init(CoreData* core, MemoryAllocation allocation) noexcept
 {
 	TypePool* const types = &core->types;
 
@@ -1667,14 +1667,14 @@ void type_pool_init(CoreData* core, MemoryAllocation allocation) noexcept
 	}
 }
 
-void type_pool_cleanup(CoreData* core) noexcept
+INTERNAL void type_pool_cleanup(CoreData* core) noexcept
 {
 	(void) core;
 }
 
 
 
-TypeId type_create_simple([[maybe_unused]] CoreData* core, TypeTag tag) noexcept
+INTERNAL TypeId type_create_simple([[maybe_unused]] CoreData* core, TypeTag tag) noexcept
 {
 	ASSERT_OR_IGNORE(tag >= TypeTag::Void && tag <= TypeTag::Divergent);
 
@@ -1685,28 +1685,28 @@ TypeId type_create_simple([[maybe_unused]] CoreData* core, TypeTag tag) noexcept
 	return type_id;
 }
 
-TypeId type_create_numeric(CoreData* core, TypeTag tag, NumericType attach) noexcept
+INTERNAL TypeId type_create_numeric(CoreData* core, TypeTag tag, NumericType attach) noexcept
 {
 	ASSERT_OR_IGNORE(tag == TypeTag::Integer || tag == TypeTag::Float);
 
 	return holotype_id_from_attachment(core, tag, range::from_object_bytes(&attach));
 }
 
-TypeId type_create_reference(CoreData* core, TypeTag tag, ReferenceType attach) noexcept
+INTERNAL TypeId type_create_reference(CoreData* core, TypeTag tag, ReferenceType attach) noexcept
 {
 	ASSERT_OR_IGNORE(tag == TypeTag::Ptr || tag == TypeTag::Slice || tag == TypeTag::TailArray);
 
 	return holotype_id_from_attachment(core, tag, range::from_object_bytes(&attach));
 }
 
-TypeId type_create_array(CoreData* core, ArrayType attach) noexcept
+INTERNAL TypeId type_create_array(CoreData* core, ArrayType attach) noexcept
 {
 	return holotype_id_from_attachment(core, TypeTag::Array, range::from_object_bytes(&attach));
 }
 
 
 
-TypeId type_create_indirection(CoreData* core) noexcept
+INTERNAL TypeId type_create_indirection(CoreData* core) noexcept
 {
 	IndirectionType attach{};
 	attach.indirection_type_id = none<TypeId>();
@@ -1716,7 +1716,7 @@ TypeId type_create_indirection(CoreData* core) noexcept
 	return id_from_structure(core, structure);
 }
 
-void type_set_indirection_target(CoreData* core, TypeId indirection_type_id, TypeId target_type_id) noexcept
+INTERNAL void type_set_indirection_target(CoreData* core, TypeId indirection_type_id, TypeId target_type_id) noexcept
 {
 	TypeStructure* const structure = structure_from_id_direct(core, indirection_type_id);
 
@@ -1729,7 +1729,7 @@ void type_set_indirection_target(CoreData* core, TypeId indirection_type_id, Typ
 
 
 
-TypeId type_create_signature(CoreData* core, bool is_func, u8 parameter_count) noexcept
+INTERNAL TypeId type_create_signature(CoreData* core, bool is_func, u8 parameter_count) noexcept
 {
 	ASSERT_OR_IGNORE(parameter_count <= 64);
 
@@ -1749,7 +1749,7 @@ TypeId type_create_signature(CoreData* core, bool is_func, u8 parameter_count) n
 	return id_from_structure(core, structure);
 }
 
-void type_add_signature_parameter(CoreData* core, TypeId type_id, SignatureParameterInit init) noexcept
+INTERNAL void type_add_signature_parameter(CoreData* core, TypeId type_id, SignatureParameterInit init) noexcept
 {
 	TypeStructure* const structure = structure_from_id_direct(core, type_id);
 
@@ -1782,7 +1782,7 @@ void type_add_signature_parameter(CoreData* core, TypeId type_id, SignatureParam
 	composite->member_used += 1;
 }
 
-TypeId type_seal_signature(CoreData* core, TypeId type_id, SignatureSealInfo seal_info) noexcept
+INTERNAL TypeId type_seal_signature(CoreData* core, TypeId type_id, SignatureSealInfo seal_info) noexcept
 {
 	TypeStructure* const structure = structure_from_id_direct(core, type_id);
 
@@ -1812,7 +1812,7 @@ TypeId type_seal_signature(CoreData* core, TypeId type_id, SignatureSealInfo sea
 	return holotype_id_from_interned_type_structure(core, structure, false);
 }
 
-TypeId type_instantiate_templated_signature(CoreData* core, TypeId type_id) noexcept
+INTERNAL TypeId type_instantiate_templated_signature(CoreData* core, TypeId type_id) noexcept
 {
 	TypeStructure* const original_structure = structure_from_id_direct(core, type_id);
 
@@ -1839,7 +1839,7 @@ TypeId type_instantiate_templated_signature(CoreData* core, TypeId type_id) noex
 	return id_from_structure(core, copied_structure);
 }
 
-void type_complete_templated_signature_parameter(CoreData* core, TypeId type_id, u16 rank, CompleteTypeAndValue type_and_value) noexcept
+INTERNAL void type_complete_templated_signature_parameter(CoreData* core, TypeId type_id, u16 rank, CompleteTypeAndValue type_and_value) noexcept
 {
 	TypeStructure* const structure = structure_from_id_direct(core, type_id);
 
@@ -1863,7 +1863,7 @@ void type_complete_templated_signature_parameter(CoreData* core, TypeId type_id,
 	signature->templated_parameter_count -= 1;
 }
 
-void type_complete_templated_signature_return_type(CoreData* core, TypeId type_id, TypeId return_type_id) noexcept
+INTERNAL void type_complete_templated_signature_return_type(CoreData* core, TypeId type_id, TypeId return_type_id) noexcept
 {
 	(void) core;
 
@@ -1876,7 +1876,7 @@ void type_complete_templated_signature_return_type(CoreData* core, TypeId type_i
 
 
 
-TypeId type_create_trait(CoreData* core, Range<IdentifierId> parameter_names) noexcept
+INTERNAL TypeId type_create_trait(CoreData* core, Range<IdentifierId> parameter_names) noexcept
 {
 	ASSERT_OR_IGNORE(parameter_names.count() >= 1 && parameter_names.count() <= 64);
 
@@ -1920,7 +1920,7 @@ TypeId type_create_trait(CoreData* core, Range<IdentifierId> parameter_names) no
 
 
 
-TypeId type_create_self(CoreData* core, TypeId base_type_id, TypeId trait_type_id, u8 trait_argument_count, Code2Id trait_body, SourceId definition_source_id, Maybe<ClosureId> impl_closure_id, Maybe<ClosureId> trait_closure_id) noexcept
+INTERNAL TypeId type_create_self(CoreData* core, TypeId base_type_id, TypeId trait_type_id, u8 trait_argument_count, Code2Id trait_body, SourceId definition_source_id, Maybe<ClosureId> impl_closure_id, Maybe<ClosureId> trait_closure_id) noexcept
 {
 	byte attach_buffer[sizeof(SelfType)];
 
@@ -1940,7 +1940,7 @@ TypeId type_create_self(CoreData* core, TypeId base_type_id, TypeId trait_type_i
 	return id_from_structure(core, structure);
 }
 
-TypeId type_set_self_trait_arguments(CoreData* core, TypeId type_id, const TypeId* arguments) noexcept
+INTERNAL TypeId type_set_self_trait_arguments(CoreData* core, TypeId type_id, const TypeId* arguments) noexcept
 {
 	TypeStructure* const structure = structure_from_id_direct(core, type_id);
 
@@ -1958,7 +1958,7 @@ TypeId type_set_self_trait_arguments(CoreData* core, TypeId type_id, const TypeI
 	return holotype_id_from_interned_type_structure(core, structure, false);
 }
 
-void type_set_self_impl_body(CoreData* core, TypeId type_id, TypeId impl_body_type_id) noexcept
+INTERNAL void type_set_self_impl_body(CoreData* core, TypeId type_id, TypeId impl_body_type_id) noexcept
 {
 	TypeStructure* const structure = structure_from_id_direct(core, type_id);
 
@@ -1971,7 +1971,7 @@ void type_set_self_impl_body(CoreData* core, TypeId type_id, TypeId impl_body_ty
 
 
 
-TypeId type_create_impl_body(CoreData* core, TypeId self_type_id, u16 trait_member_count) noexcept
+INTERNAL TypeId type_create_impl_body(CoreData* core, TypeId self_type_id, u16 trait_member_count) noexcept
 {
 	TypeStructure* const structure = composite_alloc(core, TypeTag::Composite, CompositeKind::Impl, CompositeFlags::EMPTY, trait_member_count, false);
 
@@ -1984,7 +1984,7 @@ TypeId type_create_impl_body(CoreData* core, TypeId self_type_id, u16 trait_memb
 	return id_from_structure(core, structure);
 }
 
-void type_add_impl_body_member(CoreData* core, TypeId type_id, ImplMemberInit init) noexcept
+INTERNAL void type_add_impl_body_member(CoreData* core, TypeId type_id, ImplMemberInit init) noexcept
 {
 	TypeStructure* const structure = structure_from_id_direct(core, type_id);
 
@@ -2013,7 +2013,7 @@ void type_add_impl_body_member(CoreData* core, TypeId type_id, ImplMemberInit in
 	composite->member_used += 1;
 }
 
-void type_seal_impl_body(CoreData* core, TypeId type_id) noexcept
+INTERNAL void type_seal_impl_body(CoreData* core, TypeId type_id) noexcept
 {
 	TypeStructure* const structure = structure_from_id_direct(core, type_id);
 
@@ -2036,7 +2036,7 @@ void type_seal_impl_body(CoreData* core, TypeId type_id) noexcept
 
 
 
-TypeId type_create_user_composite(CoreData* core, SourceId definition_site) noexcept
+INTERNAL TypeId type_create_user_composite(CoreData* core, SourceId definition_site) noexcept
 {
 	TypeStructure* const structure = composite_alloc(core, TypeTag::Composite, CompositeKind::User, CompositeFlags::User_IsOpen, 4, false);
 
@@ -2058,7 +2058,7 @@ TypeId type_create_user_composite(CoreData* core, SourceId definition_site) noex
 	return id_from_structure(core, indirection_structure);
 }
 
-bool type_add_user_composite_member(CoreData* core, TypeId type_id, UserCompositeMemberInit init) noexcept
+INTERNAL bool type_add_user_composite_member(CoreData* core, TypeId type_id, UserCompositeMemberInit init) noexcept
 {
 	TypeStructure* indirection_structure;
 
@@ -2105,7 +2105,7 @@ bool type_add_user_composite_member(CoreData* core, TypeId type_id, UserComposit
 	return true;
 }
 
-TypeId type_seal_user_composite(CoreData* core, TypeId type_id, UserCompositeSealInfo seal_info) noexcept
+INTERNAL TypeId type_seal_user_composite(CoreData* core, TypeId type_id, UserCompositeSealInfo seal_info) noexcept
 {
 	ASSERT_OR_IGNORE(seal_info.align != 0 && is_pow2(seal_info.align));
 
@@ -2134,7 +2134,7 @@ TypeId type_seal_user_composite(CoreData* core, TypeId type_id, UserCompositeSea
 
 
 
-TypeId type_create_file_composite(CoreData* core, u16 member_count, SourceId definition_site) noexcept
+INTERNAL TypeId type_create_file_composite(CoreData* core, u16 member_count, SourceId definition_site) noexcept
 {
 	ASSERT_OR_IGNORE(definition_site != SourceId::INVALID);
 
@@ -2149,7 +2149,7 @@ TypeId type_create_file_composite(CoreData* core, u16 member_count, SourceId def
 	return id_from_structure(core, structure);
 }
 
-void type_add_file_composite_member(CoreData* core, TypeId type_id, FileCompositeMemberInit init) noexcept
+INTERNAL void type_add_file_composite_member(CoreData* core, TypeId type_id, FileCompositeMemberInit init) noexcept
 {
 	TypeStructure* const structure = structure_from_id_direct(core, type_id);
 
@@ -2179,7 +2179,7 @@ void type_add_file_composite_member(CoreData* core, TypeId type_id, FileComposit
 
 
 
-TypeId type_create_approx_composite(CoreData* core, u16 member_count) noexcept
+INTERNAL TypeId type_create_approx_composite(CoreData* core, u16 member_count) noexcept
 {
 	(void) core;
 
@@ -2188,7 +2188,7 @@ TypeId type_create_approx_composite(CoreData* core, u16 member_count) noexcept
 	TODO("Implement.");
 }
 
-void type_add_approx_composite_member(CoreData* core, TypeId type_id, u16 rank, Maybe<IdentifierId> name, TypeId member_type_id) noexcept
+INTERNAL void type_add_approx_composite_member(CoreData* core, TypeId type_id, u16 rank, Maybe<IdentifierId> name, TypeId member_type_id) noexcept
 {
 	(void) core;
 
@@ -2205,7 +2205,7 @@ void type_add_approx_composite_member(CoreData* core, TypeId type_id, u16 rank, 
 
 
 
-bool type_file_member_init_begin(CoreData* core, TypeId type_id, u16 rank) noexcept
+INTERNAL bool type_file_member_init_begin(CoreData* core, TypeId type_id, u16 rank) noexcept
 {
 	TypeStructure* const structure = structure_from_id_direct(core, type_id);
 
@@ -2229,7 +2229,7 @@ bool type_file_member_init_begin(CoreData* core, TypeId type_id, u16 rank) noexc
 	return true;
 }
 
-void type_file_member_init_set_type(CoreData* core, TypeId type_id, u16 rank, TypeId member_type_id) noexcept
+INTERNAL void type_file_member_init_set_type(CoreData* core, TypeId type_id, u16 rank, TypeId member_type_id) noexcept
 {
 	TypeStructure* const structure = structure_from_id_direct(core, type_id);
 
@@ -2252,7 +2252,7 @@ void type_file_member_init_set_type(CoreData* core, TypeId type_id, u16 rank, Ty
 	info.member_types[rank].type_and_value.complete.type = member_type_id;
 }
 
-void type_file_member_init_complete(CoreData* core, TypeId type_id, u16 rank, TypeId member_type_id, CoreId value_id) noexcept
+INTERNAL void type_file_member_init_complete(CoreData* core, TypeId type_id, u16 rank, TypeId member_type_id, CoreId value_id) noexcept
 {
 	TypeStructure* const structure = structure_from_id_direct(core, type_id);
 
@@ -2280,7 +2280,7 @@ void type_file_member_init_complete(CoreData* core, TypeId type_id, u16 rank, Ty
 
 
 
-TypeRelation type_relation(CoreData* core, TypeId first_type_id, TypeId second_type_id) noexcept
+INTERNAL TypeRelation type_relation(CoreData* core, TypeId first_type_id, TypeId second_type_id) noexcept
 {
 	ASSERT_OR_IGNORE(first_type_id != TypeId::INVALID && second_type_id != TypeId::INVALID);
 
@@ -2309,7 +2309,7 @@ TypeRelation type_relation(CoreData* core, TypeId first_type_id, TypeId second_t
 		: second_to_first_relation;
 }
 
-TypeEquality type_is_equal(CoreData* core, TypeId type_id_a, TypeId type_id_b) noexcept
+INTERNAL TypeEquality type_is_equal(CoreData* core, TypeId type_id_a, TypeId type_id_b) noexcept
 {
 	ASSERT_OR_IGNORE(type_id_a != TypeId::INVALID && type_id_b != TypeId::INVALID);
 
@@ -2349,7 +2349,7 @@ TypeEquality type_is_equal(CoreData* core, TypeId type_id_a, TypeId type_id_b) n
 
 
 
-bool type_member_count(CoreData* core, TypeId type_id, u32* out) noexcept
+INTERNAL bool type_member_count(CoreData* core, TypeId type_id, u32* out) noexcept
 {
 	ASSERT_OR_IGNORE(type_id != TypeId::INVALID);
 
@@ -2372,7 +2372,7 @@ bool type_member_count(CoreData* core, TypeId type_id, u32* out) noexcept
 	return true;
 }
 
-bool type_composite_is_impl_body(CoreData* core, TypeId type_id) noexcept
+INTERNAL bool type_composite_is_impl_body(CoreData* core, TypeId type_id) noexcept
 {
 	const Maybe<TypeStructure*> opt_structure = structure_from_id_follow(core, type_id);
 
@@ -2387,7 +2387,7 @@ bool type_composite_is_impl_body(CoreData* core, TypeId type_id) noexcept
 	return composite->kind == CompositeKind::Impl;
 }
 
-bool type_implements_trait(CoreData* core, TypeId type_id, Code2Id trait_body, Range<TypeId> argument_types) noexcept
+INTERNAL bool type_implements_trait(CoreData* core, TypeId type_id, Code2Id trait_body, Range<TypeId> argument_types) noexcept
 {
 	const Maybe<TypeStructure*> opt_structure = structure_from_id_follow(core, type_id);
 
@@ -2418,7 +2418,7 @@ bool type_implements_trait(CoreData* core, TypeId type_id, Code2Id trait_body, R
 	return true;
 }
 
-bool type_get_holotype(CoreData* core, TypeId type_id, TypeId* out_holotype_id) noexcept
+INTERNAL bool type_get_holotype(CoreData* core, TypeId type_id, TypeId* out_holotype_id) noexcept
 {
 	const Maybe<TypeStructure*> opt_structure = structure_from_id_follow(core, type_id);
 
@@ -2435,7 +2435,7 @@ bool type_get_holotype(CoreData* core, TypeId type_id, TypeId* out_holotype_id) 
 	return structure->holotype_id != TypeId::INVALID;
 }
 
-SignatureTypeInfo type_signature_info_from_id(CoreData* core, TypeId type_id) noexcept
+INTERNAL SignatureTypeInfo type_signature_info_from_id(CoreData* core, TypeId type_id) noexcept
 {
 	ASSERT_OR_IGNORE(type_id != TypeId::INVALID);
 
@@ -2465,7 +2465,7 @@ SignatureTypeInfo type_signature_info_from_id(CoreData* core, TypeId type_id) no
 	return info;
 }
 
-bool type_has_metrics(CoreData* core, TypeId type_id) noexcept
+INTERNAL bool type_has_metrics(CoreData* core, TypeId type_id) noexcept
 {
 	ASSERT_OR_IGNORE(type_id != TypeId::INVALID);
 
@@ -2479,7 +2479,7 @@ bool type_has_metrics(CoreData* core, TypeId type_id) noexcept
 	return composite->kind != CompositeKind::User || (composite->flags & CompositeFlags::User_IsOpen) == CompositeFlags::EMPTY;
 }
 
-bool type_metrics_from_id(CoreData* core, TypeId type_id, TypeMetrics* out) noexcept
+INTERNAL bool type_metrics_from_id(CoreData* core, TypeId type_id, TypeMetrics* out) noexcept
 {
 	ASSERT_OR_IGNORE(type_id != TypeId::INVALID);
 
@@ -2631,7 +2631,7 @@ bool type_metrics_from_id(CoreData* core, TypeId type_id, TypeMetrics* out) noex
 	ASSERT_UNREACHABLE;
 }
 
-TypeTag type_tag_from_id(CoreData* core, TypeId type_id) noexcept
+INTERNAL TypeTag type_tag_from_id(CoreData* core, TypeId type_id) noexcept
 {
 	ASSERT_OR_IGNORE(type_id != TypeId::INVALID);
 
@@ -2643,7 +2643,7 @@ TypeTag type_tag_from_id(CoreData* core, TypeId type_id) noexcept
 	return get(structure)->tag;
 }
 
-bool type_member_info_by_rank(CoreData* core, TypeId type_id, u16 rank, MemberInfo* out) noexcept
+INTERNAL bool type_member_info_by_rank(CoreData* core, TypeId type_id, u16 rank, MemberInfo* out) noexcept
 {
 	ASSERT_OR_IGNORE(type_id != TypeId::INVALID);
 
@@ -2664,7 +2664,7 @@ bool type_member_info_by_rank(CoreData* core, TypeId type_id, u16 rank, MemberIn
 	return fill_member_info(info, rank, out);
 }
 
-MemberByNameRst type_member_info_by_name(CoreData* core, TypeId type_id, IdentifierId name, MemberInfo* out) noexcept
+INTERNAL MemberByNameRst type_member_info_by_name(CoreData* core, TypeId type_id, IdentifierId name, MemberInfo* out) noexcept
 {
 	ASSERT_OR_IGNORE(type_id != TypeId::INVALID);
 
@@ -2690,7 +2690,7 @@ MemberByNameRst type_member_info_by_name(CoreData* core, TypeId type_id, Identif
 		: MemberByNameRst::Incomplete;
 }
 
-IdentifierId type_member_name_by_rank(CoreData* core, TypeId type_id, u16 rank) noexcept
+INTERNAL IdentifierId type_member_name_by_rank(CoreData* core, TypeId type_id, u16 rank) noexcept
 {
 	ASSERT_OR_IGNORE(type_id != TypeId::INVALID);
 
@@ -2707,7 +2707,7 @@ IdentifierId type_member_name_by_rank(CoreData* core, TypeId type_id, u16 rank) 
 	return info.member_names[rank];
 }
 
-const void* type_attachment_from_id_raw(CoreData* core, TypeId type_id) noexcept
+INTERNAL const void* type_attachment_from_id_raw(CoreData* core, TypeId type_id) noexcept
 {
 	ASSERT_OR_IGNORE(type_id != TypeId::INVALID);
 
@@ -2718,7 +2718,7 @@ const void* type_attachment_from_id_raw(CoreData* core, TypeId type_id) noexcept
 
 
 
-const char8* tag_name(TypeTag tag) noexcept
+INTERNAL const char8* tag_name(TypeTag tag) noexcept
 {
 	static constexpr const char8* TYPE_TAG_NAMES[] = {
 		"[Unknown]",
@@ -2756,7 +2756,7 @@ const char8* tag_name(TypeTag tag) noexcept
 
 
 
-MemberIterator members_of(CoreData* core, TypeId type_id) noexcept
+INTERNAL MemberIterator members_of(CoreData* core, TypeId type_id) noexcept
 {
 	ASSERT_OR_IGNORE(type_id != TypeId::INVALID);
 
@@ -2798,7 +2798,7 @@ MemberIterator members_of(CoreData* core, TypeId type_id) noexcept
 	return it;
 }
 
-bool next(MemberIterator* it, MemberInfo* out) noexcept
+INTERNAL bool next(MemberIterator* it, MemberInfo* out) noexcept
 {
 	ASSERT_OR_IGNORE(has_next(it));
 
@@ -2816,7 +2816,7 @@ bool next(MemberIterator* it, MemberInfo* out) noexcept
 	return fill_member_info(info, rank, out);
 }
 
-bool has_next(const MemberIterator* it) noexcept
+INTERNAL bool has_next(const MemberIterator* it) noexcept
 {
 	ASSERT_OR_IGNORE(it->rank <= it->count);
 

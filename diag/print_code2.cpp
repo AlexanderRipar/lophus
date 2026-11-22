@@ -1127,7 +1127,7 @@ static s64 print_code2_impl(PrintSinkHandle sink, CoreData* core, const Code2Blo
 	return total_written;
 }
 
-s64 diag::print_code2(PrintSinkHandle unbuffered_sink, CoreData* core, const Code2Block* block) noexcept
+INTERNAL s64 diag::print_code2(PrintSinkHandle unbuffered_sink, CoreData* core, const Code2Block* block) noexcept
 {
 	char8 buffer[16384];
 

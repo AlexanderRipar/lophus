@@ -191,14 +191,14 @@ static const char8* error_message_of(CompileError error) noexcept
 
 
 
-bool error_sink_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSinkHandle sink) noexcept
+INTERNAL bool error_sink_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSinkHandle sink) noexcept
 {
 	ASSERT_OR_IGNORE(config->diagnostics.source_tab_size >= 0);
 
 	return true;
 }
 
-MemoryRequirements error_sink_memory_requirements([[maybe_unused]] const Config* config) noexcept
+INTERNAL MemoryRequirements error_sink_memory_requirements([[maybe_unused]] const Config* config) noexcept
 {
 	MemoryRequirements reqs;
 	reqs.count = 1;
@@ -208,7 +208,7 @@ MemoryRequirements error_sink_memory_requirements([[maybe_unused]] const Config*
 	return reqs;
 }
 
-void error_sink_init(CoreData* core, MemoryAllocation allocation) noexcept
+INTERNAL void error_sink_init(CoreData* core, MemoryAllocation allocation) noexcept
 {
 	ASSERT_OR_IGNORE(allocation.ranges[0].count() == MAX_ERROR_RECORD_COUNT * sizeof(ErrorRecord));
 
@@ -223,14 +223,14 @@ void error_sink_init(CoreData* core, MemoryAllocation allocation) noexcept
 	errors->sink = core->config->diagnostics.sink.sink;
 }
 
-void error_sink_cleanup(CoreData* core) noexcept
+INTERNAL void error_sink_cleanup(CoreData* core) noexcept
 {
 	(void) core;
 }
 
 
 
-void record_error(CoreData* core, SourceId source_id, CompileError error) noexcept
+INTERNAL void record_error(CoreData* core, SourceId source_id, CompileError error) noexcept
 {
 	DEBUGBREAK;
 
@@ -242,7 +242,7 @@ void record_error(CoreData* core, SourceId source_id, CompileError error) noexce
 		core->errors.records.append(ErrorRecord{ error, source_id });
 }
 
-void record_error(CoreData* core, const AstNode* source_node, CompileError error) noexcept
+INTERNAL void record_error(CoreData* core, const AstNode* source_node, CompileError error) noexcept
 {
 	record_error(core, source_id_of_ast_node(core, source_node), error);
 }
@@ -262,12 +262,12 @@ void print_errors(CoreData* core) noexcept
 	}
 }
 
-Range<ErrorRecord> get_errors(CoreData* core) noexcept
+INTERNAL Range<ErrorRecord> get_errors(CoreData* core) noexcept
 {
 	return Range<ErrorRecord>{ core->errors.records.begin(), core->errors.records.end() };
 }
 
-void print_error(PrintSinkHandle sink, const SourceLocation* location, CompileError error, u8 tab_size) noexcept
+INTERNAL void print_error(PrintSinkHandle sink, const SourceLocation* location, CompileError error, u8 tab_size) noexcept
 {
 	const char8* const message = error_message_of(error);
 
@@ -474,7 +474,7 @@ static constexpr const char8* COMPILE_ERROR_NAMES[] = {
 	"ParseConfigExpectedEqualsOrDot",
 };
 
-const char8* tag_name(CompileError error) noexcept
+INTERNAL const char8* tag_name(CompileError error) noexcept
 {
 	u32 ordinal = static_cast<u32>(error);
 
@@ -484,7 +484,7 @@ const char8* tag_name(CompileError error) noexcept
 	return COMPILE_ERROR_NAMES[ordinal];
 }
 
-Maybe<CompileError> compile_error_from_name(Range<char8> name) noexcept
+INTERNAL Maybe<CompileError> compile_error_from_name(Range<char8> name) noexcept
 {
 	for (u32 ordinal = 1; ordinal != array_count(COMPILE_ERROR_NAMES); ++ordinal)
 	{

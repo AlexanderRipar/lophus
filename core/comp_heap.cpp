@@ -252,7 +252,7 @@ static u64 calc_memory_reserve(const Config* config, u64 commit_increment) noexc
 
 
 
-bool comp_heap_validate_config(const Config* config, PrintSinkHandle sink) noexcept
+INTERNAL bool comp_heap_validate_config(const Config* config, PrintSinkHandle sink) noexcept
 {
 	if (config->heap.reserve < config->heap.commit_increment)
 	{
@@ -264,7 +264,7 @@ bool comp_heap_validate_config(const Config* config, PrintSinkHandle sink) noexc
 	return true;
 }
 
-MemoryRequirements comp_heap_memory_requirements(const Config* config) noexcept
+INTERNAL MemoryRequirements comp_heap_memory_requirements(const Config* config) noexcept
 {
 	const u64 page_size = minos::page_bytes();
 
@@ -284,7 +284,7 @@ MemoryRequirements comp_heap_memory_requirements(const Config* config) noexcept
 	return reqs;
 }
 
-void comp_heap_init(CoreData* core, MemoryAllocation allocation) noexcept
+INTERNAL void comp_heap_init(CoreData* core, MemoryAllocation allocation) noexcept
 {
 	const u64 page_size = minos::page_bytes();
 
@@ -325,19 +325,19 @@ void comp_heap_init(CoreData* core, MemoryAllocation allocation) noexcept
 	memset(core->heap.freelists, 0, sizeof(core->heap.freelists));
 }
 
-void comp_heap_cleanup(CoreData* core) noexcept
+INTERNAL void comp_heap_cleanup(CoreData* core) noexcept
 {
 	(void) core;
 }
 
 
 
-Maybe<void*> comp_heap_alloc(CoreData* core, u64 size, u64 align) noexcept
+INTERNAL Maybe<void*> comp_heap_alloc(CoreData* core, u64 size, u64 align) noexcept
 {
 	return comp_heap_alloc_internal(core, size, align, false);
 }
 
-Maybe<void*> comp_heap_alloc_global_member(CoreData* core, u64 size, u64 align, TypeId type_id) noexcept
+INTERNAL Maybe<void*> comp_heap_alloc_global_member(CoreData* core, u64 size, u64 align, TypeId type_id) noexcept
 {
 	static_assert(sizeof(CompHeapAllocationHeader) <= COMP_HEAP_MIN_ALLOCATION_SIZE);
 
@@ -355,7 +355,7 @@ Maybe<void*> comp_heap_alloc_global_member(CoreData* core, u64 size, u64 align, 
 	return allocation;
 }
 
-TypeId comp_heap_global_member_type(CoreData* core, byte* address) noexcept
+INTERNAL TypeId comp_heap_global_member_type(CoreData* core, byte* address) noexcept
 {
 	const Maybe<CompHeapAllocationHeader*> header = comp_heap_find_header(core, address);
 
@@ -365,7 +365,7 @@ TypeId comp_heap_global_member_type(CoreData* core, byte* address) noexcept
 	return get(header)->type_id;
 }
 
-bool comp_heap_leak(CoreData* core, MutRange<byte> memory) noexcept
+INTERNAL bool comp_heap_leak(CoreData* core, MutRange<byte> memory) noexcept
 {
 	// If the address is outside the heap, there is nothing to leak for us.
 	if (memory.end() <= core->heap.memory || memory.begin() >= core->heap.memory + core->heap.used)
@@ -407,7 +407,7 @@ bool comp_heap_leak(CoreData* core, MutRange<byte> memory) noexcept
 	return true;
 }
 
-void comp_heap_dealloc(CoreData* core, MutRange<byte> memory) noexcept
+INTERNAL void comp_heap_dealloc(CoreData* core, MutRange<byte> memory) noexcept
 {
 	if (memory.count() == 0)
 		memory = MutRange<byte>{ memory.begin(), memory.end() + 1 };
@@ -436,7 +436,7 @@ void comp_heap_dealloc(CoreData* core, MutRange<byte> memory) noexcept
 
 
 
-void comp_heap_gc_begin(CoreData* core) noexcept
+INTERNAL void comp_heap_gc_begin(CoreData* core) noexcept
 {
 	const u64 page_mask = minos::page_bytes() - 1;
 
@@ -463,7 +463,7 @@ void comp_heap_gc_begin(CoreData* core) noexcept
 	memset(core->heap.freelists, 0, sizeof(core->heap.freelists));
 }
 
-bool comp_heap_gc_mark(CoreData* core, MutRange<byte> memory) noexcept
+INTERNAL bool comp_heap_gc_mark(CoreData* core, MutRange<byte> memory) noexcept
 {
 	ASSERT_OR_IGNORE((reinterpret_cast<u64>(memory.begin()) & COMP_HEAP_ZERO_ADDRESS_MASK) == 0);
 
@@ -502,7 +502,7 @@ bool comp_heap_gc_mark(CoreData* core, MutRange<byte> memory) noexcept
 	return true;
 }
 
-void comp_heap_gc_end(CoreData* core) noexcept
+INTERNAL void comp_heap_gc_end(CoreData* core) noexcept
 {
 	const u64 page_mask = minos::page_bytes() - 1;
 
@@ -577,7 +577,7 @@ void comp_heap_gc_end(CoreData* core) noexcept
 	minos::mem_decommit(core->heap.gc_bitmap, gc_bitmap_commit);
 }
 
-bool comp_heap_next_leak(CoreData* core, Maybe<byte*> prev, MutRange<byte>* out_memory, TypeId* out_type_id) noexcept
+INTERNAL bool comp_heap_next_leak(CoreData* core, Maybe<byte*> prev, MutRange<byte>* out_memory, TypeId* out_type_id) noexcept
 {
 	const byte* const address = is_some(prev) ? get(prev) : core->heap.memory;
 

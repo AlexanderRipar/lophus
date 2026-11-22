@@ -281,7 +281,7 @@ static s64 print_type_impl(PrintSinkHandle sink, CoreData* core, TypeId type_id,
 	ASSERT_UNREACHABLE;
 }
 
-s64 diag::print_type(PrintSinkHandle unbuffered_sink, CoreData* core, TypeId type_id) noexcept
+INTERNAL s64 diag::print_type(PrintSinkHandle unbuffered_sink, CoreData* core, TypeId type_id) noexcept
 {
 	char8 buffer[16384];
 

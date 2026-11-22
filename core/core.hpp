@@ -8,6 +8,10 @@
 #include "../infra/print/print.hpp"
 #include "../infra/tree_schema/tree_schema.hpp"
 
+#ifndef INTERNAL
+	#define INTERNAL
+#endif
+
 
 
 // Forward declarations.
@@ -210,7 +214,7 @@ enum class Builtin : u8
 	MAX,
 };
 
-const char8* tag_name(Builtin builtin) noexcept;
+INTERNAL const char8* tag_name(Builtin builtin) noexcept;
 
 
 
@@ -306,21 +310,23 @@ struct Config
 	bool compile_all;
 };
 
-bool config_from_toml_file(Range<char8> filepath, PrintSinkHandle error_sink, Config* out_config) noexcept;
-
-Config config_defaults() noexcept;
-
-void print_config(PrintSinkHandle sink, const Config* config) noexcept;
-
-void print_config_help(PrintSinkHandle sink, u32 depth = 0) noexcept;
+INTERNAL void print_config(PrintSinkHandle sink, const Config* config) noexcept;
 
 template<typename Sink>
-void print_config(Sink sink, const Config* config) noexcept
+INTERNAL void print_config(Sink sink, const Config* config) noexcept
 {
 	PrintSink print_sink = print_make_sink(sink);
 
 	print_config(&print_sink, config);
 }
+
+
+
+bool config_from_toml_file(Range<char8> filepath, PrintSinkHandle error_sink, Config* out_config) noexcept;
+
+Config config_defaults() noexcept;
+
+void print_config_help(PrintSinkHandle sink, u32 depth = 0) noexcept;
 
 template<typename Sink>
 void print_config_help(Sink sink, u32 depth = 0) noexcept
@@ -334,44 +340,44 @@ void print_config_help(Sink sink, u32 depth = 0) noexcept
 
 
 
-Maybe<void*> comp_heap_alloc(CoreData* core, u64 size, u64 align) noexcept;
+INTERNAL Maybe<void*> comp_heap_alloc(CoreData* core, u64 size, u64 align) noexcept;
 
-Maybe<void*> comp_heap_alloc_global_member(CoreData* core, u64 size, u64 align, TypeId type_id) noexcept;
+INTERNAL Maybe<void*> comp_heap_alloc_global_member(CoreData* core, u64 size, u64 align, TypeId type_id) noexcept;
 
-TypeId comp_heap_global_member_type(CoreData* core, byte* address) noexcept;
+INTERNAL TypeId comp_heap_global_member_type(CoreData* core, byte* address) noexcept;
 
-bool comp_heap_leak(CoreData* core, MutRange<byte> memory) noexcept;
+INTERNAL bool comp_heap_leak(CoreData* core, MutRange<byte> memory) noexcept;
 
-void comp_heap_dealloc(CoreData* core, MutRange<byte> memory) noexcept;
-
-
-
-void comp_heap_gc_begin(CoreData* core) noexcept;
-
-bool comp_heap_gc_mark(CoreData* core, MutRange<byte> memory) noexcept;
-
-void comp_heap_gc_end(CoreData* core) noexcept;
-
-bool comp_heap_next_leak(CoreData* core, Maybe<byte*> prev, MutRange<byte>* out_memory, TypeId* out_type_id) noexcept;
+INTERNAL void comp_heap_dealloc(CoreData* core, MutRange<byte> memory) noexcept;
 
 
 
+INTERNAL void comp_heap_gc_begin(CoreData* core) noexcept;
+
+INTERNAL bool comp_heap_gc_mark(CoreData* core, MutRange<byte> memory) noexcept;
+
+INTERNAL void comp_heap_gc_end(CoreData* core) noexcept;
+
+INTERNAL bool comp_heap_next_leak(CoreData* core, Maybe<byte*> prev, MutRange<byte>* out_memory, TypeId* out_type_id) noexcept;
 
 
-u64 temp_stack_mark(CoreData* core) noexcept;
 
-void* temp_stack_alloc(CoreData* core, u64 size, u64 align) noexcept;
 
-void temp_stack_release(CoreData* core, u64 mark) noexcept;
+
+INTERNAL u64 temp_stack_mark(CoreData* core) noexcept;
+
+INTERNAL void* temp_stack_alloc(CoreData* core, u64 size, u64 align) noexcept;
+
+INTERNAL void temp_stack_release(CoreData* core, u64 mark) noexcept;
 
 template<typename T>
-inline T* temp_stack_typed_align(CoreData* core) noexcept
+INTERNAL inline T* temp_stack_typed_align(CoreData* core) noexcept
 {
 	return static_cast<T*>(temp_stack_alloc(core, 0, alignof(T)));
 }
 
 template<typename T>
-inline T* temp_stack_typed_alloc(CoreData* core) noexcept
+INTERNAL inline T* temp_stack_typed_alloc(CoreData* core) noexcept
 {
 	return static_cast<T*>(temp_stack_alloc(core, sizeof(T), alignof(T)));
 }
@@ -417,27 +423,27 @@ enum class IdentifierId : u32
 // byte-for-byte `identifier` are guaranteed to return the same `IdentifierId`.
 // All calls to the same `IdentifierPool` with distinct `identifier`s are
 // guaranteed to return distinct `IdentifierId`s.
-IdentifierId id_from_identifier(CoreData* core, Range<char8> identifier) noexcept;
+INTERNAL IdentifierId id_from_identifier(CoreData* core, Range<char8> identifier) noexcept;
 
 // Same as `id_from_identifier`, but additionally sets `*out_attachment` to the
 // value previously set for the given `identifier` by
 // `identifier_set_attachment`, or `0` if no attachment has been set.
 // Note that this call will never return `INVALID_IDENTIFIER_ID`.
-IdentifierId id_and_attachment_from_identifier(CoreData* core, Range<char8> identifier, u8* out_attachment) noexcept;
+INTERNAL IdentifierId id_and_attachment_from_identifier(CoreData* core, Range<char8> identifier, u8* out_attachment) noexcept;
 
 // Sets the attachment associated with `identifier` in the given
 // `IdentifierPool` to the given `attachment`. The given `identifier` must not
 // have previously had an attachment set.
 // Additionally, `attachment` must not be `0`.
-void identifier_set_attachment(CoreData* core, Range<char8> identifier, u8 attachment) noexcept;
+INTERNAL void identifier_set_attachment(CoreData* core, Range<char8> identifier, u8 attachment) noexcept;
 
 // Returns the byte-sequence corresponding to the given `IdentifierId` in the
 // given `IdentifierPool`. `id` must not be `INVALID_IDENTIFIER_ID` and must
 // have been returned from a previous call to `id_from_identifier` or
 // `id_and_attachment_from_identifier`.
-Range<char8> identifier_name_from_id(const CoreData* core, IdentifierId id) noexcept;
+INTERNAL Range<char8> identifier_name_from_id(const CoreData* core, IdentifierId id) noexcept;
 
-void identifier_pool_metrics(const CoreData* core, PrintSinkHandle sink) noexcept;
+INTERNAL void identifier_pool_metrics(const CoreData* core, PrintSinkHandle sink) noexcept;
 
 
 
@@ -471,10 +477,10 @@ struct CompFloatValue
 };
 
 // Creates a `CompIntegerValue` representing the given unsigned 64-bit value.
-CompIntegerValue comp_integer_from_u64(u64 value) noexcept;
+INTERNAL CompIntegerValue comp_integer_from_u64(u64 value) noexcept;
 
 // Creates a `CompIntegerValue` representing the given signed 64-bit value.
-CompIntegerValue comp_integer_from_s64(s64 value) noexcept;
+INTERNAL CompIntegerValue comp_integer_from_s64(s64 value) noexcept;
 
 // Creates a `CompIntegerValue` representing the given floating point value.
 // If the given `value` is `+/-inf` or `nan`, the function returns `false` and
@@ -482,131 +488,131 @@ CompIntegerValue comp_integer_from_s64(s64 value) noexcept;
 // does not represent a whole number.
 // Otherwise, the function returns `true` and initializes `*out` with the
 // integer value corresponding to the given floating point `value`.
-bool comp_integer_from_comp_float(CompFloatValue value, bool round, CompIntegerValue* out) noexcept;
+INTERNAL bool comp_integer_from_comp_float(CompFloatValue value, bool round, CompIntegerValue* out) noexcept;
 
-bool bits_from_comp_integer(CompIntegerValue value, u32 bits, bool is_signed, byte* out) noexcept;
+INTERNAL bool bits_from_comp_integer(CompIntegerValue value, u32 bits, bool is_signed, byte* out) noexcept;
 
 // Attempts to extract the value of the given `CompIntegerValue` into a `u64`.
 // If the value is outside the range of a 64-bit unsigned integer, `false` is
 // returned and `*out` is left uninitialized. Otherwise `true` is returned and
 // `*out` contains the value of the given `CompIntegerValue`.
-bool u64_from_comp_integer(CompIntegerValue value, u8 bits, u64* out) noexcept;
+INTERNAL bool u64_from_comp_integer(CompIntegerValue value, u8 bits, u64* out) noexcept;
 
 // Attempts to extract the value of the given `CompIntegerValue` into a `s64`.
 // If the value is outside the range of a 64-bit signed integer, `false` is
 // returned and `*out` is left uninitialized. Otherwise `true` is returned and
 // `*out` contains the value of the given `CompIntegerValue`.
-bool s64_from_comp_integer(CompIntegerValue value, u8 bits, s64* out) noexcept;
+INTERNAL bool s64_from_comp_integer(CompIntegerValue value, u8 bits, s64* out) noexcept;
 
 // Adds `lhs` and `rhs` together, returning a new `CompIntegerValue`
 // representing the result.
-CompIntegerValue comp_integer_add(CompIntegerValue lhs, CompIntegerValue rhs) noexcept;
+INTERNAL CompIntegerValue comp_integer_add(CompIntegerValue lhs, CompIntegerValue rhs) noexcept;
 
 // Subtracts `rhs` from 'lhs', returning a new `CompIntegerValue` representing
 // the result.
-CompIntegerValue comp_integer_sub(CompIntegerValue lhs, CompIntegerValue rhs) noexcept;
+INTERNAL CompIntegerValue comp_integer_sub(CompIntegerValue lhs, CompIntegerValue rhs) noexcept;
 
 // Multiplies `lhs` with `rhs`, returning a new `CompIntegerValue` representing
 // the result.
-CompIntegerValue comp_integer_mul(CompIntegerValue lhs, CompIntegerValue rhs) noexcept;
+INTERNAL CompIntegerValue comp_integer_mul(CompIntegerValue lhs, CompIntegerValue rhs) noexcept;
 
 // Performs truncating division of `lhs` by 'rhs'.
 // If `rhs` is `0`, `false` is returned and `*out` is left uninitialized.
 // Otherwise, `true` is returned and `*out` receives the resulting value.
-bool comp_integer_div(CompIntegerValue lhs, CompIntegerValue rhs, CompIntegerValue* out) noexcept;
+INTERNAL bool comp_integer_div(CompIntegerValue lhs, CompIntegerValue rhs, CompIntegerValue* out) noexcept;
 
 // Takes the module of `lhs` by 'rhs'.
 // If `rhs` is `0`, `false` is returned and `*out` is left uninitialized.
 // Otherwise, `true` is returned and `*out` receives the resulting value.
-bool comp_integer_mod(CompIntegerValue lhs, CompIntegerValue rhs, CompIntegerValue* out) noexcept;
+INTERNAL bool comp_integer_mod(CompIntegerValue lhs, CompIntegerValue rhs, CompIntegerValue* out) noexcept;
 
 // Flips the sign of the given `CompIntegerValue`, returning a new
 // `CompIntegerValue` holding the resulting value.
-CompIntegerValue comp_integer_neg(CompIntegerValue value) noexcept;
+INTERNAL CompIntegerValue comp_integer_neg(CompIntegerValue value) noexcept;
 
 // Shift `lhs` left by `rhs` bits, effectively calculating `lhs * 2^rhs`.
 // If `rhs` is negative, returns `false` and leaves `*out` uninitialized.
 // Otherwise returns `true` and sets `*out` to the resulting value.
-bool comp_integer_shift_left(CompIntegerValue lhs, CompIntegerValue rhs, CompIntegerValue* out) noexcept;
+INTERNAL bool comp_integer_shift_left(CompIntegerValue lhs, CompIntegerValue rhs, CompIntegerValue* out) noexcept;
 
 // Shift `lhs` right by `rhs` bits, effectively calculating `lhs / 2^rhs` where
 // `/` is truncating division.
 // If `rhs` is negative, returns `false` and leaves `*out` uninitialized.
 // Otherwise returns `true` and sets `*out` to the resulting value.
-bool comp_integer_shift_right(CompIntegerValue lhs, CompIntegerValue rhs, CompIntegerValue* out) noexcept;
+INTERNAL bool comp_integer_shift_right(CompIntegerValue lhs, CompIntegerValue rhs, CompIntegerValue* out) noexcept;
 
 // Takes the bitwise and of `lhs` and `rhs`.
-CompIntegerValue comp_integer_bit_and(CompIntegerValue lhs, CompIntegerValue rhs) noexcept;
+INTERNAL CompIntegerValue comp_integer_bit_and(CompIntegerValue lhs, CompIntegerValue rhs) noexcept;
 
 // Takes the bitwise or of `lhs` and `rhs`.
-CompIntegerValue comp_integer_bit_or(CompIntegerValue lhs, CompIntegerValue rhs) noexcept;
+INTERNAL CompIntegerValue comp_integer_bit_or(CompIntegerValue lhs, CompIntegerValue rhs) noexcept;
 
 // Takes the bitwise exclusive or of `lhs` and `rhs`.
-CompIntegerValue comp_integer_bit_xor(CompIntegerValue lhs, CompIntegerValue rhs) noexcept;
+INTERNAL CompIntegerValue comp_integer_bit_xor(CompIntegerValue lhs, CompIntegerValue rhs) noexcept;
 
-CompIntegerValue comp_integer_bit_not(CompIntegerValue value) noexcept;
+INTERNAL CompIntegerValue comp_integer_bit_not(CompIntegerValue value) noexcept;
 
 // Compares the values represented by two `CompIntegerValues`. Returns `true`
 // if they are equal, `false` otherwise.
-StrongCompareOrdering comp_integer_compare(CompIntegerValue lhs, CompIntegerValue rhs) noexcept;
+INTERNAL StrongCompareOrdering comp_integer_compare(CompIntegerValue lhs, CompIntegerValue rhs) noexcept;
 
 
 
 // Creates a `CompFloatValue` representing the given double-precision float
 // value.
-CompFloatValue comp_float_from_f64(f64 value) noexcept;
+INTERNAL CompFloatValue comp_float_from_f64(f64 value) noexcept;
 
 // Creates a `CompFloatValue` representing the given single-precision float
 // value.
-CompFloatValue comp_float_from_f32(f32 value) noexcept;
+INTERNAL CompFloatValue comp_float_from_f32(f32 value) noexcept;
 
 // Attempts to crete a `CompFloatValue` representing the given 64-bit unsigned
 // integer. If the integer is not exactly representable, `false` is returned
 // and `*out` is left uninitialized.
 // Otherwise `true` is returned and `*out` receives the resulting value.
-bool comp_float_from_u64(u64 value, CompFloatValue* out) noexcept;
+INTERNAL bool comp_float_from_u64(u64 value, CompFloatValue* out) noexcept;
 
 // Attempts to crete a `CompFloatValue` representing the given 64-bit signed
 // integer. If the integer is not exactly representable, `false` is returned
 // and `*out` is left uninitialized.
 // Otherwise `true` is returned and `*out` receives the resulting value.
-bool comp_float_from_s64(s64 value, CompFloatValue* out) noexcept;
+INTERNAL bool comp_float_from_s64(s64 value, CompFloatValue* out) noexcept;
 
 // Attempts to crete a `CompFloatValue` representing the given
 // `CompIntegerValue`. If the integer is not exactly representable, `false`
 // is returned and `*out` is left uninitialized.
 // Otherwise `true` is returned and `*out` receives the resulting value.
-bool comp_float_from_comp_integer(CompIntegerValue value, CompFloatValue* out) noexcept;
+INTERNAL bool comp_float_from_comp_integer(CompIntegerValue value, CompFloatValue* out) noexcept;
 
 // Returns the value represented by the given `CompFloatValue` as a
 // double-precision float.
-f64 f64_from_comp_float(CompFloatValue value) noexcept;
+INTERNAL f64 f64_from_comp_float(CompFloatValue value) noexcept;
 
 // Returns the value represented by the given `CompFloatValue` as a
 // single-precision float.
-f32 f32_from_comp_float(CompFloatValue value) noexcept;
+INTERNAL f32 f32_from_comp_float(CompFloatValue value) noexcept;
 
 // Adds `lhs` and `rhs` together, returning a new `CompFloatValue` representing
 // the result.
-CompFloatValue comp_float_add(CompFloatValue lhs, CompFloatValue rhs) noexcept;
+INTERNAL CompFloatValue comp_float_add(CompFloatValue lhs, CompFloatValue rhs) noexcept;
 
 // Subtracts `rhs` from `lhs`, returning a new `CompFloatValue` representing
 // the result.
-CompFloatValue comp_float_sub(CompFloatValue lhs, CompFloatValue rhs) noexcept;
+INTERNAL CompFloatValue comp_float_sub(CompFloatValue lhs, CompFloatValue rhs) noexcept;
 
 // Multiplies `lhs` with `rhs`, returning a new `CompFloatValue` representing
 // the result.
-CompFloatValue comp_float_mul(CompFloatValue lhs, CompFloatValue rhs) noexcept;
+INTERNAL CompFloatValue comp_float_mul(CompFloatValue lhs, CompFloatValue rhs) noexcept;
 
 // Divides `lhs` by `rhs`, returning a new `CompFloatValue` representing the
 // result.
-CompFloatValue comp_float_div(CompFloatValue lhs, CompFloatValue rhs) noexcept;
+INTERNAL CompFloatValue comp_float_div(CompFloatValue lhs, CompFloatValue rhs) noexcept;
 
 // Takes the modulo of `lhs` by `rhs`, returning a new `CompFloatValue`
 // representing the result.
-CompFloatValue comp_float_neg(CompFloatValue value) noexcept;
+INTERNAL CompFloatValue comp_float_neg(CompFloatValue value) noexcept;
 
-WeakCompareOrdering comp_float_compare(CompFloatValue lhs, CompFloatValue rhs) noexcept;
+INTERNAL WeakCompareOrdering comp_float_compare(CompFloatValue lhs, CompFloatValue rhs) noexcept;
 
 
 
@@ -616,7 +622,7 @@ WeakCompareOrdering comp_float_compare(CompFloatValue lhs, CompFloatValue rhs) n
 // If `bits` is not exactly `dst.count() * 8` only the low `bits % 8` bits of
 // `dst`'s last byte are written, with the others keeping their initial values.
 // Returns `false` if overflow occurred, `true` otherwise.
-bool bitwise_add(u16 bits, bool is_signed, MutRange<byte> dst, Range<byte> lhs, Range<byte> rhs) noexcept;
+INTERNAL bool bitwise_add(u16 bits, bool is_signed, MutRange<byte> dst, Range<byte> lhs, Range<byte> rhs) noexcept;
 
 // Subtracts the bytes in `rhs` from those in `lhs` as little-endian integers,
 // putting the resulting value into `dst`.
@@ -625,7 +631,7 @@ bool bitwise_add(u16 bits, bool is_signed, MutRange<byte> dst, Range<byte> lhs, 
 // If `bits` is not exactly `dst.count() * 8` only the low `bits % 8` bits of
 // `dst`'s last byte are written, with the others keeping their initial values.
 // Returns `false` if overflow occurred, `true` otherwise.
-bool bitwise_sub(u16 bits, bool is_signed, MutRange<byte> dst, Range<byte> lhs, Range<byte> rhs) noexcept;
+INTERNAL bool bitwise_sub(u16 bits, bool is_signed, MutRange<byte> dst, Range<byte> lhs, Range<byte> rhs) noexcept;
 
 // Multiplies the bytes in `lhs` with those in `rhs` as little-endian integers,
 // putting the resulting value into `dst`.
@@ -634,7 +640,7 @@ bool bitwise_sub(u16 bits, bool is_signed, MutRange<byte> dst, Range<byte> lhs, 
 // If `bits` is not exactly `dst.count() * 8` only the low `bits % 8` bits of
 // `dst`'s last byte are written, with the others keeping their initial values.
 // Returns `false` if overflow occurred, `true` otherwise.
-bool bitwise_mul(u16 bits, bool is_signed, MutRange<byte> dst, Range<byte> lhs, Range<byte> rhs) noexcept;
+INTERNAL bool bitwise_mul(u16 bits, bool is_signed, MutRange<byte> dst, Range<byte> lhs, Range<byte> rhs) noexcept;
 
 // Divides the bytes in `lhs` by those in `rhs` as little-endian integers,
 // putting the resulting value into `dst`.
@@ -643,7 +649,7 @@ bool bitwise_mul(u16 bits, bool is_signed, MutRange<byte> dst, Range<byte> lhs, 
 // If `bits` is not exactly `dst.count() * 8` only the low `bits % 8` bits of
 // `dst`'s last byte are written, with the others keeping their initial values.
 // Returns `false` if overflow occurred, `true` otherwise.
-bool bitwise_div(u16 bits, bool is_signed, MutRange<byte> dst, Range<byte> lhs, Range<byte> rhs) noexcept;
+INTERNAL bool bitwise_div(u16 bits, bool is_signed, MutRange<byte> dst, Range<byte> lhs, Range<byte> rhs) noexcept;
 
 // Takes `lhs` modulo the value in `rhs`, interpreted as little-endian
 // integers, putting the resulting value into `dst`.
@@ -652,7 +658,7 @@ bool bitwise_div(u16 bits, bool is_signed, MutRange<byte> dst, Range<byte> lhs, 
 // If `bits` is not exactly `dst.count() * 8` only the low `bits % 8` bits of
 // `dst`'s last byte are written, with the others keeping their initial values.
 // Returns `false` if overflow occurred, `true` otherwise.
-bool bitwise_mod(u16 bits, bool is_signed, MutRange<byte> dst, Range<byte> lhs, Range<byte> rhs) noexcept;
+INTERNAL bool bitwise_mod(u16 bits, bool is_signed, MutRange<byte> dst, Range<byte> lhs, Range<byte> rhs) noexcept;
 
 // Shifts the bytes in `lhs` by `rhs` bits to the left (upward in the bytewise
 // representation, i.e. to a higher index), putting the result into `dst`.
@@ -665,7 +671,7 @@ bool bitwise_mod(u16 bits, bool is_signed, MutRange<byte> dst, Range<byte> lhs, 
 // and only the `bits % 8` bits of `lhs`'s last byte are respected, with the
 // others treated as 0.
 // Bits in `dst` that do not receive a shifted bit are set to 0.
-void bitwise_shift_left(u16 bits, MutRange<byte> dst, Range<byte> lhs, u64 rhs) noexcept;
+INTERNAL void bitwise_shift_left(u16 bits, MutRange<byte> dst, Range<byte> lhs, u64 rhs) noexcept;
 
 // Shifts the bytes in `lhs` by `rhs` bits to the right (downward in the
 // bytewise representation, i.e. to a lower index), putting the result into
@@ -680,7 +686,7 @@ void bitwise_shift_left(u16 bits, MutRange<byte> dst, Range<byte> lhs, u64 rhs) 
 // If `is_arithmetic_shift` is true and the most significant bit of `src` is 1,
 // then bits in `dst` that do not receive a shifted bit are set to 1. Otherwise
 // they are set to 0.
-void bitwise_shift_right(u16 bits, MutRange<byte> dst, Range<byte> lhs, u64 rhs, bool is_arithmetic_shift) noexcept;
+INTERNAL void bitwise_shift_right(u16 bits, MutRange<byte> dst, Range<byte> lhs, u64 rhs, bool is_arithmetic_shift) noexcept;
 
 // Negates the bytes in `operand`, interpreted as a little-endian integer,
 // putting the resulting value into `dst`.
@@ -690,7 +696,7 @@ void bitwise_shift_right(u16 bits, MutRange<byte> dst, Range<byte> lhs, u64 rhs,
 // `dst`'s last byte are written, with the others keeping their initial values.
 // Returns `false` if overflow occurred (i.e., if `operand` contained the most
 // negative value representable in the given bit count), `true` otherwise.
-bool bitwise_neg(u16 bits, MutRange<byte> dst, Range<byte> operand) noexcept;
+INTERNAL bool bitwise_neg(u16 bits, MutRange<byte> dst, Range<byte> operand) noexcept;
 
 // Computes the bitwise not of the bytes in `operand`, putting the resulting
 // value into `dst`.
@@ -700,139 +706,139 @@ bool bitwise_neg(u16 bits, MutRange<byte> dst, Range<byte> operand) noexcept;
 // `dst`'s last byte are written, with the others keeping their initial values.
 // Returns `false` if overflow occurred (i.e., if `operand` contained the most
 // negative value representable in the given bit count), `true` otherwise.
-void bitwise_not(u16 bits, MutRange<byte> dst, Range<byte> operand) noexcept;
+INTERNAL void bitwise_not(u16 bits, MutRange<byte> dst, Range<byte> operand) noexcept;
 
 
 
 // Safely adds the 8-bit unsigned integers `a` and `b`, returning `false` and
 // leaving `*out` undefined if overflow occurred. Otherwise, `*out` is set to
 // the result and `true` is returned.
-bool add_checked_u8(u8 a, u8 b, u8* out) noexcept;
+INTERNAL bool add_checked_u8(u8 a, u8 b, u8* out) noexcept;
 
 // Safely adds the 16-bit unsigned integers `a` and `b`, returning `false` and
 // leaving `*out` undefined if overflow occurred. Otherwise, `*out` is set to
 // the result and `true` is returned.
-bool add_checked_u16(u16 a, u16 b, u16* out) noexcept;
+INTERNAL bool add_checked_u16(u16 a, u16 b, u16* out) noexcept;
 
 // Safely adds the 32-bit unsigned integers `a` and `b`, returning `false` and
 // leaving `*out` undefined if overflow occurred. Otherwise, `*out` is set to
 // the result and `true` is returned.
-bool add_checked_u32(u32 a, u32 b, u32* out) noexcept;
+INTERNAL bool add_checked_u32(u32 a, u32 b, u32* out) noexcept;
 
 // Safely adds the 64-bit unsigned integers `a` and `b`, returning `false` and
 // leaving `*out` undefined if overflow occurred. Otherwise, `*out` is set to
 // the result and `true` is returned.
-bool add_checked_u64(u64 a, u64 b, u64* out) noexcept;
+INTERNAL bool add_checked_u64(u64 a, u64 b, u64* out) noexcept;
 
 // Safely adds the 8-bit signed integers `a` and `b`, returning `false` and
 // leaving `*out` undefined if overflow occurred. Otherwise, `*out` is set to
 // the result and `true` is returned.
-bool add_checked_s8(s8 a, s8 b, s8* out) noexcept;
+INTERNAL bool add_checked_s8(s8 a, s8 b, s8* out) noexcept;
 
 // Safely adds the 16-bit signed integers `a` and `b`, returning `false` and
 // leaving `*out` undefined if overflow occurred. Otherwise, `*out` is set to
 // the result and `true` is returned.
-bool add_checked_s16(s16 a, s16 b, s16* out) noexcept;
+INTERNAL bool add_checked_s16(s16 a, s16 b, s16* out) noexcept;
 
 // Safely adds the 32-bit signed integers `a` and `b`, returning `false` and
 // leaving `*out` undefined if overflow occurred. Otherwise, `*out` is set to
 // the result and `true` is returned.
-bool add_checked_s32(s32 a, s32 b, s32* out) noexcept;
+INTERNAL bool add_checked_s32(s32 a, s32 b, s32* out) noexcept;
 
 // Safely adds the 64-bit signed integers `a` and `b`, returning `false` and
 // leaving `*out` undefined if overflow occurred. Otherwise, `*out` is set to
 // the result and `true` is returned.
-bool add_checked_s64(s64 a, s64 b, s64* out) noexcept;
+INTERNAL bool add_checked_s64(s64 a, s64 b, s64* out) noexcept;
 
 
 // Safely subtracts the 8-bit unsigned integer `b` from `a`, returning `false`
 // and leaving `*out` undefined if overflow occurred. Otherwise, `*out` is set
 // to the result and `true` is returned.
-bool sub_checked_u8(u8 a, u8 b, u8* out) noexcept;
+INTERNAL bool sub_checked_u8(u8 a, u8 b, u8* out) noexcept;
 
 // Safely subtracts the 16-bit unsigned integer `b` from `a`, returning `false`
 // and leaving `*out` undefined if overflow occurred. Otherwise, `*out` is set
 // to the result and `true` is returned.
-bool sub_checked_u16(u16 a, u16 b, u16* out) noexcept;
+INTERNAL bool sub_checked_u16(u16 a, u16 b, u16* out) noexcept;
 
 // Safely subtracts the 32-bit unsigned integer `b` from `a`, returning `false`
 // and leaving `*out` undefined if overflow occurred. Otherwise, `*out` is set
 // to the result and `true` is returned.
-bool sub_checked_u32(u32 a, u32 b, u32* out) noexcept;
+INTERNAL bool sub_checked_u32(u32 a, u32 b, u32* out) noexcept;
 
 // Safely subtracts the 64-bit unsigned integer `b` from `a`, returning `false`
 // and leaving `*out` undefined if overflow occurred. Otherwise, `*out` is set
 // to the result and `true` is returned.
-bool sub_checked_u64(u64 a, u64 b, u64* out) noexcept;
+INTERNAL bool sub_checked_u64(u64 a, u64 b, u64* out) noexcept;
 
 // Safely subtracts the 8-bit signed integer `b` from `a`, returning `false`
 // and leaving `*out` undefined if overflow occurred. Otherwise, `*out` is set
 // to the result and `true` is returned.
-bool sub_checked_s8(s8 a, s8 b, s8* out) noexcept;
+INTERNAL bool sub_checked_s8(s8 a, s8 b, s8* out) noexcept;
 
 // Safely subtracts the 16-bit signed integer `b` from `a`, returning `false`
 // and leaving `*out` undefined if overflow occurred. Otherwise, `*out` is set
 // to the result and `true` is returned.
-bool sub_checked_s16(s16 a, s16 b, s16* out) noexcept;
+INTERNAL bool sub_checked_s16(s16 a, s16 b, s16* out) noexcept;
 
 // Safely subtracts the 32-bit signed integer `b` from `a`, returning `false`
 // and leaving `*out` undefined if overflow occurred. Otherwise, `*out` is set
 // to the result and `true` is returned.
-bool sub_checked_s32(s32 a, s32 b, s32* out) noexcept;
+INTERNAL bool sub_checked_s32(s32 a, s32 b, s32* out) noexcept;
 
 // Safely subtracts the 64-bit signed integer `b` from `a`, returning `false`
 // and leaving `*out` undefined if overflow occurred. Otherwise, `*out` is set
 // to the result and `true` is returned.
-bool sub_checked_s64(s64 a, s64 b, s64* out) noexcept;
+INTERNAL bool sub_checked_s64(s64 a, s64 b, s64* out) noexcept;
 
 
 // Safely multiplies the 8-bit unsigned integers `a` and `b`.
 // If the result would overflow, `false` is returned, and `*out` is
 // left undefined. Otherwise, `true` is returned, and `*out` is set to the
 // division's result.
-bool mul_checked_u8(u8 a, u8 b, u8* out) noexcept;
+INTERNAL bool mul_checked_u8(u8 a, u8 b, u8* out) noexcept;
 
 // Safely multiplies the 16-bit unsigned integers `a` and `b`.
 // If the result would overflow, `false` is returned, and `*out` is
 // left undefined. Otherwise, `true` is returned, and `*out` is set to the
 // division's result.
-bool mul_checked_u16(u16 a, u16 b, u16* out) noexcept;
+INTERNAL bool mul_checked_u16(u16 a, u16 b, u16* out) noexcept;
 
 // Safely multiplies the 32-bit unsigned integers `a` and `b`.
 // If the result would overflow, `false` is returned, and `*out` is
 // left undefined. Otherwise, `true` is returned, and `*out` is set to the
 // division's result.
-bool mul_checked_u32(u32 a, u32 b, u32* out) noexcept;
+INTERNAL bool mul_checked_u32(u32 a, u32 b, u32* out) noexcept;
 
 // Safely multiplies the 64-bit unsigned integers `a` and `b`.
 // If the result would overflow, `false` is returned, and `*out` is
 // left undefined. Otherwise, `true` is returned, and `*out` is set to the
 // division's result.
-bool mul_checked_u64(u64 a, u64 b, u64* out) noexcept;
+INTERNAL bool mul_checked_u64(u64 a, u64 b, u64* out) noexcept;
 
 // Safely multiplies the 8-bit signed integers `a` and `b`.
 // If the result would overflow, `false` is returned, and `*out` is
 // left undefined. Otherwise, `true` is returned, and `*out` is set to the
 // division's result.
-bool mul_checked_s8(s8 a, s8 b, s8* out) noexcept;
+INTERNAL bool mul_checked_s8(s8 a, s8 b, s8* out) noexcept;
 
 // Safely multiplies the 16-bit signed integers `a` and `b`.
 // If the result would overflow, `false` is returned, and `*out` is
 // left undefined. Otherwise, `true` is returned, and `*out` is set to the
 // division's result.
-bool mul_checked_s16(s16 a, s16 b, s16* out) noexcept;
+INTERNAL bool mul_checked_s16(s16 a, s16 b, s16* out) noexcept;
 
 // Safely multiplies the 32-bit signed integers `a` and `b`.
 // If the result would overflow, `false` is returned, and `*out` is
 // left undefined. Otherwise, `true` is returned, and `*out` is set to the
 // division's result.
-bool mul_checked_s32(s32 a, s32 b, s32* out) noexcept;
+INTERNAL bool mul_checked_s32(s32 a, s32 b, s32* out) noexcept;
 
 // Safely multiplies the 64-bit signed integers `a` and `b`.
 // If the result would overflow, `false` is returned, and `*out` is
 // left undefined. Otherwise, `true` is returned, and `*out` is set to the
 // division's result.
-bool mul_checked_s64(s64 a, s64 b, s64* out) noexcept;
+INTERNAL bool mul_checked_s64(s64 a, s64 b, s64* out) noexcept;
 
 
 
@@ -1519,19 +1525,19 @@ struct ReferenceList
 
 
 // Bitwise `or` of two `AstFlag`s
-inline constexpr AstFlag operator|(AstFlag lhs, AstFlag rhs) noexcept
+static inline constexpr AstFlag operator|(AstFlag lhs, AstFlag rhs) noexcept
 {
 	return static_cast<AstFlag>(static_cast<u8>(lhs) | static_cast<u8>(rhs));
 }
 
 // Bitwise `and` of two `AstFlag`s
-inline constexpr AstFlag operator&(AstFlag lhs, AstFlag rhs) noexcept
+static inline constexpr AstFlag operator&(AstFlag lhs, AstFlag rhs) noexcept
 {
 	return static_cast<AstFlag>(static_cast<u8>(lhs) & static_cast<u8>(rhs));
 }
 
 // Bitwise `set-or` of two `AstFlag`s
-inline constexpr AstFlag& operator|=(AstFlag& lhs, AstFlag rhs) noexcept
+static inline constexpr AstFlag& operator|=(AstFlag& lhs, AstFlag rhs) noexcept
 {
 	lhs = lhs | rhs;
 
@@ -1539,7 +1545,7 @@ inline constexpr AstFlag& operator|=(AstFlag& lhs, AstFlag rhs) noexcept
 }
 
 // Bitwise `set-and` of two `AstFlag`s
-inline constexpr AstFlag& operator&=(AstFlag& lhs, AstFlag rhs) noexcept
+static inline constexpr AstFlag& operator&=(AstFlag& lhs, AstFlag rhs) noexcept
 {
 	lhs = lhs & rhs;
 
@@ -1552,12 +1558,12 @@ inline constexpr AstFlag& operator&=(AstFlag& lhs, AstFlag rhs) noexcept
 // `node` must be part of an AST created by a call to `complete_ast` on the
 // same `AstPool`.
 // Use `ast_node_from_id` to retrieve `node` from the returned `AstNodeId`.
-AstNodeId id_from_ast_node(CoreData* core, AstNode* node) noexcept;
+INTERNAL AstNodeId id_from_ast_node(CoreData* core, AstNode* node) noexcept;
 
 // Converts `id` to its corresponding `AstNode*`.
 // `id` must have been obtained from a previous call to `id_from_ast_node` on
 // the same `AstPool`.
-AstNode* ast_node_from_id(CoreData* core, AstNodeId id) noexcept;
+INTERNAL AstNode* ast_node_from_id(CoreData* core, AstNodeId id) noexcept;
 
 
 
@@ -1570,7 +1576,7 @@ AstNode* ast_node_from_id(CoreData* core, AstNodeId id) noexcept;
 // The node's `source_id`, `flags` and `tag` fields will be set to the given
 // values. The node will not have an attachment.
 // To complete the ast builder, call `complete_ast`.
-AstBuilderToken push_node(CoreData* core, AstBuilderToken first_child, SourceId source_id, AstFlag flags, AstTag tag) noexcept;
+INTERNAL AstBuilderToken push_node(CoreData* core, AstBuilderToken first_child, SourceId source_id, AstFlag flags, AstTag tag) noexcept;
 
 // Pushes a new `AstNode` with the given attachment into `asts`'s ast builder.
 // Nodes are pushed in post-order, meaning that children are pushed before
@@ -1584,7 +1590,7 @@ AstBuilderToken push_node(CoreData* core, AstBuilderToken first_child, SourceId 
 // argument. Note that the allocated attachment is four-byte aligned, so it is
 // not possible to have attachments requiring a higher alignment.
 // To complete the ast builder, call `complete_ast`.
-AstBuilderToken push_node(CoreData* core, AstBuilderToken first_child, SourceId source_id, AstFlag flags, AstTag tag, u8 attachment_dwords, const void* attachment) noexcept;
+INTERNAL AstBuilderToken push_node(CoreData* core, AstBuilderToken first_child, SourceId source_id, AstFlag flags, AstTag tag, u8 attachment_dwords, const void* attachment) noexcept;
 
 // Templated helper version of `push_node`.
 // This makes it easier to create a node with a given `attachment`.
@@ -1594,7 +1600,7 @@ AstBuilderToken push_node(CoreData* core, AstBuilderToken first_child, SourceId 
 // will be set to `T::TAG`.
 // See the non-templated versions of `push_node` for further details.
 template<typename T>
-static AstBuilderToken push_node(CoreData* core, AstBuilderToken first_child, SourceId source_id, AstFlag flags, T attachment) noexcept
+static inline AstBuilderToken push_node(CoreData* core, AstBuilderToken first_child, SourceId source_id, AstFlag flags, T attachment) noexcept
 {
 	static_assert(sizeof(T) % sizeof(u64) == 0);
 
@@ -1605,39 +1611,39 @@ static AstBuilderToken push_node(CoreData* core, AstBuilderToken first_child, So
 // resulting ast.
 // To fill the builder, use one of the `push_node` functions.
 // After a call to this function, `asts`'s builder will be reset.
-AstNode* complete_ast(CoreData* core) noexcept;
+INTERNAL AstNode* complete_ast(CoreData* core) noexcept;
 
 
 
-ClosureList* alloc_closure_list(CoreData* core, u32 entry_count) noexcept;
+INTERNAL ClosureList* alloc_closure_list(CoreData* core, u32 entry_count) noexcept;
 
-ClosureListId id_from_closure_list(CoreData* core, ClosureList* closure_list) noexcept;
+INTERNAL ClosureListId id_from_closure_list(CoreData* core, ClosureList* closure_list) noexcept;
 
-ClosureList* closure_list_from_id(CoreData* core, ClosureListId id) noexcept;
+INTERNAL ClosureList* closure_list_from_id(CoreData* core, ClosureListId id) noexcept;
 
 
 
-ReferenceList* alloc_reference_list(CoreData* core, u32 entry_count) noexcept;
+INTERNAL ReferenceList* alloc_reference_list(CoreData* core, u32 entry_count) noexcept;
 
-ReferenceListId id_from_reference_list(CoreData* core, ReferenceList* reference_list) noexcept;
+INTERNAL ReferenceListId id_from_reference_list(CoreData* core, ReferenceList* reference_list) noexcept;
 
-ReferenceList* reference_list_from_id(CoreData* core, ReferenceListId id) noexcept;
+INTERNAL ReferenceList* reference_list_from_id(CoreData* core, ReferenceListId id) noexcept;
 
 
 
 // Checks whether `node` has any child nodes.
 // If it does, returns `true`, otherwise returns `false`.
-bool has_children(const AstNode* node) noexcept;
+INTERNAL bool has_children(const AstNode* node) noexcept;
 
 // Checks whether `node` has a next sibling.
 // If it does, returns `true`, otherwise returns `false`.
-bool has_next_sibling(const AstNode* node) noexcept;
+INTERNAL bool has_next_sibling(const AstNode* node) noexcept;
 
 // Checks whether the given `flag` is set in `node`s `flags` field.
 // If it does, returns `true`, otherwise returns `false`.
-bool has_flag(const AstNode* node, AstFlag flag) noexcept;
+INTERNAL bool has_flag(const AstNode* node, AstFlag flag) noexcept;
 
-bool is_descendant_of(const AstNode* parent, const AstNode* child) noexcept;
+INTERNAL bool is_descendant_of(const AstNode* parent, const AstNode* child) noexcept;
 
 // Returns the next sibling of `node`.
 // This function must only be called on `AstNode`s that have a next sibling.
@@ -1645,7 +1651,7 @@ bool is_descendant_of(const AstNode* parent, const AstNode* child) noexcept;
 // the `condition` of an `AstTag::If` node will always have a next sibling,
 // namely a `where` or the `consequent`), or dynamically checked by a call to
 // `has_next_sibling` (e.g., in case of the child of an `AstTag::Block` node).
-AstNode* next_sibling_of(AstNode* node) noexcept;
+INTERNAL AstNode* next_sibling_of(AstNode* node) noexcept;
 
 // Returns the first child of `node`.
 // This function must only be called on `AstNode`s that have children.
@@ -1653,12 +1659,12 @@ AstNode* next_sibling_of(AstNode* node) noexcept;
 // always have exactly two children), or dynamically checked by a call to
 // `has_children` (e.g., for an `AstTag::Block` node, which may represent an
 // empty block).
-AstNode* first_child_of(AstNode* node) noexcept;
+INTERNAL AstNode* first_child_of(AstNode* node) noexcept;
 
 // Retrieves a pointer to `node`'s attachment of type `T`, where `T` must be
 // the `Ast*Data` struct corresponding to `node`'s `tag`.
 template<typename T>
-inline T* attachment_of(AstNode* node) noexcept
+static inline T* attachment_of(AstNode* node) noexcept
 {
 	static_assert(sizeof(AstNode) == sizeof(u64));
 
@@ -1672,7 +1678,7 @@ inline T* attachment_of(AstNode* node) noexcept
 // Retrieves a `const` pointer to `node`'s attachment of type `T`, where `T`
 // must be the `Ast*Data` struct corresponding to `node`'s `tag`.
 template<typename T>
-inline const T* attachment_of(const AstNode* node) noexcept
+static inline const T* attachment_of(const AstNode* node) noexcept
 {
 	ASSERT_OR_IGNORE(T::TAG == node->tag);
 
@@ -1681,89 +1687,89 @@ inline const T* attachment_of(const AstNode* node) noexcept
 	return reinterpret_cast<const T*>(node + 1);
 }
 
-SourceId source_id_of_ast_node(const CoreData* core, const AstNode* node) noexcept;
+INTERNAL SourceId source_id_of_ast_node(const CoreData* core, const AstNode* node) noexcept;
 
 
 
 // Retrieves a `FuncInfo` struct corresponding to `node`'s child structure.
 // `node`'s tag must be `AstTag::Func`.
-SignatureInfo get_signature_info(AstNode* node) noexcept;
+INTERNAL SignatureInfo get_signature_info(AstNode* node) noexcept;
 
 // Retrieves a `DefinitionInfo` struct corresponding to `node`'s child
 // structure.
 // `node`'s tag must be `AstTag::Definition`.
-DefinitionInfo get_definition_info(AstNode* node) noexcept;
+INTERNAL DefinitionInfo get_definition_info(AstNode* node) noexcept;
 
 // Retrieves a `IfInfo` struct corresponding to `node`'s child structure.
 // `node`'s tag must be `AstTag::If`.
-IfInfo get_if_info(AstNode* node) noexcept;
+INTERNAL IfInfo get_if_info(AstNode* node) noexcept;
 
 // Retrieves a `ForInfo` struct corresponding to `node`'s child structure.
 // `node`'s tag must be `AstTag::For`.
-ForInfo get_for_info(AstNode* node) noexcept;
+INTERNAL ForInfo get_for_info(AstNode* node) noexcept;
 
 // Retrieves a `ForEachInfo` struct corresponding to `node`'s child structure.
 // `node`'s tag must be `AstTag::ForEach`.
-ForEachInfo get_foreach_info(AstNode* node) noexcept;
+INTERNAL ForEachInfo get_foreach_info(AstNode* node) noexcept;
 
 // Retrieves a `SwitchInfo` struct corresponding to `node`'s child structure.
 // `node`'s tag must be `AstTag::Switch`.
-SwitchInfo get_switch_info(AstNode* node) noexcept;
+INTERNAL SwitchInfo get_switch_info(AstNode* node) noexcept;
 
-OpSliceOfInfo get_op_slice_of_info(AstNode* node) noexcept;
+INTERNAL OpSliceOfInfo get_op_slice_of_info(AstNode* node) noexcept;
 
 // Creates an iterator over `node`'s direct children, skipping over more
 // removed ancestors.
 // See `AstDirectChildIterator` for further details.
-AstDirectChildIterator direct_children_of(AstNode* node) noexcept;
+INTERNAL AstDirectChildIterator direct_children_of(AstNode* node) noexcept;
 
 // Retrieves the next element of `iterator`. This function may only be called
 // exactly once after `has_next` called on the same iterator has returned
 // `true`.
-AstNode* next(AstDirectChildIterator* iterator) noexcept;
+INTERNAL AstNode* next(AstDirectChildIterator* iterator) noexcept;
 
 // Checks whether `iterator` has an element to be returned by a future call to
 // `next`. This call is idempotent.
-bool has_next(const AstDirectChildIterator* iterator) noexcept;
+INTERNAL bool has_next(const AstDirectChildIterator* iterator) noexcept;
 
 // Creates an iterator over `node`'s ancestors, yielding them in preorder.
 // See `AstPreorderIterator` for further details.
-AstPreorderIterator preorder_ancestors_of(AstNode* node) noexcept;
+INTERNAL AstPreorderIterator preorder_ancestors_of(AstNode* node) noexcept;
 
 // Retrieves the next element of `iterator`. This function may only be called
 // exactly once after `has_next` called on the same iterator has returned
 // `true`.
-AstIterationResult next(AstPreorderIterator* iterator) noexcept;
+INTERNAL AstIterationResult next(AstPreorderIterator* iterator) noexcept;
 
 // Checks whether `iterator` has an element to be returned by a future call to
 // `next`. This call is idempotent.
-bool has_next(const AstPreorderIterator* iterator) noexcept;
+INTERNAL bool has_next(const AstPreorderIterator* iterator) noexcept;
 
 // Creates an iterator over `node`'s ancestors, yielding them in postorder.
 // See `AstPostorderIterator` for further details.
-AstPostorderIterator postorder_ancestors_of(AstNode* node) noexcept;
+INTERNAL AstPostorderIterator postorder_ancestors_of(AstNode* node) noexcept;
 
 // Retrieves the next element of `iterator`. This function may only be called
 // exactly once after `has_next` called on the same iterator has returned
 // `true`.
-AstIterationResult next(AstPostorderIterator* iterator) noexcept;
+INTERNAL AstIterationResult next(AstPostorderIterator* iterator) noexcept;
 
 // Checks whether `iterator` has an element to be returned by a future call to
 // `next`. This call is idempotent.
-bool has_next(const AstPostorderIterator* iterator) noexcept;
+INTERNAL bool has_next(const AstPostorderIterator* iterator) noexcept;
 
-AstFlatIterator flat_ancestors_of(AstNode* node) noexcept;
+INTERNAL AstFlatIterator flat_ancestors_of(AstNode* node) noexcept;
 
-AstNode* next(AstFlatIterator* iterator) noexcept;
+INTERNAL AstNode* next(AstFlatIterator* iterator) noexcept;
 
-bool has_next(const AstFlatIterator* iterator) noexcept;
+INTERNAL bool has_next(const AstFlatIterator* iterator) noexcept;
 
 
 
 // Retrieves a string representing the given `tag`.
 // If `tag` is not an enumerant of `AstTag`, it is treated as
 // `AstTag::INVALID`.
-const char8* tag_name(AstTag tag) noexcept;
+INTERNAL const char8* tag_name(AstTag tag) noexcept;
 
 
 
@@ -1881,24 +1887,24 @@ struct SourceLocation
 // Due to the way this function interacts with `parse` in `import_file`,
 // `source_file->ast` will be `AstNodeId::INVALID` if and only if this is
 // the first read of the file (meaning `content` contains the file's contents).
-SourceFileRead read_source_file(CoreData* core, Range<char8> filepath) noexcept;
+INTERNAL SourceFileRead read_source_file(CoreData* core, Range<char8> filepath) noexcept;
 
 // Converts `source_id` to a `SourceLocation`.
 // If `source_id` is `SourceId::INVALID`, a dummy location indicating the
 // hard-coded prelude is returned.
-SourceLocation source_location_from_source_id(CoreData* core, SourceId source_id) noexcept;
+INTERNAL SourceLocation source_location_from_source_id(CoreData* core, SourceId source_id) noexcept;
 
 // Retrieves the path to the file to which the given `source_id` belongs.
 // This path may not be the same as that from which the file was imported, but
 // can be used to open the file.
 // `source_id` must not be `SourceId::INVALID`.
-Range<char8> source_file_path_from_source_id(CoreData* core, SourceId source_id) noexcept;
+INTERNAL Range<char8> source_file_path_from_source_id(CoreData* core, SourceId source_id) noexcept;
 
 
 
-SourceFileId id_from_source_file(CoreData* core, SourceFile* file) noexcept;
+INTERNAL SourceFileId id_from_source_file(CoreData* core, SourceFile* file) noexcept;
 
-SourceFile* source_file_from_id(CoreData* core, SourceFileId file_id) noexcept;
+INTERNAL SourceFile* source_file_from_id(CoreData* core, SourceFileId file_id) noexcept;
 
 
 
@@ -2087,14 +2093,14 @@ struct ErrorRecord
 // given `source_id`.
 // Future calls to `get_errors` or `print_errors` will include an `ErrorRecord`
 // with members corresponding to the given arguments.
-void record_error(CoreData* core, SourceId source_id, CompileError error) noexcept;
+INTERNAL void record_error(CoreData* core, SourceId source_id, CompileError error) noexcept;
 
 // Records the given `error` into the `ErrorSink`, associating it with the
 // `SourceId` returned by
 // `source_id_of_ast_node(<AstPool passed to create_error_sink>, source_node)`.
 // Future calls to `get_errors` or `print_errors` will include an `ErrorRecord`
 // with members corresponding to the given arguments.
-void record_error(CoreData* core, const AstNode* source_node, CompileError error) noexcept;
+INTERNAL void record_error(CoreData* core, const AstNode* source_node, CompileError error) noexcept;
 
 // Prints all errors added to the given `ErrorSink` by previous calls to
 // `record_error` to its log file, in the order they were added.
@@ -2104,17 +2110,17 @@ void print_errors(CoreData* core) noexcept;
 
 // Returns a range of `ErrorRecords` representing all previous calls to
 // `record_error` on the given `ErrorSink`.
-Range<ErrorRecord> get_errors(CoreData* core) noexcept;
+INTERNAL Range<ErrorRecord> get_errors(CoreData* core) noexcept;
 
 // Appends the message for the given `CompileError` to `sink`, prefixing it with
 // the given `location`.
 // This is mainly intended for usage with `Config` parsing, as there is no
 // `ErrorSink` available at that point.
-void print_error(PrintSinkHandle sink, const SourceLocation* location, CompileError error, u8 tab_size) noexcept;
+INTERNAL void print_error(PrintSinkHandle sink, const SourceLocation* location, CompileError error, u8 tab_size) noexcept;
 
-const char8* tag_name(CompileError error) noexcept;
+INTERNAL const char8* tag_name(CompileError error) noexcept;
 
-Maybe<CompileError> compile_error_from_name(Range<char8> name) noexcept;
+INTERNAL Maybe<CompileError> compile_error_from_name(Range<char8> name) noexcept;
 
 
 
@@ -2122,9 +2128,9 @@ Maybe<CompileError> compile_error_from_name(Range<char8> name) noexcept;
 
 struct LexicalAnalyser;
 
-bool set_prelude_scope(CoreData* core, AstNode* prelude, SourceFileId file_id) noexcept;
+INTERNAL bool set_prelude_scope(CoreData* core, AstNode* prelude, SourceFileId file_id) noexcept;
 
-bool resolve_names(CoreData* core, AstNode* root, SourceFileId file_id) noexcept;
+INTERNAL bool resolve_names(CoreData* core, AstNode* root, SourceFileId file_id) noexcept;
 
 
 
@@ -2548,100 +2554,100 @@ struct alignas(8) SelfType
 // Creates a "simple" type. This takes a `tag`, which
 // must not expect any additional associated data.
 // See `TypeTag` for details on which `tag`s are applicable.
-TypeId type_create_simple(CoreData* core, TypeTag tag) noexcept;
+INTERNAL TypeId type_create_simple(CoreData* core, TypeTag tag) noexcept;
 
 // Creates a "numeric", i.e. `Integer` or `Float` type.
 // This takes a tag indicating which type to create, along with a `NumericType`
 // further describing it.
-TypeId type_create_numeric(CoreData* core, TypeTag tag, NumericType attach) noexcept;
+INTERNAL TypeId type_create_numeric(CoreData* core, TypeTag tag, NumericType attach) noexcept;
 
 // Creates a "reference", i.e. `Ptr`, `Slice` or `TailArray` type.
 // This takes a tag indicating which type to create, along with a
 // `ReferenceType` further describing it.
-TypeId type_create_reference(CoreData* core, TypeTag tag, ReferenceType attach) noexcept;
+INTERNAL TypeId type_create_reference(CoreData* core, TypeTag tag, ReferenceType attach) noexcept;
 
 // Creates an "array", i.e. `Array` or `ArrayLiteral` type.
 // This takes a tag indicating which type to create, along with an `ArrayType`
 // further describing it.
-TypeId type_create_array(CoreData* core, ArrayType attach) noexcept;
+INTERNAL TypeId type_create_array(CoreData* core, ArrayType attach) noexcept;
 
 
 
-TypeId type_create_indirection(CoreData* core) noexcept;
+INTERNAL TypeId type_create_indirection(CoreData* core) noexcept;
 
-void type_set_indirection_target(CoreData* core, TypeId indirection_type_id, TypeId target_type_id) noexcept;
-
-
-
-TypeId type_create_signature(CoreData* core, bool is_func, u8 parameter_count) noexcept;
-
-void type_add_signature_parameter(CoreData* core, TypeId type_id, SignatureParameterInit init) noexcept;
-
-TypeId type_seal_signature(CoreData* core, TypeId type_id, SignatureSealInfo seal_info) noexcept;
-
-TypeId type_instantiate_templated_signature(CoreData* core, TypeId type_id) noexcept;
-
-void type_complete_templated_signature_parameter(CoreData* core, TypeId type_id, u16 rank, CompleteTypeAndValue type_and_value) noexcept;
-
-void type_complete_templated_signature_return_type(CoreData* core, TypeId type_id, TypeId return_type_id) noexcept;
+INTERNAL void type_set_indirection_target(CoreData* core, TypeId indirection_type_id, TypeId target_type_id) noexcept;
 
 
 
-TypeId type_create_trait(CoreData* core, Range<IdentifierId> parameter_names) noexcept;
+INTERNAL TypeId type_create_signature(CoreData* core, bool is_func, u8 parameter_count) noexcept;
+
+INTERNAL void type_add_signature_parameter(CoreData* core, TypeId type_id, SignatureParameterInit init) noexcept;
+
+INTERNAL TypeId type_seal_signature(CoreData* core, TypeId type_id, SignatureSealInfo seal_info) noexcept;
+
+INTERNAL TypeId type_instantiate_templated_signature(CoreData* core, TypeId type_id) noexcept;
+
+INTERNAL void type_complete_templated_signature_parameter(CoreData* core, TypeId type_id, u16 rank, CompleteTypeAndValue type_and_value) noexcept;
+
+INTERNAL void type_complete_templated_signature_return_type(CoreData* core, TypeId type_id, TypeId return_type_id) noexcept;
 
 
 
-TypeId type_create_self(CoreData* core, TypeId base_type_id, TypeId trait_type_id, u8 trait_argument_count, Code2Id trait_body, SourceId definition_source_id, Maybe<ClosureId> impl_closure_id, Maybe<ClosureId> trait_closure_id) noexcept;
-
-TypeId type_set_self_trait_arguments(CoreData* core, TypeId type_id, const TypeId* arguments) noexcept;
-
-void type_set_self_impl_body(CoreData* core, TypeId type_id, TypeId impl_body_type_id) noexcept;
+INTERNAL TypeId type_create_trait(CoreData* core, Range<IdentifierId> parameter_names) noexcept;
 
 
 
-TypeId type_create_impl_body(CoreData* core, TypeId self_type_id, u16 trait_member_count) noexcept;
+INTERNAL TypeId type_create_self(CoreData* core, TypeId base_type_id, TypeId trait_type_id, u8 trait_argument_count, Code2Id trait_body, SourceId definition_source_id, Maybe<ClosureId> impl_closure_id, Maybe<ClosureId> trait_closure_id) noexcept;
 
-void type_add_impl_body_member(CoreData* core, TypeId type_id, ImplMemberInit init) noexcept;
+INTERNAL TypeId type_set_self_trait_arguments(CoreData* core, TypeId type_id, const TypeId* arguments) noexcept;
 
-Code2Id type_impl_body_member_type_initializer(CoreData* core, TypeId type_id, u16 rank) noexcept;
-
-void type_seal_impl_body(CoreData* core, TypeId type_id) noexcept;
+INTERNAL void type_set_self_impl_body(CoreData* core, TypeId type_id, TypeId impl_body_type_id) noexcept;
 
 
 
-TypeId type_create_user_composite(CoreData* core, SourceId definition_site) noexcept;
+INTERNAL TypeId type_create_impl_body(CoreData* core, TypeId self_type_id, u16 trait_member_count) noexcept;
 
-bool type_add_user_composite_member(CoreData* core, TypeId type_id, UserCompositeMemberInit init) noexcept;
+INTERNAL void type_add_impl_body_member(CoreData* core, TypeId type_id, ImplMemberInit init) noexcept;
 
-TypeId type_seal_user_composite(CoreData* core, TypeId type_id, UserCompositeSealInfo seal_info) noexcept;
+INTERNAL Code2Id type_impl_body_member_type_initializer(CoreData* core, TypeId type_id, u16 rank) noexcept;
 
-
-
-TypeId type_create_file_composite(CoreData* core, u16 member_count, SourceId definition_site) noexcept;
-
-void type_add_file_composite_member(CoreData* core, TypeId type_id, FileCompositeMemberInit init) noexcept;
+INTERNAL void type_seal_impl_body(CoreData* core, TypeId type_id) noexcept;
 
 
 
-TypeId type_create_approx_composite(CoreData* core, u16 member_count) noexcept;
+INTERNAL TypeId type_create_user_composite(CoreData* core, SourceId definition_site) noexcept;
 
-void type_add_approx_composite_member(CoreData* core, TypeId type_id, u16 rank, Maybe<IdentifierId> name, TypeId member_type_id) noexcept;
+INTERNAL bool type_add_user_composite_member(CoreData* core, TypeId type_id, UserCompositeMemberInit init) noexcept;
 
-
-
-bool type_file_member_init_begin(CoreData* core, TypeId type_id, u16 rank) noexcept;
-
-void type_file_member_init_set_type(CoreData* core, TypeId type_id, u16 rank, TypeId member_type_id) noexcept;
-
-void type_file_member_init_complete(CoreData* core, TypeId type_id, u16 rank, TypeId member_type_id, CoreId value_id) noexcept;
+INTERNAL TypeId type_seal_user_composite(CoreData* core, TypeId type_id, UserCompositeSealInfo seal_info) noexcept;
 
 
 
-TypeRelation type_relation(CoreData* core, TypeId first_type_id, TypeId second_type_id) noexcept;
+INTERNAL TypeId type_create_file_composite(CoreData* core, u16 member_count, SourceId definition_site) noexcept;
+
+INTERNAL void type_add_file_composite_member(CoreData* core, TypeId type_id, FileCompositeMemberInit init) noexcept;
+
+
+
+INTERNAL TypeId type_create_approx_composite(CoreData* core, u16 member_count) noexcept;
+
+INTERNAL void type_add_approx_composite_member(CoreData* core, TypeId type_id, u16 rank, Maybe<IdentifierId> name, TypeId member_type_id) noexcept;
+
+
+
+INTERNAL bool type_file_member_init_begin(CoreData* core, TypeId type_id, u16 rank) noexcept;
+
+INTERNAL void type_file_member_init_set_type(CoreData* core, TypeId type_id, u16 rank, TypeId member_type_id) noexcept;
+
+INTERNAL void type_file_member_init_complete(CoreData* core, TypeId type_id, u16 rank, TypeId member_type_id, CoreId value_id) noexcept;
+
+
+
+INTERNAL TypeRelation type_relation(CoreData* core, TypeId first_type_id, TypeId second_type_id) noexcept;
 
 // Checks whether `type_id_a` and `type_id_b` refer to the same type or
 // non-distinct aliases of the same type.
-TypeEquality type_is_equal(CoreData* core, TypeId type_id_a, TypeId type_id_b) noexcept;
+INTERNAL TypeEquality type_is_equal(CoreData* core, TypeId type_id_a, TypeId type_id_b) noexcept;
 
 
 
@@ -2649,14 +2655,14 @@ TypeEquality type_is_equal(CoreData* core, TypeId type_id_a, TypeId type_id_b) n
 // This returns false iff `type_id` refers to a composite type that has a
 // `disposition` of `TypeDisposition::User` and has not yet had
 // `type_seal_composite` called on it.
-bool type_has_metrics(CoreData* core, TypeId type_id) noexcept;
+INTERNAL bool type_has_metrics(CoreData* core, TypeId type_id) noexcept;
 
 // Retrieves the `size`, `stride` and `align` of the type referenced by
 // `type_id`. `size` and `alignment` may take any value, including `0`.
 // `align` is guaranteed to be non-zero.
 // This function must not be called on a composite type which has not received
 // a previous call to `close_open_type`.
-bool type_metrics_from_id(CoreData* core, TypeId type_id, TypeMetrics* out) noexcept;
+INTERNAL bool type_metrics_from_id(CoreData* core, TypeId type_id, TypeMetrics* out) noexcept;
 
 // Retrieves the `TypeTag` associated with the given `type_id`.
 // For types created by `simple_type`, this is the value of the `tag`
@@ -2664,35 +2670,35 @@ bool type_metrics_from_id(CoreData* core, TypeId type_id, TypeMetrics* out) noex
 // For types craeted by `alias_type`, this is the same as the `tag` of the
 // aliased type.
 // For types created by `create_open_type`, this is `TypeTag::Composite`.
-TypeTag type_tag_from_id(CoreData* core, TypeId type_id) noexcept;
+INTERNAL TypeTag type_tag_from_id(CoreData* core, TypeId type_id) noexcept;
 
 // Retrieves the number of members in the type referenced by `type_id`, which
 // must reference a sealed composite type.
-bool type_member_count(CoreData* core, TypeId type_id, u32* out) noexcept;
+INTERNAL bool type_member_count(CoreData* core, TypeId type_id, u32* out) noexcept;
 
-bool type_composite_is_impl_body(CoreData* core, TypeId type_id) noexcept;
+INTERNAL bool type_composite_is_impl_body(CoreData* core, TypeId type_id) noexcept;
 
-bool type_implements_trait(CoreData* core, TypeId type_id, Code2Id trait_body, Range<TypeId> argument_types) noexcept;
+INTERNAL bool type_implements_trait(CoreData* core, TypeId type_id, Code2Id trait_body, Range<TypeId> argument_types) noexcept;
 
-bool type_get_holotype(CoreData* core, TypeId type_id, TypeId* out_holotype_id) noexcept;
+INTERNAL bool type_get_holotype(CoreData* core, TypeId type_id, TypeId* out_holotype_id) noexcept;
 
-SignatureTypeInfo type_signature_info_from_id(CoreData* core, TypeId type_id) noexcept;
+INTERNAL SignatureTypeInfo type_signature_info_from_id(CoreData* core, TypeId type_id) noexcept;
 
-bool type_member_info_by_rank(CoreData* core, TypeId type_id, u16 rank, MemberInfo* out) noexcept;
+INTERNAL bool type_member_info_by_rank(CoreData* core, TypeId type_id, u16 rank, MemberInfo* out) noexcept;
 
-MemberByNameRst type_member_info_by_name(CoreData* core, TypeId type_id, IdentifierId name, MemberInfo* out) noexcept;
+INTERNAL MemberByNameRst type_member_info_by_name(CoreData* core, TypeId type_id, IdentifierId name, MemberInfo* out) noexcept;
 
-IdentifierId type_member_name_by_rank(CoreData* core, TypeId type_id, u16 rank) noexcept;
+INTERNAL IdentifierId type_member_name_by_rank(CoreData* core, TypeId type_id, u16 rank) noexcept;
 
 // Do not call this function directly. Use `type_attachment_from_id` instead.
-const void* type_attachment_from_id_raw(CoreData* core, TypeId type_id) noexcept;
+INTERNAL const void* type_attachment_from_id_raw(CoreData* core, TypeId type_id) noexcept;
 
 // Retrieves the structural data associated with `type_id`, which must not
 // refer to a composite type.
 // The returned data is the same as that passed to the call to `simple_type`
 // that created `type_id`, chaining through calls to `alias_type`.
 template<typename T>
-const T* type_attachment_from_id(CoreData* core, TypeId type_id) noexcept
+static inline const T* type_attachment_from_id(CoreData* core, TypeId type_id) noexcept
 {
 	#ifndef NDEBUG
 		const TypeTag tag = type_tag_from_id(core, type_id);
@@ -2717,21 +2723,21 @@ const T* type_attachment_from_id(CoreData* core, TypeId type_id) noexcept
 // Retrieves a string representing the given `tag`.
 // If `tag` is not an enumerant of `TypeTag`, it is treated as
 // `TypeTag::INVALID`.
-const char8* tag_name(TypeTag tag) noexcept;
+INTERNAL const char8* tag_name(TypeTag tag) noexcept;
 
 
 // Creates an iterator over `type_id`s members.
 // See `MemberIterator` for further details.
-MemberIterator members_of(CoreData* core, TypeId type_id) noexcept;
+INTERNAL MemberIterator members_of(CoreData* core, TypeId type_id) noexcept;
 
 // Retrieves the next element of `iterator`. This function may only be called
 // exactly once after `has_next` called on the same iterator has returned
 // `true`.
-bool next(MemberIterator* it, MemberInfo* out_info) noexcept;
+INTERNAL bool next(MemberIterator* it, MemberInfo* out_info) noexcept;
 
 // Checks whether `iterator` has an element to be returned by a future call to
 // `next`. This call is idempotent.
-bool has_next(const MemberIterator* it) noexcept;
+INTERNAL bool has_next(const MemberIterator* it) noexcept;
 
 
 
@@ -2746,7 +2752,7 @@ struct Parser;
 // with subsequent bytes receiving subsequent `SourceId`s.
 // If `is_std` is `true`, builtins are allowed, otherwise they are disallowed.
 // `filepath` is used for logging.
-Maybe<AstNode*> parse(CoreData* core, Range<char8> content, SourceId source_id_base, bool is_std) noexcept;
+INTERNAL Maybe<AstNode*> parse(CoreData* core, Range<char8> content, SourceId source_id_base, bool is_std) noexcept;
 
 
 
@@ -3423,54 +3429,54 @@ struct alignas(4) Code2AttUnaryOp
 
 
 template<typename T>
-static const T* attachment_of(const Code2* code) noexcept
+static inline const T* attachment_of(const Code2* code) noexcept
 {
 	return reinterpret_cast<const T*>(code);
 }
 
 template<typename T>
-static T* attachment_of(Code2* code) noexcept
+static inline T* attachment_of(Code2* code) noexcept
 {
 	return reinterpret_cast<T*>(code);
 }
 
 
 
-Code2Id id_from_code2_block(CoreData* core, const Code2Block* block) noexcept;
+INTERNAL Code2Id id_from_code2_block(CoreData* core, const Code2Block* block) noexcept;
 
-Code2Block* code2_block_from_id(CoreData* core, Code2Id id) noexcept;
-
-
-
-Code2Offset offset_from_code2(const Code2Block* block, const Code2* data) noexcept;
-
-Code2* code2_from_offset(Code2Block* block, Code2Offset offset) noexcept;
-
-const Code2* code2_from_offset(const Code2Block* block, Code2Offset offset) noexcept;
+INTERNAL Code2Block* code2_block_from_id(CoreData* core, Code2Id id) noexcept;
 
 
 
-Code2* code2_block_begin(Code2Block* block) noexcept;
+INTERNAL Code2Offset offset_from_code2(const Code2Block* block, const Code2* data) noexcept;
 
-const Code2* code2_block_begin(const Code2Block* block) noexcept;
+INTERNAL Code2* code2_from_offset(Code2Block* block, Code2Offset offset) noexcept;
 
-Code2* code2_block_end(Code2Block* block) noexcept;
-
-const Code2* code2_block_end(const Code2Block* block) noexcept;
+INTERNAL const Code2* code2_from_offset(const Code2Block* block, Code2Offset offset) noexcept;
 
 
 
-bool code2_from_top_level_definition(CoreData* core, AstNode* definition, Maybe<Code2Id>* out_type, Code2Id* out_value) noexcept;
+INTERNAL Code2* code2_block_begin(Code2Block* block) noexcept;
+
+INTERNAL const Code2* code2_block_begin(const Code2Block* block) noexcept;
+
+INTERNAL Code2* code2_block_end(Code2Block* block) noexcept;
+
+INTERNAL const Code2* code2_block_end(const Code2Block* block) noexcept;
 
 
 
-const char8* tag_name(Code2Op op) noexcept;
+INTERNAL bool code2_from_top_level_definition(CoreData* core, AstNode* definition, Maybe<Code2Id>* out_type, Code2Id* out_value) noexcept;
 
-const char8* tag_name(Code2AttBinaryArithmetic_Kind kind) noexcept;
 
-const char8* tag_name(Code2AttBitShift_Kind kind) noexcept;
 
-const char8* tag_name(Code2AttCompare_Kind kind) noexcept;
+INTERNAL const char8* tag_name(Code2Op op) noexcept;
+
+INTERNAL const char8* tag_name(Code2AttBinaryArithmetic_Kind kind) noexcept;
+
+INTERNAL const char8* tag_name(Code2AttBitShift_Kind kind) noexcept;
+
+INTERNAL const char8* tag_name(Code2AttCompare_Kind kind) noexcept;
 
 
 
@@ -3566,11 +3572,11 @@ struct FFINativeCallArgs
 
 // Pre-processes `arguments` and `return_value_dst` for native calls using the
 // system's calling convention.
-void ffi_prepare_args_for_native_call(CoreData* core, Range<TypecheckDefinition> arguments, byte* argument_data, byte* return_value_dst, TypeId return_type, FFINativeCallArgs* out) noexcept;
+INTERNAL void ffi_prepare_args_for_native_call(CoreData* core, Range<TypecheckDefinition> arguments, byte* argument_data, byte* return_value_dst, TypeId return_type, FFINativeCallArgs* out) noexcept;
 
 // Calls out to `native_callee`, with `args` previously preprocessed by
 // `ffi_prepare_args_for_native_call`.
-void ffi_perform_native_call(const void* native_callee, const FFINativeCallArgs* simplified_args) noexcept;
+INTERNAL void ffi_perform_native_call(const void* native_callee, const FFINativeCallArgs* simplified_args) noexcept;
 
 
 
@@ -3591,8 +3597,8 @@ void reset_core_data(CoreData* core) noexcept;
 
 bool run_compilation(CoreData* core, bool main_is_std) noexcept;
 
-void* address_from_core_id(CoreData* core, CoreId id) noexcept;
+INTERNAL void* address_from_core_id(CoreData* core, CoreId id) noexcept;
 
-CoreId core_id_from_address(CoreData* core, const void* memory) noexcept;
+INTERNAL CoreId core_id_from_address(CoreData* core, const void* memory) noexcept;
 
 #endif // CORE_INCLUDE_GUARD

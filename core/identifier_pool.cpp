@@ -130,12 +130,12 @@ void IdentifierAlloc::dealloc([[maybe_unused]] u32 id) noexcept
 
 
 
-bool identifier_pool_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSinkHandle sink) noexcept
+INTERNAL bool identifier_pool_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSinkHandle sink) noexcept
 {
 	return true;
 }
 
-MemoryRequirements identifier_pool_memory_requirements([[maybe_unused]] const Config* config) noexcept
+INTERNAL MemoryRequirements identifier_pool_memory_requirements([[maybe_unused]] const Config* config) noexcept
 {
 	MemoryRequirements reqs;
 	reqs.count = 1;
@@ -145,7 +145,7 @@ MemoryRequirements identifier_pool_memory_requirements([[maybe_unused]] const Co
 	return reqs;
 }
 
-void identifier_pool_init(CoreData* core, MemoryAllocation allocation) noexcept
+INTERNAL void identifier_pool_init(CoreData* core, MemoryAllocation allocation) noexcept
 {
 	ASSERT_OR_IGNORE(allocation.ranges[0].count() == IDENTIFIER_LOOKUP_RESERVE + IDENTIFIER_ENTRY_RESERVE);
 
@@ -160,19 +160,19 @@ void identifier_pool_init(CoreData* core, MemoryAllocation allocation) noexcept
 	(void) core->identifiers.entries.reserve(sizeof(IdentifierEntry));
 }
 
-void identifier_pool_cleanup(CoreData* core) noexcept
+INTERNAL void identifier_pool_cleanup(CoreData* core) noexcept
 {
 	(void) core;
 }
 
 
 
-IdentifierId id_from_identifier(CoreData* core, Range<char8> identifier) noexcept
+INTERNAL IdentifierId id_from_identifier(CoreData* core, Range<char8> identifier) noexcept
 {
 	return static_cast<IdentifierId>(core->identifiers.map.id_from(identifier, strhash(reinterpret_cast<const byte*>(identifier.begin()), reinterpret_cast<const byte*>(identifier.end()))) + static_cast<u32>(IdentifierId::FirstNatural));
 }
 
-IdentifierId id_and_attachment_from_identifier(CoreData* core, Range<char8> identifier, u8* out_token) noexcept
+INTERNAL IdentifierId id_and_attachment_from_identifier(CoreData* core, Range<char8> identifier, u8* out_token) noexcept
 {
 	const IdentifierEntry* const entry = core->identifiers.map.value_from(identifier, strhash(reinterpret_cast<const byte*>(identifier.begin()), reinterpret_cast<const byte*>(identifier.end())));
 
@@ -181,7 +181,7 @@ IdentifierId id_and_attachment_from_identifier(CoreData* core, Range<char8> iden
 	return static_cast<IdentifierId>(core->identifiers.map.id_from(entry) + static_cast<u32>(IdentifierId::FirstNatural));
 }
 
-void identifier_set_attachment(CoreData* core, Range<char8> identifier, u8 attachment) noexcept
+INTERNAL void identifier_set_attachment(CoreData* core, Range<char8> identifier, u8 attachment) noexcept
 {
 	ASSERT_OR_IGNORE(attachment != 0);
 
@@ -192,7 +192,7 @@ void identifier_set_attachment(CoreData* core, Range<char8> identifier, u8 attac
 	entry->m_attachment = attachment;
 }
 
-Range<char8> identifier_name_from_id(const CoreData* core, IdentifierId id) noexcept
+INTERNAL Range<char8> identifier_name_from_id(const CoreData* core, IdentifierId id) noexcept
 {
 	ASSERT_OR_IGNORE(id >= IdentifierId::FirstNatural);
 
@@ -203,7 +203,7 @@ Range<char8> identifier_name_from_id(const CoreData* core, IdentifierId id) noex
 
 
 
-void identifier_pool_metrics(const CoreData* core, PrintSinkHandle unbuffered_sink) noexcept
+INTERNAL void identifier_pool_metrics(const CoreData* core, PrintSinkHandle unbuffered_sink) noexcept
 {
 	char8 buffer[16384];
 

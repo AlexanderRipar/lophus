@@ -150,6 +150,17 @@ endif()
 
 prepare_object_library(lophus-lib ${LOPHUS_LIB_SOURCES})
 
+# Disable unused function warnings for monobuilds.
+if (MONOBUILD)
+	if ((${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU") OR (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang"))
+		target_compile_options(lophus-lib PRIVATE "$<$<COMPILE_LANGUAGE:CXX>:-Wno-unused-function>")
+	elseif (MSVC)
+		target_compile_options(lophus-lib PRIVATE "$<$<COMPILE_LANGUAGE:CXX>:/wd4505>")
+	else()
+		message(FATAL_ERROR "Unknown compiler id ${CMAKE_CXX_COMPILER_ID}")
+	endif()
+endif()
+
 prepare_executable(lophus main.cpp ${INTERFACE_HEADERS})
 
 add_subdirectory(test)

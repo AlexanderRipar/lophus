@@ -1171,6 +1171,18 @@ static void print_config_help_element(PrintSinkHandle sink, const ConfigMetadata
 
 
 
+INTERNAL void print_config(PrintSinkHandle sink, const Config* config) noexcept
+{
+	const ConfigMetadataEntry* meta = &CONFIG_METADATA.self_;
+
+	const ConfigMetadataEntry* const end = meta + meta->attach.child_count;
+
+	while (meta < end)
+		print_config_element(sink, config, &meta, 0);
+}
+
+
+
 bool config_from_toml_file(Range<char8> filepath, PrintSinkHandle error_sink, Config* out_config) noexcept
 {
 	*out_config = Config{};
@@ -1261,16 +1273,6 @@ Config config_defaults() noexcept
 	}
 
 	return config;
-}
-
-void print_config(PrintSinkHandle sink, const Config* config) noexcept
-{
-	const ConfigMetadataEntry* meta = &CONFIG_METADATA.self_;
-
-	const ConfigMetadataEntry* const end = meta + meta->attach.child_count;
-
-	while (meta < end)
-		print_config_element(sink, config, &meta, 0);
 }
 
 void print_config_help(PrintSinkHandle sink, u32 depth) noexcept

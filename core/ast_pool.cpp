@@ -260,12 +260,12 @@ static constexpr u64 SOURCE_BUILDER_RESERVE_SIZE = (static_cast<u64>(1) << 26) *
 
 static constexpr u64 ATTACHMENT_LISTS_RESERVE_SIZE = (static_cast<u64>(1) << 24) * sizeof(ClosureListEntry);
 
-bool ast_pool_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSinkHandle sink) noexcept
+INTERNAL bool ast_pool_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSinkHandle sink) noexcept
 {
 	return true;
 }
 
-MemoryRequirements ast_pool_memory_requirements([[maybe_unused]] const Config* config) noexcept
+INTERNAL MemoryRequirements ast_pool_memory_requirements([[maybe_unused]] const Config* config) noexcept
 {
 	static_assert(alignof(AstNode) == alignof(decltype(*AstPool::attachment_lists.begin())));
 
@@ -279,7 +279,7 @@ MemoryRequirements ast_pool_memory_requirements([[maybe_unused]] const Config* c
 	return reqs;
 }
 
-void ast_pool_init(CoreData* core, MemoryAllocation allocation) noexcept
+INTERNAL void ast_pool_init(CoreData* core, MemoryAllocation allocation) noexcept
 {
 	ASSERT_OR_IGNORE(allocation.ranges[0].count() == NODES_RESERVE_SIZE + ATTACHMENT_LISTS_RESERVE_SIZE);
 	
@@ -311,19 +311,19 @@ void ast_pool_init(CoreData* core, MemoryAllocation allocation) noexcept
 	(void) asts->attachment_lists.reserve();
 }
 
-void ast_pool_cleanup(CoreData* core) noexcept
+INTERNAL void ast_pool_cleanup(CoreData* core) noexcept
 {
 	(void) core;
 }
 
 
 
-AstNodeId id_from_ast_node(CoreData* core, AstNode* node) noexcept
+INTERNAL AstNodeId id_from_ast_node(CoreData* core, AstNode* node) noexcept
 {
 	return static_cast<AstNodeId>(static_cast<u32>(node - core->asts.nodes.begin()));
 }
 
-AstNode* ast_node_from_id(CoreData* core, AstNodeId id) noexcept
+INTERNAL AstNode* ast_node_from_id(CoreData* core, AstNodeId id) noexcept
 {
 	ASSERT_OR_IGNORE(id != AstNodeId::INVALID);
 
@@ -332,41 +332,41 @@ AstNode* ast_node_from_id(CoreData* core, AstNodeId id) noexcept
 
 
 
-bool has_children(const AstNode* node) noexcept
+INTERNAL bool has_children(const AstNode* node) noexcept
 {
 	return (node->structure_flags & AstNode::STRUCTURE_NO_CHILDREN) == 0;
 }
 
-bool has_next_sibling(const AstNode* node) noexcept
+INTERNAL bool has_next_sibling(const AstNode* node) noexcept
 {
 	return (node->structure_flags & AstNode::STRUCTURE_LAST_SIBLING) == 0;
 }
 
-bool has_flag(const AstNode* node, AstFlag flag) noexcept
+INTERNAL bool has_flag(const AstNode* node, AstFlag flag) noexcept
 {
 	return (node->flags & flag) != AstFlag::EMPTY;
 }
 
-bool is_descendant_of(const AstNode* parent, const AstNode* child) noexcept
+INTERNAL bool is_descendant_of(const AstNode* parent, const AstNode* child) noexcept
 {
 	return child >= parent && child < parent + parent->next_sibling_offset;
 }
 
-AstNode* next_sibling_of(AstNode* node) noexcept
+INTERNAL AstNode* next_sibling_of(AstNode* node) noexcept
 {
 	ASSERT_OR_IGNORE(has_next_sibling(node));
 
 	return node + node->next_sibling_offset;
 }
 
-AstNode* first_child_of(AstNode* node) noexcept
+INTERNAL AstNode* first_child_of(AstNode* node) noexcept
 {
 	ASSERT_OR_IGNORE(has_children(node));
 
 	return node + node->own_qwords;
 }
 
-SourceId source_id_of_ast_node(const CoreData* core, const AstNode* node) noexcept
+INTERNAL SourceId source_id_of_ast_node(const CoreData* core, const AstNode* node) noexcept
 {
 	const u64 index = node - core->asts.nodes.begin();
 
@@ -378,7 +378,7 @@ SourceId source_id_of_ast_node(const CoreData* core, const AstNode* node) noexce
 
 
 
-AstBuilderToken push_node(CoreData* core, AstBuilderToken first_child, SourceId source_id, AstFlag flags, AstTag tag) noexcept
+INTERNAL AstBuilderToken push_node(CoreData* core, AstBuilderToken first_child, SourceId source_id, AstFlag flags, AstTag tag) noexcept
 {
 	static_assert(sizeof(AstNode) == sizeof(u64));
 
@@ -395,7 +395,7 @@ AstBuilderToken push_node(CoreData* core, AstBuilderToken first_child, SourceId 
 	return static_cast<AstBuilderToken>(node - core->asts.node_builder.begin());
 }
 
-AstBuilderToken push_node(CoreData* core, AstBuilderToken first_child, SourceId source_id, AstFlag flags, AstTag tag, u8 attachment_qwords, const void* attachment) noexcept
+INTERNAL AstBuilderToken push_node(CoreData* core, AstBuilderToken first_child, SourceId source_id, AstFlag flags, AstTag tag, u8 attachment_qwords, const void* attachment) noexcept
 {
 	static_assert(sizeof(AstNode) == sizeof(u64));
 
@@ -416,7 +416,7 @@ AstBuilderToken push_node(CoreData* core, AstBuilderToken first_child, SourceId 
 	return static_cast<AstBuilderToken>(node - core->asts.node_builder.begin());
 }
 
-AstNode* complete_ast(CoreData* core) noexcept
+INTERNAL AstNode* complete_ast(CoreData* core) noexcept
 {
 	set_flags(core);
 
@@ -433,7 +433,7 @@ AstNode* complete_ast(CoreData* core) noexcept
 
 
 
-ClosureList* alloc_closure_list(CoreData* core, u32 entry_count) noexcept
+INTERNAL ClosureList* alloc_closure_list(CoreData* core, u32 entry_count) noexcept
 {
 	const u64 size = sizeof(ClosureList) + static_cast<u64>(entry_count) * sizeof(ClosureListEntry);
 
@@ -445,12 +445,12 @@ ClosureList* alloc_closure_list(CoreData* core, u32 entry_count) noexcept
 	return list;
 }
 
-ClosureListId id_from_closure_list(CoreData* core, ClosureList* closure_list) noexcept
+INTERNAL ClosureListId id_from_closure_list(CoreData* core, ClosureList* closure_list) noexcept
 {
 	return static_cast<ClosureListId>(reinterpret_cast<u64*>(closure_list) - core->asts.attachment_lists.begin());
 }
 
-ClosureList* closure_list_from_id(CoreData* core, ClosureListId id) noexcept
+INTERNAL ClosureList* closure_list_from_id(CoreData* core, ClosureListId id) noexcept
 {
 	ASSERT_OR_IGNORE(id != ClosureListId::INVALID);
 
@@ -459,7 +459,7 @@ ClosureList* closure_list_from_id(CoreData* core, ClosureListId id) noexcept
 
 
 
-ReferenceList* alloc_reference_list(CoreData* core, u32 entry_count) noexcept
+INTERNAL ReferenceList* alloc_reference_list(CoreData* core, u32 entry_count) noexcept
 {
 	const u64 size = sizeof(ReferenceList) + static_cast<u64>(entry_count) * sizeof(AstNodeId);
 
@@ -471,24 +471,24 @@ ReferenceList* alloc_reference_list(CoreData* core, u32 entry_count) noexcept
 	return list;
 }
 
-ReferenceListId id_from_reference_list(CoreData* core, ReferenceList* reference_list) noexcept
+INTERNAL ReferenceListId id_from_reference_list(CoreData* core, ReferenceList* reference_list) noexcept
 {
 	return static_cast<ReferenceListId>(reinterpret_cast<u64*>(reference_list) - core->asts.attachment_lists.begin());
 }
 
-ReferenceList* reference_list_from_id(CoreData* core, ReferenceListId id) noexcept
+INTERNAL ReferenceList* reference_list_from_id(CoreData* core, ReferenceListId id) noexcept
 {
 	return reinterpret_cast<ReferenceList*>(core->asts.attachment_lists.begin() + static_cast<u32>(id));
 }
 
 
 
-AstDirectChildIterator direct_children_of(AstNode* node) noexcept
+INTERNAL AstDirectChildIterator direct_children_of(AstNode* node) noexcept
 {
 	return { has_children(node) ? first_child_of(node) : nullptr };
 }
 
-AstNode* next(AstDirectChildIterator* iterator) noexcept
+INTERNAL AstNode* next(AstDirectChildIterator* iterator) noexcept
 {
 	ASSERT_OR_IGNORE(iterator->curr != nullptr);
 
@@ -499,13 +499,13 @@ AstNode* next(AstDirectChildIterator* iterator) noexcept
 	return result;
 }
 
-bool has_next(const AstDirectChildIterator* iterator) noexcept
+INTERNAL bool has_next(const AstDirectChildIterator* iterator) noexcept
 {
 	return iterator->curr != nullptr;
 }
 
 
-AstPreorderIterator preorder_ancestors_of(AstNode* node) noexcept
+INTERNAL AstPreorderIterator preorder_ancestors_of(AstNode* node) noexcept
 {
 	AstPreorderIterator iterator;
 
@@ -525,7 +525,7 @@ AstPreorderIterator preorder_ancestors_of(AstNode* node) noexcept
 	return iterator;
 }
 
-AstIterationResult next(AstPreorderIterator* iterator) noexcept
+INTERNAL AstIterationResult next(AstPreorderIterator* iterator) noexcept
 {
 	ASSERT_OR_IGNORE(iterator->curr != nullptr);
 
@@ -567,13 +567,13 @@ AstIterationResult next(AstPreorderIterator* iterator) noexcept
 	return result;
 }
 
-bool has_next(const AstPreorderIterator* iterator) noexcept
+INTERNAL bool has_next(const AstPreorderIterator* iterator) noexcept
 {
 	return iterator->curr != nullptr;
 }
 
 
-AstPostorderIterator postorder_ancestors_of(AstNode* node) noexcept
+INTERNAL AstPostorderIterator postorder_ancestors_of(AstNode* node) noexcept
 {
 	AstPostorderIterator iterator;
 
@@ -594,7 +594,7 @@ AstPostorderIterator postorder_ancestors_of(AstNode* node) noexcept
 	return iterator;
 }
 
-AstIterationResult next(AstPostorderIterator* iterator) noexcept
+INTERNAL AstIterationResult next(AstPostorderIterator* iterator) noexcept
 {
 	ASSERT_OR_IGNORE(iterator->depth >= 0);
 
@@ -632,18 +632,18 @@ AstIterationResult next(AstPostorderIterator* iterator) noexcept
 	return { ret_node, ret_depth };
 }
 
-bool has_next(const AstPostorderIterator* iterator) noexcept
+INTERNAL bool has_next(const AstPostorderIterator* iterator) noexcept
 {
 	return iterator->depth >= 0;
 }
 
 
-AstFlatIterator flat_ancestors_of(AstNode* node) noexcept
+INTERNAL AstFlatIterator flat_ancestors_of(AstNode* node) noexcept
 {
 	return { node, node + node->next_sibling_offset };
 }
 
-AstNode* next(AstFlatIterator* iterator) noexcept
+INTERNAL AstNode* next(AstFlatIterator* iterator) noexcept
 {
 	ASSERT_OR_IGNORE(has_next(iterator));
 
@@ -654,14 +654,14 @@ AstNode* next(AstFlatIterator* iterator) noexcept
 	return result;
 }
 
-bool has_next(const AstFlatIterator* iterator) noexcept
+INTERNAL bool has_next(const AstFlatIterator* iterator) noexcept
 {
 	return iterator->curr != iterator->end;
 }
 
 
 
-SignatureInfo get_signature_info(AstNode* signature) noexcept
+INTERNAL SignatureInfo get_signature_info(AstNode* signature) noexcept
 {
 	ASSERT_OR_IGNORE(signature->tag == AstTag::Signature);
 
@@ -700,7 +700,7 @@ SignatureInfo get_signature_info(AstNode* signature) noexcept
 	return desc;
 }
 
-DefinitionInfo get_definition_info(AstNode* definition) noexcept
+INTERNAL DefinitionInfo get_definition_info(AstNode* definition) noexcept
 {
 	ASSERT_OR_IGNORE(definition->tag == AstTag::Definition);
 
@@ -717,7 +717,7 @@ DefinitionInfo get_definition_info(AstNode* definition) noexcept
 	return { none<AstNode*>(), some(first_child_of(definition)) };
 }
 
-IfInfo get_if_info(AstNode* node) noexcept
+INTERNAL IfInfo get_if_info(AstNode* node) noexcept
 {
 	ASSERT_OR_IGNORE(node->tag == AstTag::If);
 
@@ -750,7 +750,7 @@ IfInfo get_if_info(AstNode* node) noexcept
 	return info;
 }
 
-ForInfo get_for_info(AstNode* node) noexcept
+INTERNAL ForInfo get_for_info(AstNode* node) noexcept
 {
 	ASSERT_OR_IGNORE(node->tag == AstTag::For);
 
@@ -790,7 +790,7 @@ ForInfo get_for_info(AstNode* node) noexcept
 	return info;
 }
 
-ForEachInfo get_foreach_info(AstNode* node) noexcept
+INTERNAL ForEachInfo get_foreach_info(AstNode* node) noexcept
 {
 	ASSERT_OR_IGNORE(node->tag == AstTag::ForEach);
 
@@ -834,7 +834,7 @@ ForEachInfo get_foreach_info(AstNode* node) noexcept
 	return info;
 }
 
-SwitchInfo get_switch_info(AstNode* node) noexcept
+INTERNAL SwitchInfo get_switch_info(AstNode* node) noexcept
 {
 	ASSERT_OR_IGNORE(node->tag == AstTag::Switch);
 
@@ -862,7 +862,7 @@ SwitchInfo get_switch_info(AstNode* node) noexcept
 	return info;
 }
 
-OpSliceOfInfo get_op_slice_of_info(AstNode* node) noexcept
+INTERNAL OpSliceOfInfo get_op_slice_of_info(AstNode* node) noexcept
 {
 	ASSERT_OR_IGNORE(node->tag == AstTag::OpSliceOf);
 
@@ -903,7 +903,7 @@ OpSliceOfInfo get_op_slice_of_info(AstNode* node) noexcept
 
 
 
-const char8* tag_name(AstTag tag) noexcept
+INTERNAL const char8* tag_name(AstTag tag) noexcept
 {
 	static constexpr const char8* AST_TAG_NAMES[] = {
 		"[unknown]",

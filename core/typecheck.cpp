@@ -4717,7 +4717,7 @@ static TypecheckNext initialize_global_cont(CoreData* core, Code2Block* block, C
 
 
 
-bool run_typechecker(CoreData* core, Code2Id block_id) noexcept
+INTERNAL bool run_typechecker(CoreData* core, Code2Id block_id) noexcept
 {
 	Code2Block* const block = code2_block_from_id(core, block_id);
 

@@ -4,16 +4,20 @@
 #include "../core/core.hpp"
 #include "../infra/print/print.hpp"
 
+#ifndef INTERNAL
+	#define INTERNAL
+#endif
+
 namespace diag
 {
-	s64 print_ast(PrintSinkHandle sink, CoreData* core, AstNode* root) noexcept;
+	INTERNAL s64 print_ast(PrintSinkHandle sink, CoreData* core, AstNode* root) noexcept;
 
-	s64 print_type(PrintSinkHandle sink, CoreData* core, TypeId type_id) noexcept;
+	INTERNAL s64 print_type(PrintSinkHandle sink, CoreData* core, TypeId type_id) noexcept;
 
-	s64 print_code2(PrintSinkHandle sink, CoreData* core, const Code2Block* header) noexcept;
+	INTERNAL s64 print_code2(PrintSinkHandle sink, CoreData* core, const Code2Block* header) noexcept;
 
 	template<typename Sink, typename... Inserts>
-	s64 print_header(Sink sink, const char8* format, Inserts... inserts) noexcept
+	INTERNAL s64 print_header(Sink sink, const char8* format, Inserts... inserts) noexcept
 	{
 		const s64 begin_written = print(sink, "### ");
 

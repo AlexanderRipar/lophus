@@ -55,7 +55,7 @@ NORETURN static void record_lowering_error(CoreData* core, const AstNode* locati
 
 
 
-void* emit_raw(CoreData* core, u64 size) noexcept
+static void* emit_raw(CoreData* core, u64 size) noexcept
 {
 	if (size > UINT32_MAX)
 		panic("Size `%` of `Code2` allocation request exceeds the supported maximum of `%`.\n", size, UINT32_MAX);
@@ -1342,7 +1342,7 @@ bool code2_from_top_level_definition(CoreData* core, AstNode* definition, Maybe<
 
 
 
-Code2Id id_from_code2_block(CoreData* core, const Code2Block* block) noexcept
+INTERNAL Code2Id id_from_code2_block(CoreData* core, const Code2Block* block) noexcept
 {
 	ASSERT_OR_IGNORE(block >= reinterpret_cast<Code2Block*>(core->code2.codes.begin()));
 
@@ -1357,7 +1357,7 @@ Code2Id id_from_code2_block(CoreData* core, const Code2Block* block) noexcept
 	return static_cast<Code2Id>(offset);
 }
 
-Code2Block* code2_block_from_id(CoreData* core, Code2Id id) noexcept
+INTERNAL Code2Block* code2_block_from_id(CoreData* core, Code2Id id) noexcept
 {
 	ASSERT_OR_IGNORE(id != Code2Id::INVALID);
 
@@ -1374,43 +1374,43 @@ Code2Block* code2_block_from_id(CoreData* core, Code2Id id) noexcept
 
 
 
-Code2Offset offset_from_code2(const Code2Block* block, const Code2* data) noexcept
+INTERNAL Code2Offset offset_from_code2(const Code2Block* block, const Code2* data) noexcept
 {
 	ASSERT_OR_IGNORE(reinterpret_cast<const u32*>(block) < reinterpret_cast<const u32*>(data));
 
 	return static_cast<Code2Offset>(reinterpret_cast<const u32*>(data) - reinterpret_cast<const u32*>(block));
 }
 
-Code2* code2_from_offset(Code2Block* block, Code2Offset offset) noexcept
+INTERNAL Code2* code2_from_offset(Code2Block* block, Code2Offset offset) noexcept
 {
 	ASSERT_OR_IGNORE(offset != Code2Offset::INVALID);
 
 	return reinterpret_cast<Code2*>(reinterpret_cast<u32*>(block) + static_cast<u32>(offset));
 }
 
-const Code2* code2_from_offset(const Code2Block* block, Code2Offset offset) noexcept
+INTERNAL const Code2* code2_from_offset(const Code2Block* block, Code2Offset offset) noexcept
 {
 	return code2_from_offset(const_cast<Code2Block*>(block), offset);
 }
 
 
 
-Code2* code2_block_begin(Code2Block* block) noexcept
+INTERNAL Code2* code2_block_begin(Code2Block* block) noexcept
 {
 	return reinterpret_cast<Code2*>(block + 1);
 }
 
-const Code2* code2_block_begin(const Code2Block* block) noexcept
+INTERNAL const Code2* code2_block_begin(const Code2Block* block) noexcept
 {
 	return code2_block_begin(const_cast<Code2Block*>(block));
 }
 
-Code2* code2_block_end(Code2Block* block) noexcept
+INTERNAL Code2* code2_block_end(Code2Block* block) noexcept
 {
 	return reinterpret_cast<Code2*>(reinterpret_cast<u32*>(block) + block->size);
 }
 
-const Code2* code2_block_end(const Code2Block* block) noexcept
+INTERNAL const Code2* code2_block_end(const Code2Block* block) noexcept
 {
 	return code2_block_end(const_cast<Code2Block*>(block));
 }
@@ -1419,7 +1419,7 @@ const Code2* code2_block_end(const Code2Block* block) noexcept
 
 
 
-const char8* tag_name(Code2Op op) noexcept
+INTERNAL const char8* tag_name(Code2Op op) noexcept
 {
 	static constexpr const char8* TAG_NAMES[] = { 
 		"[Unknown]",
@@ -1492,7 +1492,7 @@ const char8* tag_name(Code2Op op) noexcept
 	return TAG_NAMES[ordinal];
 }
 
-const char8* tag_name(Code2AttBinaryArithmetic_Kind kind) noexcept
+INTERNAL const char8* tag_name(Code2AttBinaryArithmetic_Kind kind) noexcept
 {
 	static constexpr const char8* TAG_NAMES[] = {
 		"[Unknown]",
@@ -1517,7 +1517,7 @@ const char8* tag_name(Code2AttBinaryArithmetic_Kind kind) noexcept
 	return TAG_NAMES[ordinal];
 }
 
-const char8* tag_name(Code2AttBitShift_Kind kind) noexcept
+INTERNAL const char8* tag_name(Code2AttBitShift_Kind kind) noexcept
 {
 	static constexpr const char8* TAG_NAMES[] = {
 		"[Unknown]",
@@ -1533,7 +1533,7 @@ const char8* tag_name(Code2AttBitShift_Kind kind) noexcept
 	return TAG_NAMES[ordinal];
 }
 
-const char8* tag_name(Code2AttCompare_Kind kind) noexcept
+INTERNAL const char8* tag_name(Code2AttCompare_Kind kind) noexcept
 {
 	static constexpr const char8* TAG_NAMES[] = {
 		"[Unknown]",
@@ -1555,12 +1555,12 @@ const char8* tag_name(Code2AttCompare_Kind kind) noexcept
 
 
 
-bool code2_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSinkHandle sink) noexcept
+INTERNAL bool code2_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSinkHandle sink) noexcept
 {
 	return true;
 }
 
-MemoryRequirements code2_memory_requirements([[maybe_unused]] const Config* config) noexcept
+INTERNAL MemoryRequirements code2_memory_requirements([[maybe_unused]] const Config* config) noexcept
 {
 	MemoryRequirements reqs;
 	reqs.count = 2;
@@ -1572,7 +1572,7 @@ MemoryRequirements code2_memory_requirements([[maybe_unused]] const Config* conf
 	return reqs;
 }
 
-void code2_init(CoreData* core, MemoryAllocation allocation) noexcept
+INTERNAL void code2_init(CoreData* core, MemoryAllocation allocation) noexcept
 {
 	ASSERT_OR_IGNORE(allocation.ranges[0].count() == CODES_RESERVE_SIZE);
 
@@ -1583,7 +1583,7 @@ void code2_init(CoreData* core, MemoryAllocation allocation) noexcept
 	core->code2.fixups.init(allocation.ranges[1], FIXUPS_COMMIT_INCREMENT_COUNT);
 }
 
-void code2_cleanup(CoreData* core) noexcept
+INTERNAL void code2_cleanup(CoreData* core) noexcept
 {
 	(void) core;
 }

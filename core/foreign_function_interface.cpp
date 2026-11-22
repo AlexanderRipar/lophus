@@ -26,7 +26,7 @@ extern "C"
 //   provided to indicate how the return value of the native callee needs to be
 //   fixed up. If this is not `WIN32_RET_COPY_NONE`, the next element receives
 //   the address into which the return value must be written.
-void ffi_prepare_args_for_native_call(CoreData* core, Range<TypecheckDefinition> arguments, byte* argument_data_base, byte* return_value_dst, TypeId return_type, FFINativeCallArgs* out) noexcept
+INTERNAL void ffi_prepare_args_for_native_call(CoreData* core, Range<TypecheckDefinition> arguments, byte* argument_data_base, byte* return_value_dst, TypeId return_type, FFINativeCallArgs* out) noexcept
 {
 	ASSERT_OR_IGNORE(arguments.count() <= 64);
 
@@ -153,7 +153,7 @@ void ffi_prepare_args_for_native_call(CoreData* core, Range<TypecheckDefinition>
 	out->arg_count = i;
 }
 
-void ffi_perform_native_call(const void* native_callee, const FFINativeCallArgs* args) noexcept
+INTERNAL void ffi_perform_native_call(const void* native_callee, const FFINativeCallArgs* args) noexcept
 {
 	ffi_x64_win32_asm_perform_native_call(args->arg_count, args->arg_values, native_callee);
 }
@@ -389,7 +389,7 @@ static void sysv_prepare_arg(const TypecheckDefinition* argument, FFISysVTypeDes
 	}
 }
 
-void ffi_prepare_args_for_native_call(CoreData* core, Range<TypecheckDefinition> arguments, byte* argument_data_base, byte* return_value_dst, TypeId return_type, FFINativeCallArgs* out) noexcept
+INTERNAL void ffi_prepare_args_for_native_call(CoreData* core, Range<TypecheckDefinition> arguments, byte* argument_data_base, byte* return_value_dst, TypeId return_type, FFINativeCallArgs* out) noexcept
 {
 	ASSERT_OR_IGNORE(arguments.count() <= 64);
 
@@ -465,7 +465,7 @@ void ffi_prepare_args_for_native_call(CoreData* core, Range<TypecheckDefinition>
 
 // Calls out to `native_callee`, with `args` previously preprocessed by
 // `ffi_prepare_args_for_native_call`.
-void ffi_perform_native_call(const void* native_callee, const FFINativeCallArgs* args) noexcept
+INTERNAL void ffi_perform_native_call(const void* native_callee, const FFINativeCallArgs* args) noexcept
 {
 	ffi_x64_sysv_asm_perform_native_call(args->stack_count, args->stack_size, args->xmm_values, args->stack_arg_kinds[0], args->stack_arg_kinds[1], native_callee);
 }

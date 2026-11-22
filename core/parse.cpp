@@ -2912,12 +2912,12 @@ static bool parse_file(CoreData* core) noexcept
 
 
 
-bool parser_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSinkHandle sink) noexcept
+INTERNAL bool parser_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSinkHandle sink) noexcept
 {
 	return true;
 }
 
-MemoryRequirements parser_memory_requirements([[maybe_unused]] const Config* config) noexcept
+INTERNAL MemoryRequirements parser_memory_requirements([[maybe_unused]] const Config* config) noexcept
 {
 	MemoryRequirements reqs;
 	reqs.count = 0;
@@ -2925,7 +2925,7 @@ MemoryRequirements parser_memory_requirements([[maybe_unused]] const Config* con
 	return reqs;
 }
 
-void parser_init(CoreData* core, [[maybe_unused]] MemoryAllocation allocation) noexcept
+INTERNAL void parser_init(CoreData* core, [[maybe_unused]] MemoryAllocation allocation) noexcept
 {
 	Parser* const parser = &core->parser;
 
@@ -2936,14 +2936,14 @@ void parser_init(CoreData* core, [[maybe_unused]] MemoryAllocation allocation) n
 		identifier_set_attachment(core, keyword.range(), keyword.attachment());
 }
 
-void parser_cleanup(CoreData* core) noexcept
+INTERNAL void parser_cleanup(CoreData* core) noexcept
 {
 	(void) core;
 }
 
 
 
-Maybe<AstNode*> parse(CoreData* core, Range<char8> content, SourceId source_id_base, bool is_std) noexcept
+INTERNAL Maybe<AstNode*> parse(CoreData* core, Range<char8> content, SourceId source_id_base, bool is_std) noexcept
 {
 	ASSERT_OR_IGNORE(content.count() != 0 && content.end()[-1] == '\0');
 

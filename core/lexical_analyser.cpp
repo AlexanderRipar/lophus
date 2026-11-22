@@ -1180,12 +1180,12 @@ static void resolve_names_root(CoreData* core, AstNode* root, SourceFileId file_
 
 
 
-bool lexical_analyser_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSinkHandle sink) noexcept
+INTERNAL bool lexical_analyser_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSinkHandle sink) noexcept
 {
 	return true;
 }
 
-MemoryRequirements lexical_analyser_memory_requirements([[maybe_unused]] const Config* config) noexcept
+INTERNAL MemoryRequirements lexical_analyser_memory_requirements([[maybe_unused]] const Config* config) noexcept
 {
 	MemoryRequirements reqs;
 	reqs.count = 0;
@@ -1193,21 +1193,21 @@ MemoryRequirements lexical_analyser_memory_requirements([[maybe_unused]] const C
 	return reqs;
 }
 
-void lexical_analyser_init(CoreData* core, [[maybe_unused]] MemoryAllocation allocation) noexcept
+INTERNAL void lexical_analyser_init(CoreData* core, [[maybe_unused]] MemoryAllocation allocation) noexcept
 {
 	LexicalAnalyser* const lex = &core->lex;
 	lex->scopes_top = -1;
 	lex->has_error = false;
 }
 
-void lexical_analyser_cleanup(CoreData* core) noexcept
+INTERNAL void lexical_analyser_cleanup(CoreData* core) noexcept
 {
 	(void) core;
 }
 
 
 
-bool set_prelude_scope(CoreData* core, AstNode* prelude, SourceFileId file_id) noexcept
+INTERNAL bool set_prelude_scope(CoreData* core, AstNode* prelude, SourceFileId file_id) noexcept
 {
 	ASSERT_OR_IGNORE(core->lex.scopes_top == -1);
 
@@ -1239,7 +1239,7 @@ bool set_prelude_scope(CoreData* core, AstNode* prelude, SourceFileId file_id) n
 	return !core->lex.has_error;
 }
 
-bool resolve_names(CoreData* core, AstNode* root, SourceFileId file_id) noexcept
+INTERNAL bool resolve_names(CoreData* core, AstNode* root, SourceFileId file_id) noexcept
 {
 	ASSERT_OR_IGNORE(core->lex.scopes_top == 0);
 

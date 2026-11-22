@@ -7,91 +7,91 @@
 #include "../infra/inplace_sort.hpp"
 #include "../diag/diag.hpp"
 
-bool comp_heap_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
+INTERNAL bool comp_heap_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
 
-bool temp_stack_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
+INTERNAL bool temp_stack_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
 
-bool ast_pool_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
+INTERNAL bool ast_pool_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
 
-bool error_sink_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
+INTERNAL bool error_sink_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
 
-bool identifier_pool_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
+INTERNAL bool identifier_pool_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
 
-bool lexical_analyser_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
+INTERNAL bool lexical_analyser_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
 
-bool type_pool_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
+INTERNAL bool type_pool_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
 
-bool parser_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
+INTERNAL bool parser_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
 
-bool source_reader_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
+INTERNAL bool source_reader_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
 
-bool code2_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
-
-
-
-MemoryRequirements comp_heap_memory_requirements(const Config* config) noexcept;
-
-MemoryRequirements temp_stack_memory_requirements(const Config* config) noexcept;
-
-MemoryRequirements ast_pool_memory_requirements(const Config* config) noexcept;
-
-MemoryRequirements error_sink_memory_requirements(const Config* config) noexcept;
-
-MemoryRequirements identifier_pool_memory_requirements(const Config* config) noexcept;
-
-MemoryRequirements lexical_analyser_memory_requirements(const Config* config) noexcept;
-
-MemoryRequirements type_pool_memory_requirements(const Config* config) noexcept;
-
-MemoryRequirements parser_memory_requirements(const Config* config) noexcept;
-
-MemoryRequirements source_reader_memory_requirements(const Config* config) noexcept;
-
-MemoryRequirements code2_memory_requirements([[maybe_unused]] const Config* config) noexcept;
+INTERNAL bool code2_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
 
 
 
-void comp_heap_init(CoreData* core, MemoryAllocation allocation) noexcept;
+INTERNAL MemoryRequirements comp_heap_memory_requirements(const Config* config) noexcept;
 
-void temp_stack_init(CoreData* core, MemoryAllocation allocation) noexcept;
+INTERNAL MemoryRequirements temp_stack_memory_requirements(const Config* config) noexcept;
 
-void ast_pool_init(CoreData* core, MemoryAllocation allocation) noexcept;
+INTERNAL MemoryRequirements ast_pool_memory_requirements(const Config* config) noexcept;
 
-void error_sink_init(CoreData* core, MemoryAllocation allocation) noexcept;
+INTERNAL MemoryRequirements error_sink_memory_requirements(const Config* config) noexcept;
 
-void identifier_pool_init(CoreData* core, MemoryAllocation allocation) noexcept;
+INTERNAL MemoryRequirements identifier_pool_memory_requirements(const Config* config) noexcept;
 
-void lexical_analyser_init(CoreData* core, MemoryAllocation allocation) noexcept;
+INTERNAL MemoryRequirements lexical_analyser_memory_requirements(const Config* config) noexcept;
 
-void type_pool_init(CoreData* core, MemoryAllocation allocation) noexcept;
+INTERNAL MemoryRequirements type_pool_memory_requirements(const Config* config) noexcept;
 
-void parser_init(CoreData* core, MemoryAllocation allocation) noexcept;
+INTERNAL MemoryRequirements parser_memory_requirements(const Config* config) noexcept;
 
-void source_reader_init(CoreData* core, MemoryAllocation allocation) noexcept;
+INTERNAL MemoryRequirements source_reader_memory_requirements(const Config* config) noexcept;
 
-void code2_init(CoreData* core, MemoryAllocation allocation) noexcept;
+INTERNAL MemoryRequirements code2_memory_requirements([[maybe_unused]] const Config* config) noexcept;
 
 
 
-void comp_heap_cleanup(CoreData* core) noexcept;
+INTERNAL void comp_heap_init(CoreData* core, MemoryAllocation allocation) noexcept;
 
-void temp_stack_cleanup(CoreData* core) noexcept;
+INTERNAL void temp_stack_init(CoreData* core, MemoryAllocation allocation) noexcept;
 
-void ast_pool_cleanup(CoreData* core) noexcept;
+INTERNAL void ast_pool_init(CoreData* core, MemoryAllocation allocation) noexcept;
 
-void error_sink_cleanup(CoreData* core) noexcept;
+INTERNAL void error_sink_init(CoreData* core, MemoryAllocation allocation) noexcept;
 
-void identifier_pool_cleanup(CoreData* core) noexcept;
+INTERNAL void identifier_pool_init(CoreData* core, MemoryAllocation allocation) noexcept;
 
-void lexical_analyser_cleanup(CoreData* core) noexcept;
+INTERNAL void lexical_analyser_init(CoreData* core, MemoryAllocation allocation) noexcept;
 
-void type_pool_cleanup(CoreData* core) noexcept;
+INTERNAL void type_pool_init(CoreData* core, MemoryAllocation allocation) noexcept;
 
-void parser_cleanup(CoreData* core) noexcept;
+INTERNAL void parser_init(CoreData* core, MemoryAllocation allocation) noexcept;
 
-void source_reader_cleanup(CoreData* core) noexcept;
+INTERNAL void source_reader_init(CoreData* core, MemoryAllocation allocation) noexcept;
 
-void code2_cleanup(CoreData* core) noexcept;
+INTERNAL void code2_init(CoreData* core, MemoryAllocation allocation) noexcept;
+
+
+
+INTERNAL void comp_heap_cleanup(CoreData* core) noexcept;
+
+INTERNAL void temp_stack_cleanup(CoreData* core) noexcept;
+
+INTERNAL void ast_pool_cleanup(CoreData* core) noexcept;
+
+INTERNAL void error_sink_cleanup(CoreData* core) noexcept;
+
+INTERNAL void identifier_pool_cleanup(CoreData* core) noexcept;
+
+INTERNAL void lexical_analyser_cleanup(CoreData* core) noexcept;
+
+INTERNAL void type_pool_cleanup(CoreData* core) noexcept;
+
+INTERNAL void parser_cleanup(CoreData* core) noexcept;
+
+INTERNAL void source_reader_cleanup(CoreData* core) noexcept;
+
+INTERNAL void code2_cleanup(CoreData* core) noexcept;
 
 
 
@@ -589,7 +589,7 @@ bool run_compilation(CoreData* core, bool main_is_std) noexcept
 
 
 
-void* address_from_core_id(CoreData* core, CoreId id) noexcept
+INTERNAL void* address_from_core_id(CoreData* core, CoreId id) noexcept
 {
 	ASSERT_OR_IGNORE((static_cast<u64>(id) << COMP_HEAP_MIN_ALLOCATION_SIZE_LOG2) >= sizeof(CoreData));
 
@@ -598,7 +598,7 @@ void* address_from_core_id(CoreData* core, CoreId id) noexcept
 	return reinterpret_cast<byte*>(core) + (static_cast<u64>(id) << COMP_HEAP_MIN_ALLOCATION_SIZE_LOG2);
 }
 
-CoreId core_id_from_address(CoreData* core, const void* memory) noexcept
+INTERNAL CoreId core_id_from_address(CoreData* core, const void* memory) noexcept
 {
 	ASSERT_OR_IGNORE(memory >= core + 1);
 
@@ -609,7 +609,7 @@ CoreId core_id_from_address(CoreData* core, const void* memory) noexcept
 
 
 
-const char8* tag_name(Builtin builtin) noexcept
+INTERNAL const char8* tag_name(Builtin builtin) noexcept
 {
 	static constexpr const char8* BUILTIN_NAMES[] = {
 		"INVALID",

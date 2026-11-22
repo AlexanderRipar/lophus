@@ -199,32 +199,32 @@ static bool bitwise_binary_arithmetic_op(u16 bits, bool is_signed, MutRange<byte
 	return true;
 }
 
-bool bitwise_add(u16 bits, bool is_signed, MutRange<byte> dst, Range<byte> lhs, Range<byte> rhs) noexcept
+INTERNAL bool bitwise_add(u16 bits, bool is_signed, MutRange<byte> dst, Range<byte> lhs, Range<byte> rhs) noexcept
 {
 	return bitwise_binary_arithmetic_op<BinaryArithmeticOp::Add>(bits, is_signed, dst, lhs, rhs);
 }
 
-bool bitwise_sub(u16 bits, bool is_signed, MutRange<byte> dst, Range<byte> lhs, Range<byte> rhs) noexcept
+INTERNAL bool bitwise_sub(u16 bits, bool is_signed, MutRange<byte> dst, Range<byte> lhs, Range<byte> rhs) noexcept
 {
 	return bitwise_binary_arithmetic_op<BinaryArithmeticOp::Sub>(bits, is_signed, dst, lhs, rhs);
 }
 
-bool bitwise_mul(u16 bits, bool is_signed, MutRange<byte> dst, Range<byte> lhs, Range<byte> rhs) noexcept
+INTERNAL bool bitwise_mul(u16 bits, bool is_signed, MutRange<byte> dst, Range<byte> lhs, Range<byte> rhs) noexcept
 {
 	return bitwise_binary_arithmetic_op<BinaryArithmeticOp::Mul>(bits, is_signed, dst, lhs, rhs);
 }
 
-bool bitwise_div(u16 bits, bool is_signed, MutRange<byte> dst, Range<byte> lhs, Range<byte> rhs) noexcept
+INTERNAL bool bitwise_div(u16 bits, bool is_signed, MutRange<byte> dst, Range<byte> lhs, Range<byte> rhs) noexcept
 {
 	return bitwise_binary_arithmetic_op<BinaryArithmeticOp::Div>(bits, is_signed, dst, lhs, rhs);
 }
 
-bool bitwise_mod(u16 bits, bool is_signed, MutRange<byte> dst, Range<byte> lhs, Range<byte> rhs) noexcept
+INTERNAL bool bitwise_mod(u16 bits, bool is_signed, MutRange<byte> dst, Range<byte> lhs, Range<byte> rhs) noexcept
 {
 	return bitwise_binary_arithmetic_op<BinaryArithmeticOp::Mod>(bits, is_signed, dst, lhs, rhs);
 }
 
-void bitwise_shift_left(u16 bits, MutRange<byte> dst, Range<byte> lhs, u64 rhs) noexcept
+INTERNAL void bitwise_shift_left(u16 bits, MutRange<byte> dst, Range<byte> lhs, u64 rhs) noexcept
 {
 	ASSERT_OR_IGNORE(rhs < bits);
 
@@ -257,7 +257,7 @@ void bitwise_shift_left(u16 bits, MutRange<byte> dst, Range<byte> lhs, u64 rhs) 
 	}
 }
 
-void bitwise_shift_right(u16 bits, MutRange<byte> dst, Range<byte> lhs, u64 rhs, bool is_arithmetic_shift) noexcept
+INTERNAL void bitwise_shift_right(u16 bits, MutRange<byte> dst, Range<byte> lhs, u64 rhs, bool is_arithmetic_shift) noexcept
 {
 	ASSERT_OR_IGNORE(rhs < bits);
 
@@ -312,7 +312,7 @@ void bitwise_shift_right(u16 bits, MutRange<byte> dst, Range<byte> lhs, u64 rhs,
 	}
 }
 
-bool bitwise_neg(u16 bits, MutRange<byte> dst, Range<byte> operand) noexcept
+INTERNAL bool bitwise_neg(u16 bits, MutRange<byte> dst, Range<byte> operand) noexcept
 {
 	ASSERT_OR_IGNORE(dst.count() != 0
 	              && dst.count() == operand.count()
@@ -353,7 +353,7 @@ bool bitwise_neg(u16 bits, MutRange<byte> dst, Range<byte> operand) noexcept
 	return false;
 }
 
-void bitwise_not(u16 bits, MutRange<byte> dst, Range<byte> operand) noexcept
+INTERNAL void bitwise_not(u16 bits, MutRange<byte> dst, Range<byte> operand) noexcept
 {
 	ASSERT_OR_IGNORE(dst.count() != 0
 	              && dst.count() == operand.count()
@@ -370,7 +370,7 @@ void bitwise_not(u16 bits, MutRange<byte> dst, Range<byte> operand) noexcept
 
 
 
-bool add_checked_u8(u8 a, u8 b, u8* out) noexcept
+INTERNAL bool add_checked_u8(u8 a, u8 b, u8* out) noexcept
 {
 	const u64 result = static_cast<u64>(a) + static_cast<u64>(b);
 
@@ -379,7 +379,7 @@ bool add_checked_u8(u8 a, u8 b, u8* out) noexcept
 	return result <= UINT8_MAX;
 }
 
-bool add_checked_u16(u16 a, u16 b, u16* out) noexcept
+INTERNAL bool add_checked_u16(u16 a, u16 b, u16* out) noexcept
 {
 	const u64 result = static_cast<u64>(a) + static_cast<u64>(b);
 
@@ -388,7 +388,7 @@ bool add_checked_u16(u16 a, u16 b, u16* out) noexcept
 	return result <= UINT16_MAX;
 }
 
-bool add_checked_u32(u32 a, u32 b, u32* out) noexcept
+INTERNAL bool add_checked_u32(u32 a, u32 b, u32* out) noexcept
 {
 	const u64 result = static_cast<u64>(a) + static_cast<u64>(b);
 
@@ -397,7 +397,7 @@ bool add_checked_u32(u32 a, u32 b, u32* out) noexcept
 	return result <= UINT32_MAX;
 }
 
-bool add_checked_u64(u64 a, u64 b, u64* out) noexcept
+INTERNAL bool add_checked_u64(u64 a, u64 b, u64* out) noexcept
 {
 	const u64 result = a + b;
 
@@ -406,7 +406,7 @@ bool add_checked_u64(u64 a, u64 b, u64* out) noexcept
 	return result >= a && result >= b;
 }
 
-bool add_checked_s8(s8 a, s8 b, s8* out) noexcept
+INTERNAL bool add_checked_s8(s8 a, s8 b, s8* out) noexcept
 {
 	const s64 result = static_cast<s64>(a) + static_cast<s64>(b);
 
@@ -415,7 +415,7 @@ bool add_checked_s8(s8 a, s8 b, s8* out) noexcept
 	return result >= INT8_MIN && result <= INT8_MAX;
 }
 
-bool add_checked_s16(s16 a, s16 b, s16* out) noexcept
+INTERNAL bool add_checked_s16(s16 a, s16 b, s16* out) noexcept
 {
 	const s64 result = static_cast<s64>(a) + static_cast<s64>(b);
 
@@ -424,7 +424,7 @@ bool add_checked_s16(s16 a, s16 b, s16* out) noexcept
 	return result >= INT16_MIN && result <= INT16_MAX;
 }
 
-bool add_checked_s32(s32 a, s32 b, s32* out) noexcept
+INTERNAL bool add_checked_s32(s32 a, s32 b, s32* out) noexcept
 {
 	const s64 result = static_cast<s64>(a) + static_cast<s64>(b);
 
@@ -433,7 +433,7 @@ bool add_checked_s32(s32 a, s32 b, s32* out) noexcept
 	return result >= INT32_MIN && result <= INT32_MAX;
 }
 
-bool add_checked_s64(s64 a, s64 b, s64* out) noexcept
+INTERNAL bool add_checked_s64(s64 a, s64 b, s64* out) noexcept
 {
 	const u64 result = static_cast<u64>(static_cast<s64>(a)) + static_cast<u64>(static_cast<s64>(b));
 
@@ -447,7 +447,7 @@ bool add_checked_s64(s64 a, s64 b, s64* out) noexcept
 
 
 
-bool sub_checked_u8(u8 a, u8 b, u8* out) noexcept
+INTERNAL bool sub_checked_u8(u8 a, u8 b, u8* out) noexcept
 {
 	const u64 result = static_cast<u64>(a) - static_cast<u64>(b);
 
@@ -456,7 +456,7 @@ bool sub_checked_u8(u8 a, u8 b, u8* out) noexcept
 	return result <= UINT8_MAX;
 }
 
-bool sub_checked_u16(u16 a, u16 b, u16* out) noexcept
+INTERNAL bool sub_checked_u16(u16 a, u16 b, u16* out) noexcept
 {
 	const u64 result = static_cast<u64>(a) - static_cast<u64>(b);
 
@@ -465,7 +465,7 @@ bool sub_checked_u16(u16 a, u16 b, u16* out) noexcept
 	return result <= UINT16_MAX;
 }
 
-bool sub_checked_u32(u32 a, u32 b, u32* out) noexcept
+INTERNAL bool sub_checked_u32(u32 a, u32 b, u32* out) noexcept
 {
 	const u64 result = static_cast<u64>(a) - static_cast<u64>(b);
 
@@ -474,7 +474,7 @@ bool sub_checked_u32(u32 a, u32 b, u32* out) noexcept
 	return result <= UINT32_MAX;
 }
 
-bool sub_checked_u64(u64 a, u64 b, u64* out) noexcept
+INTERNAL bool sub_checked_u64(u64 a, u64 b, u64* out) noexcept
 {
 	const u64 result = a - b;
 
@@ -483,7 +483,7 @@ bool sub_checked_u64(u64 a, u64 b, u64* out) noexcept
 	return a >= b;
 }
 
-bool sub_checked_s8(s8 a, s8 b, s8* out) noexcept
+INTERNAL bool sub_checked_s8(s8 a, s8 b, s8* out) noexcept
 {
 	const s64 result = static_cast<s64>(a) - static_cast<s64>(b);
 
@@ -492,7 +492,7 @@ bool sub_checked_s8(s8 a, s8 b, s8* out) noexcept
 	return result >= INT8_MIN && result <= INT8_MAX;
 }
 
-bool sub_checked_s16(s16 a, s16 b, s16* out) noexcept
+INTERNAL bool sub_checked_s16(s16 a, s16 b, s16* out) noexcept
 {
 	const s64 result = static_cast<s64>(a) - static_cast<s64>(b);
 
@@ -501,7 +501,7 @@ bool sub_checked_s16(s16 a, s16 b, s16* out) noexcept
 	return result >= INT16_MIN && result <= INT16_MAX;
 }
 
-bool sub_checked_s32(s32 a, s32 b, s32* out) noexcept
+INTERNAL bool sub_checked_s32(s32 a, s32 b, s32* out) noexcept
 {
 	const s64 result = static_cast<s64>(a) - static_cast<s64>(b);
 
@@ -510,7 +510,7 @@ bool sub_checked_s32(s32 a, s32 b, s32* out) noexcept
 	return result >= INT16_MIN && result <= INT16_MAX;
 }
 
-bool sub_checked_s64(s64 a, s64 b, s64* out) noexcept
+INTERNAL bool sub_checked_s64(s64 a, s64 b, s64* out) noexcept
 {
 	const s64 result = static_cast<s64>(static_cast<u64>(static_cast<s64>(a)) - static_cast<u64>(static_cast<s64>(b)));
 
@@ -526,7 +526,7 @@ bool sub_checked_s64(s64 a, s64 b, s64* out) noexcept
 
 
 
-bool mul_checked_u8(u8 a, u8 b, u8* out) noexcept
+INTERNAL bool mul_checked_u8(u8 a, u8 b, u8* out) noexcept
 {
 	const u64 result = static_cast<u64>(a) * static_cast<u64>(b);
 
@@ -535,7 +535,7 @@ bool mul_checked_u8(u8 a, u8 b, u8* out) noexcept
 	return result <= UINT8_MAX;
 }
 
-bool mul_checked_u16(u16 a, u16 b, u16* out) noexcept
+INTERNAL bool mul_checked_u16(u16 a, u16 b, u16* out) noexcept
 {
 	const u64 result = static_cast<u64>(a) * static_cast<u64>(b);
 
@@ -544,7 +544,7 @@ bool mul_checked_u16(u16 a, u16 b, u16* out) noexcept
 	return result <= UINT16_MAX;
 }
 
-bool mul_checked_u32(u32 a, u32 b, u32* out) noexcept
+INTERNAL bool mul_checked_u32(u32 a, u32 b, u32* out) noexcept
 {
 	const u64 result = static_cast<u64>(a) * static_cast<u64>(b);
 
@@ -553,7 +553,7 @@ bool mul_checked_u32(u32 a, u32 b, u32* out) noexcept
 	return result <= UINT32_MAX;
 }
 
-bool mul_checked_u64(u64 a, u64 b, u64* out) noexcept
+INTERNAL bool mul_checked_u64(u64 a, u64 b, u64* out) noexcept
 {
 #ifdef COMPILER_MSVC
 	u64 high_result;
@@ -568,7 +568,7 @@ bool mul_checked_u64(u64 a, u64 b, u64* out) noexcept
 #endif
 }
 
-bool mul_checked_s8(s8 a, s8 b, s8* out) noexcept
+INTERNAL bool mul_checked_s8(s8 a, s8 b, s8* out) noexcept
 {
 	const s64 result = static_cast<s64>(a) * static_cast<s64>(b);
 
@@ -577,7 +577,7 @@ bool mul_checked_s8(s8 a, s8 b, s8* out) noexcept
 	return result >= INT8_MIN && result <= INT8_MAX;
 }
 
-bool mul_checked_s16(s16 a, s16 b, s16* out) noexcept
+INTERNAL bool mul_checked_s16(s16 a, s16 b, s16* out) noexcept
 {
 	const s64 result = static_cast<s64>(a) * static_cast<s64>(b);
 
@@ -586,7 +586,7 @@ bool mul_checked_s16(s16 a, s16 b, s16* out) noexcept
 	return result >= INT16_MIN && result <= INT16_MAX;
 }
 
-bool mul_checked_s32(s32 a, s32 b, s32* out) noexcept
+INTERNAL bool mul_checked_s32(s32 a, s32 b, s32* out) noexcept
 {
 	const s64 result = static_cast<s64>(a) * static_cast<s64>(b);
 
@@ -595,7 +595,7 @@ bool mul_checked_s32(s32 a, s32 b, s32* out) noexcept
 	return result >= INT32_MIN && result <= INT32_MAX;
 }
 
-bool mul_checked_s64(s64 a, s64 b, s64* out) noexcept
+INTERNAL bool mul_checked_s64(s64 a, s64 b, s64* out) noexcept
 {
 #ifdef COMPILER_MSVC
 	s64 high_result;
@@ -631,7 +631,7 @@ static bool is_negative(CompIntegerValue value) noexcept
 
 
 
-CompIntegerValue comp_integer_from_u64(u64 value) noexcept
+INTERNAL CompIntegerValue comp_integer_from_u64(u64 value) noexcept
 {
 	if (value > COMP_INTEGER_MAX)
 		panic("Value % exceeds current supported maximum value of compile-time integers of %.\n", value, COMP_INTEGER_MAX);
@@ -639,7 +639,7 @@ CompIntegerValue comp_integer_from_u64(u64 value) noexcept
 	return { value << 1 };
 }
 
-CompIntegerValue comp_integer_from_s64(s64 value) noexcept
+INTERNAL CompIntegerValue comp_integer_from_s64(s64 value) noexcept
 {
 	if (value < COMP_INTEGER_MIN)
 		panic("Value % exceeds current supported minimum value of compile-time integers of %.\n", value, COMP_INTEGER_MIN);
@@ -650,7 +650,7 @@ CompIntegerValue comp_integer_from_s64(s64 value) noexcept
 	return { static_cast<u64>(value) << 1 };
 }
 
-bool comp_integer_from_comp_float(CompFloatValue value, bool round, CompIntegerValue* out) noexcept
+INTERNAL bool comp_integer_from_comp_float(CompFloatValue value, bool round, CompIntegerValue* out) noexcept
 {
 	const f64 float_value = value.rep;
 
@@ -665,7 +665,7 @@ bool comp_integer_from_comp_float(CompFloatValue value, bool round, CompIntegerV
 	return true;
 }
 
-bool bits_from_comp_integer(CompIntegerValue value, u32 bits, bool is_signed, byte* out) noexcept
+INTERNAL bool bits_from_comp_integer(CompIntegerValue value, u32 bits, bool is_signed, byte* out) noexcept
 {
 	if (!is_inlined(value))
 		panic("Unexpected non-inlined `CompIntegerValue`.\n");
@@ -708,7 +708,7 @@ bool bits_from_comp_integer(CompIntegerValue value, u32 bits, bool is_signed, by
 	return true;
 }
 
-bool u64_from_comp_integer(CompIntegerValue value, u8 bits, u64* out) noexcept
+INTERNAL bool u64_from_comp_integer(CompIntegerValue value, u8 bits, u64* out) noexcept
 {
 	ASSERT_OR_IGNORE(bits <= 64);
 
@@ -728,7 +728,7 @@ bool u64_from_comp_integer(CompIntegerValue value, u8 bits, u64* out) noexcept
 	return true;
 }
 
-bool s64_from_comp_integer(CompIntegerValue value, u8 bits, s64* out) noexcept
+INTERNAL bool s64_from_comp_integer(CompIntegerValue value, u8 bits, s64* out) noexcept
 {
 	ASSERT_OR_IGNORE(bits <= 64);
 
@@ -745,7 +745,7 @@ bool s64_from_comp_integer(CompIntegerValue value, u8 bits, s64* out) noexcept
 	return true;
 }
 
-CompIntegerValue comp_integer_add(CompIntegerValue lhs, CompIntegerValue rhs) noexcept
+INTERNAL CompIntegerValue comp_integer_add(CompIntegerValue lhs, CompIntegerValue rhs) noexcept
 {
 	if (!is_inlined(lhs) || !is_inlined(rhs))
 		panic("Unexpected non-inlined `CompIntegerValue`.\n");
@@ -758,7 +758,7 @@ CompIntegerValue comp_integer_add(CompIntegerValue lhs, CompIntegerValue rhs) no
 	return { static_cast<u64>(result) };
 }
 
-CompIntegerValue comp_integer_sub(CompIntegerValue lhs, CompIntegerValue rhs) noexcept
+INTERNAL CompIntegerValue comp_integer_sub(CompIntegerValue lhs, CompIntegerValue rhs) noexcept
 {
 	if (!is_inlined(lhs) || !is_inlined(rhs))
 		panic("Unexpected non-inlined `CompIntegerValue`.\n");
@@ -771,7 +771,7 @@ CompIntegerValue comp_integer_sub(CompIntegerValue lhs, CompIntegerValue rhs) no
 	return { static_cast<u64>(result) };
 }
 
-CompIntegerValue comp_integer_mul(CompIntegerValue lhs, CompIntegerValue rhs) noexcept
+INTERNAL CompIntegerValue comp_integer_mul(CompIntegerValue lhs, CompIntegerValue rhs) noexcept
 {
 	if (!is_inlined(lhs) || !is_inlined(rhs))
 		panic("Unexpected non-inlined `CompIntegerValue`.\n");
@@ -784,7 +784,7 @@ CompIntegerValue comp_integer_mul(CompIntegerValue lhs, CompIntegerValue rhs) no
 	return { static_cast<u64>(result) };
 }
 
-bool comp_integer_div(CompIntegerValue lhs, CompIntegerValue rhs, CompIntegerValue* out) noexcept
+INTERNAL bool comp_integer_div(CompIntegerValue lhs, CompIntegerValue rhs, CompIntegerValue* out) noexcept
 {
 	if (!is_inlined(lhs) || !is_inlined(rhs))
 		panic("Unexpected non-inlined `CompIntegerValue`.\n");
@@ -801,7 +801,7 @@ bool comp_integer_div(CompIntegerValue lhs, CompIntegerValue rhs, CompIntegerVal
 	return true;
 }
 
-bool comp_integer_mod(CompIntegerValue lhs, CompIntegerValue rhs, CompIntegerValue* out) noexcept
+INTERNAL bool comp_integer_mod(CompIntegerValue lhs, CompIntegerValue rhs, CompIntegerValue* out) noexcept
 {
 	if (!is_inlined(lhs) || !is_inlined(rhs))
 		panic("Unexpected non-inlined `CompIntegerValue`.\n");
@@ -818,7 +818,7 @@ bool comp_integer_mod(CompIntegerValue lhs, CompIntegerValue rhs, CompIntegerVal
 	return true;
 }
 
-CompIntegerValue comp_integer_neg(CompIntegerValue value) noexcept
+INTERNAL CompIntegerValue comp_integer_neg(CompIntegerValue value) noexcept
 {
 	if (!is_inlined(value))
 		panic("Unexpected non-inlined `CompIntegerValue`.\n");
@@ -829,7 +829,7 @@ CompIntegerValue comp_integer_neg(CompIntegerValue value) noexcept
 	return { static_cast<u64>(-static_cast<s64>(value.rep >> 1)) << 1 };
 }
 
-bool comp_integer_shift_left(CompIntegerValue lhs, CompIntegerValue rhs, CompIntegerValue* out) noexcept
+INTERNAL bool comp_integer_shift_left(CompIntegerValue lhs, CompIntegerValue rhs, CompIntegerValue* out) noexcept
 {
 	if (!is_inlined(lhs) || !is_inlined(rhs))
 		panic("Unexpected non-inlined `CompIntegerValue`.\n");
@@ -851,7 +851,7 @@ bool comp_integer_shift_left(CompIntegerValue lhs, CompIntegerValue rhs, CompInt
 	return true;
 }
 
-bool comp_integer_shift_right(CompIntegerValue lhs, CompIntegerValue rhs, CompIntegerValue* out) noexcept
+INTERNAL bool comp_integer_shift_right(CompIntegerValue lhs, CompIntegerValue rhs, CompIntegerValue* out) noexcept
 {
 	if (!is_inlined(lhs) || !is_inlined(rhs))
 		panic("Unexpected non-inlined `CompIntegerValue`.\n");
@@ -866,7 +866,7 @@ bool comp_integer_shift_right(CompIntegerValue lhs, CompIntegerValue rhs, CompIn
 	return true;
 }
 
-CompIntegerValue comp_integer_bit_and(CompIntegerValue lhs, CompIntegerValue rhs) noexcept
+INTERNAL CompIntegerValue comp_integer_bit_and(CompIntegerValue lhs, CompIntegerValue rhs) noexcept
 {
 	if (!is_inlined(lhs) || !is_inlined(rhs))
 		panic("Unexpected non-inlined `CompIntegerValue`.\n");
@@ -874,7 +874,7 @@ CompIntegerValue comp_integer_bit_and(CompIntegerValue lhs, CompIntegerValue rhs
 	return CompIntegerValue{ lhs.rep & rhs.rep };
 }
 
-CompIntegerValue comp_integer_bit_or(CompIntegerValue lhs, CompIntegerValue rhs) noexcept
+INTERNAL CompIntegerValue comp_integer_bit_or(CompIntegerValue lhs, CompIntegerValue rhs) noexcept
 {
 	if (!is_inlined(lhs) || !is_inlined(rhs))
 		panic("Unexpected non-inlined `CompIntegerValue`.\n");
@@ -882,7 +882,7 @@ CompIntegerValue comp_integer_bit_or(CompIntegerValue lhs, CompIntegerValue rhs)
 	return CompIntegerValue{ lhs.rep | rhs.rep };
 }
 
-CompIntegerValue comp_integer_bit_xor(CompIntegerValue lhs, CompIntegerValue rhs) noexcept
+INTERNAL CompIntegerValue comp_integer_bit_xor(CompIntegerValue lhs, CompIntegerValue rhs) noexcept
 {
 	if (!is_inlined(lhs) || !is_inlined(rhs))
 		panic("Unexpected non-inlined `CompIntegerValue`.\n");
@@ -890,7 +890,7 @@ CompIntegerValue comp_integer_bit_xor(CompIntegerValue lhs, CompIntegerValue rhs
 	return CompIntegerValue{ lhs.rep ^ rhs.rep };
 }
 
-CompIntegerValue comp_integer_bit_not(CompIntegerValue value) noexcept
+INTERNAL CompIntegerValue comp_integer_bit_not(CompIntegerValue value) noexcept
 {
 	if (!is_inlined(value))
 		panic("Unexpected non-inlined `CompIntegerValue`.\n");
@@ -898,7 +898,7 @@ CompIntegerValue comp_integer_bit_not(CompIntegerValue value) noexcept
 	return CompIntegerValue{ (~value.rep) ^ 1 };
 }
 
-StrongCompareOrdering comp_integer_compare(CompIntegerValue lhs, CompIntegerValue rhs) noexcept
+INTERNAL StrongCompareOrdering comp_integer_compare(CompIntegerValue lhs, CompIntegerValue rhs) noexcept
 {
 	if (!is_inlined(lhs) || !is_inlined(rhs))
 		panic("Unexpected non-inlined `CompIntegerValue`.\n");
@@ -913,17 +913,17 @@ StrongCompareOrdering comp_integer_compare(CompIntegerValue lhs, CompIntegerValu
 
 
 
-CompFloatValue comp_float_from_f64(f64 value) noexcept
+INTERNAL CompFloatValue comp_float_from_f64(f64 value) noexcept
 {
 	return { value };
 }
 
-CompFloatValue comp_float_from_f32(f32 value) noexcept
+INTERNAL CompFloatValue comp_float_from_f32(f32 value) noexcept
 {
 	return { static_cast<f64>(value) };
 }
 
-bool comp_float_from_u64(u64 value, CompFloatValue* out) noexcept
+INTERNAL bool comp_float_from_u64(u64 value, CompFloatValue* out) noexcept
 {
 	if (static_cast<u64>(static_cast<f64>(value)) != value)
 		return false;
@@ -933,7 +933,7 @@ bool comp_float_from_u64(u64 value, CompFloatValue* out) noexcept
 	return true;
 }
 
-bool comp_float_from_s64(s64 value, CompFloatValue* out) noexcept
+INTERNAL bool comp_float_from_s64(s64 value, CompFloatValue* out) noexcept
 {
 	if (static_cast<s64>(static_cast<f64>(value)) != value)
 		return false;
@@ -943,7 +943,7 @@ bool comp_float_from_s64(s64 value, CompFloatValue* out) noexcept
 	return true;
 }
 
-bool comp_float_from_comp_integer(CompIntegerValue value, CompFloatValue* out) noexcept
+INTERNAL bool comp_float_from_comp_integer(CompIntegerValue value, CompFloatValue* out) noexcept
 {
 	if (!is_inlined(value))
 		panic("Unexpected non-inlined `CompIntegerValue`.\n");
@@ -960,42 +960,42 @@ bool comp_float_from_comp_integer(CompIntegerValue value, CompFloatValue* out) n
 	return true;
 }
 
-f64 f64_from_comp_float(CompFloatValue value) noexcept
+INTERNAL f64 f64_from_comp_float(CompFloatValue value) noexcept
 {
 	return value.rep;
 }
 
-f32 f32_from_comp_float(CompFloatValue value) noexcept
+INTERNAL f32 f32_from_comp_float(CompFloatValue value) noexcept
 {
 	return static_cast<f32>(value.rep);
 }
 
-CompFloatValue comp_float_add(CompFloatValue lhs, CompFloatValue rhs) noexcept
+INTERNAL CompFloatValue comp_float_add(CompFloatValue lhs, CompFloatValue rhs) noexcept
 {
 	return CompFloatValue{ lhs.rep + rhs.rep };
 }
 
-CompFloatValue comp_float_sub(CompFloatValue lhs, CompFloatValue rhs) noexcept
+INTERNAL CompFloatValue comp_float_sub(CompFloatValue lhs, CompFloatValue rhs) noexcept
 {
 	return CompFloatValue{ lhs.rep - rhs.rep };
 }
 
-CompFloatValue comp_float_mul(CompFloatValue lhs, CompFloatValue rhs) noexcept
+INTERNAL CompFloatValue comp_float_mul(CompFloatValue lhs, CompFloatValue rhs) noexcept
 {
 	return CompFloatValue{ lhs.rep * rhs.rep };
 }
 
-CompFloatValue comp_float_div(CompFloatValue lhs, CompFloatValue rhs) noexcept
+INTERNAL CompFloatValue comp_float_div(CompFloatValue lhs, CompFloatValue rhs) noexcept
 {
 	return CompFloatValue{ lhs.rep / rhs.rep };
 }
 
-CompFloatValue comp_float_neg(CompFloatValue value) noexcept
+INTERNAL CompFloatValue comp_float_neg(CompFloatValue value) noexcept
 {
 	return CompFloatValue{ -value.rep };
 }
 
-WeakCompareOrdering comp_float_compare(CompFloatValue lhs, CompFloatValue rhs) noexcept
+INTERNAL WeakCompareOrdering comp_float_compare(CompFloatValue lhs, CompFloatValue rhs) noexcept
 {
 	if (std::isnan(lhs.rep) || std::isnan(rhs.rep))
 		return WeakCompareOrdering::Unordered;

@@ -454,12 +454,12 @@ static SourceLocation source_location_from_source_file_and_source_id(CoreData* c
 
 
 
-bool source_reader_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSinkHandle sink) noexcept
+INTERNAL bool source_reader_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSinkHandle sink) noexcept
 {
 	return true;
 }
 
-MemoryRequirements source_reader_memory_requirements([[maybe_unused]] const Config* config) noexcept
+INTERNAL MemoryRequirements source_reader_memory_requirements([[maybe_unused]] const Config* config) noexcept
 {
 	MemoryRequirements reqs;
 	reqs.count = 1;
@@ -473,7 +473,7 @@ MemoryRequirements source_reader_memory_requirements([[maybe_unused]] const Conf
 	return reqs;
 }
 
-void source_reader_init(CoreData* core, MemoryAllocation allocation) noexcept
+INTERNAL void source_reader_init(CoreData* core, MemoryAllocation allocation) noexcept
 {
 	ASSERT_OR_IGNORE(allocation.ranges[0].count() == KNOWN_FILES_BY_PATH_LOOKUP_RESERVE + KNOWN_FILES_BY_PATH_VALUES_RESERVE + KNOWN_FILES_BY_IDENTITY_LOOKUP_RESERVE + KNOWN_FILES_BY_IDENTITY_VALUES_RESERVE + SOURCE_BUFFER_RESERVE);
 
@@ -514,7 +514,7 @@ void source_reader_init(CoreData* core, MemoryAllocation allocation) noexcept
 	(void) reader->id_entries.reserve();
 }
 
-void source_reader_cleanup(CoreData* core) noexcept
+INTERNAL void source_reader_cleanup(CoreData* core) noexcept
 {
 	SourceFileByIdEntry* curr = core->reader.id_entries.begin();
 
@@ -531,7 +531,7 @@ void source_reader_cleanup(CoreData* core) noexcept
 
 
 
-SourceFileRead read_source_file(CoreData* core, Range<char8> filepath) noexcept
+INTERNAL SourceFileRead read_source_file(CoreData* core, Range<char8> filepath) noexcept
 {
 	// Try lookup via path. This is just approximate, but conservative, meaning
 	// that there *might* be a match here if the file has already been seen,
@@ -598,7 +598,7 @@ SourceFileRead read_source_file(CoreData* core, Range<char8> filepath) noexcept
 	return SourceFileRead{ &id_entry->data, content };
 }
 
-SourceLocation source_location_from_source_id(CoreData* core, SourceId source_id) noexcept
+INTERNAL SourceLocation source_location_from_source_id(CoreData* core, SourceId source_id) noexcept
 {
 	if (source_id == SourceId::INVALID)
 	{
@@ -612,7 +612,7 @@ SourceLocation source_location_from_source_id(CoreData* core, SourceId source_id
 	}
 }
 
-Range<char8> source_file_path_from_source_id(CoreData* core, SourceId source_id) noexcept
+INTERNAL Range<char8> source_file_path_from_source_id(CoreData* core, SourceId source_id) noexcept
 {
 	ASSERT_OR_IGNORE(source_id != SourceId::INVALID);
 
@@ -627,14 +627,14 @@ Range<char8> source_file_path_from_source_id(CoreData* core, SourceId source_id)
 
 
 
-SourceFileId id_from_source_file(CoreData* core, SourceFile* file) noexcept
+INTERNAL SourceFileId id_from_source_file(CoreData* core, SourceFile* file) noexcept
 {
 	const SourceFileByIdEntry* const key = reinterpret_cast<const SourceFileByIdEntry*>(reinterpret_cast<byte*>(file) - offsetof(SourceFileByIdEntry, data));
 
 	return static_cast<SourceFileId>(core->reader.known_files_by_identity.id_from(key));
 }
 
-SourceFile* source_file_from_id(CoreData* core, SourceFileId file_id) noexcept
+INTERNAL SourceFile* source_file_from_id(CoreData* core, SourceFileId file_id) noexcept
 {
 	return &core->reader.known_files_by_identity.value_from(static_cast<u32>(file_id))->data;
 }
