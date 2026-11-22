@@ -8,13 +8,13 @@
 static s64 print_type_impl(PrintSinkHandle sink, CoreData* core, TypeId type_id, u32 indent, bool skip_initial_indent) noexcept
 {
 	if (type_id == TypeId::INVALID)
-		return print(sink, "%[< %]<Invalid>\n", "", skip_initial_indent ? 0 : indent * 2);
+		return print_noflush(sink, "%[< %]<Invalid>\n", "", skip_initial_indent ? 0 : indent * 2);
 
 	s64 indent_written = 0;
 
 	if (!skip_initial_indent)
 	{
-		indent_written = print(sink, "%[< %]", "", indent * 2);
+		indent_written = print_noflush(sink, "%[< %]", "", indent * 2);
 
 		if (indent_written < 0)
 			return -1;
@@ -36,7 +36,7 @@ static s64 print_type_impl(PrintSinkHandle sink, CoreData* core, TypeId type_id,
 	case TypeTag::TypeInfo:
 	case TypeTag::TailArray:
 	{
-		const s64 written = print(sink, "%\n", tag_name(tag));
+		const s64 written = print_noflush(sink, "%\n", tag_name(tag));
 
 		if (written < 0)
 			return -1;
@@ -49,7 +49,7 @@ static s64 print_type_impl(PrintSinkHandle sink, CoreData* core, TypeId type_id,
 	{
 		const NumericType* numeric_type = type_attachment_from_id<NumericType>(core, type_id);
 
-		const s64 written = print(sink, "%[]%\n", tag == TypeTag::Integer ? numeric_type->is_signed ? "s" : "u" : "f", numeric_type->bits);
+		const s64 written = print_noflush(sink, "%[]%\n", tag == TypeTag::Integer ? numeric_type->is_signed ? "s" : "u" : "f", numeric_type->bits);
 
 		if (written < 0)
 			return -1;
@@ -76,7 +76,7 @@ static s64 print_type_impl(PrintSinkHandle sink, CoreData* core, TypeId type_id,
 		else
 			introducer = "*";
 
-		const s64 written = print(sink, "%[]%", introducer, reference->is_mut ? "mut " : "");
+		const s64 written = print_noflush(sink, "%[]%", introducer, reference->is_mut ? "mut " : "");
 
 		if (written < 0)
 			return -1;
@@ -93,7 +93,7 @@ static s64 print_type_impl(PrintSinkHandle sink, CoreData* core, TypeId type_id,
 	{
 		const ArrayType* const array = type_attachment_from_id<ArrayType>(core, type_id);
 
-		const s64 written = print(sink, "[%]", array->element_count);
+		const s64 written = print_noflush(sink, "[%]", array->element_count);
 
 		if (written < 0)
 			return -1;
@@ -120,7 +120,7 @@ static s64 print_type_impl(PrintSinkHandle sink, CoreData* core, TypeId type_id,
 
 			if (type_metrics_from_id(core, type_id, &metrics))
 			{
-				written = print(sink, " (size=% align=% stride=%) {",
+				written = print_noflush(sink, " (size=% align=% stride=%) {",
 					metrics.size,
 					metrics.align,
 					metrics.stride
@@ -128,7 +128,7 @@ static s64 print_type_impl(PrintSinkHandle sink, CoreData* core, TypeId type_id,
 			}
 			else
 			{
-				written = print(sink, " (size=? align=? stride=?) {");
+				written = print_noflush(sink, " (size=? align=? stride=?) {");
 			}
 
 			if (written < 0)
@@ -138,7 +138,7 @@ static s64 print_type_impl(PrintSinkHandle sink, CoreData* core, TypeId type_id,
 		}
 		else
 		{
-			const s64 written = print(sink, " (size=? align=? stride=?) {");
+			const s64 written = print_noflush(sink, " (size=? align=? stride=?) {");
 
 			if (written < 0)
 				return -1;
@@ -158,7 +158,7 @@ static s64 print_type_impl(PrintSinkHandle sink, CoreData* core, TypeId type_id,
 
 			const IdentifierId member_name = type_member_name_by_rank(core, type_id, member_info.rank);
 
-			const s64 flags_written = print(sink, "\n%[< %] global=% pub=% mut=% eval=% ",
+			const s64 flags_written = print_noflush(sink, "\n%[< %] global=% pub=% mut=% eval=% ",
 				"", (indent + 1) * 2,
 				member_info.is_global,
 				member_info.is_pub,
@@ -173,7 +173,7 @@ static s64 print_type_impl(PrintSinkHandle sink, CoreData* core, TypeId type_id,
 
 			if (is_complete && !member_info.is_global)
 			{
-				const s64 offset_written = print(sink, "offset=% ", member_info.offset);
+				const s64 offset_written = print_noflush(sink, "offset=% ", member_info.offset);
 
 				if (offset_written < 0)
 					return -1;
@@ -185,13 +185,13 @@ static s64 print_type_impl(PrintSinkHandle sink, CoreData* core, TypeId type_id,
 
 			if (member_name < IdentifierId::FirstNatural)
 			{
-				name_written = print(sink, "name=\"_%\" :: ", static_cast<u32>(member_name));
+				name_written = print_noflush(sink, "name=\"_%\" :: ", static_cast<u32>(member_name));
 			}
 			else
 			{
 				const Range<char8> name = identifier_name_from_id(core, member_name);
 
-				name_written = print(sink, "name=\"%\" :: ", name);
+				name_written = print_noflush(sink, "name=\"%\" :: ", name);
 			}
 
 			if (name_written < 0)
@@ -207,7 +207,7 @@ static s64 print_type_impl(PrintSinkHandle sink, CoreData* core, TypeId type_id,
 			}
 			else
 			{
-				type_written = print(sink, "Code2Id<%u>", static_cast<u32>(get(member_info.type_and_value.pending.type)));
+				type_written = print_noflush(sink, "Code2Id<%u>", static_cast<u32>(get(member_info.type_and_value.pending.type)));
 			}
 
 			if (type_written < 0)
@@ -218,7 +218,7 @@ static s64 print_type_impl(PrintSinkHandle sink, CoreData* core, TypeId type_id,
 			has_members = true;
 		}
 
-		const s64 end_written = print(sink, "%[< %]}", "", has_members ? indent * 2 : 1, "");
+		const s64 end_written = print_noflush(sink, "%[< %]}", "", has_members ? indent * 2 : 1, "");
 
 		if (end_written < 0)
 			return -1;
@@ -233,11 +233,11 @@ static s64 print_type_impl(PrintSinkHandle sink, CoreData* core, TypeId type_id,
 
 			if (info.has_templated_return_type)
 			{
-				return_type_written = print(sink, " -> Code2Id<%>", static_cast<u32>(info.return_type.templated.completion_id));
+				return_type_written = print_noflush(sink, " -> Code2Id<%>", static_cast<u32>(info.return_type.templated.completion_id));
 			}
 			else
 			{
-				const s64 arrow_written = print(sink, " -> ");
+				const s64 arrow_written = print_noflush(sink, " -> ");
 
 				if (arrow_written < 0)
 					return -1;
@@ -260,7 +260,7 @@ static s64 print_type_impl(PrintSinkHandle sink, CoreData* core, TypeId type_id,
 	{
 		const SelfType* const self = type_attachment_from_id<SelfType>(core, type_id);
 
-		const s64 written = print(sink, "Self ");
+		const s64 written = print_noflush(sink, "Self ");
 
 		if (written < 0)
 			return -1;
@@ -281,14 +281,19 @@ static s64 print_type_impl(PrintSinkHandle sink, CoreData* core, TypeId type_id,
 	ASSERT_UNREACHABLE;
 }
 
-s64 diag::print_type(PrintSinkHandle sink, CoreData* core, TypeId type_id) noexcept
+s64 diag::print_type(PrintSinkHandle unbuffered_sink, CoreData* core, TypeId type_id) noexcept
 {
-	const s64 type_written = print_type_impl(sink, core, type_id, 0, false);
+	char8 buffer[16384];
+
+	PrintSink buffered_sink = print_make_buffered_sink(unbuffered_sink, MutRange{ buffer });
+
+	const s64 type_written = print_type_impl(&buffered_sink, core, type_id, 0, false);
 
 	if (type_written < 0)
 		return -1;
 
-	const s64 end_written = print(sink, "\n");
+	// Flush with the last print.
+	const s64 end_written = print(&buffered_sink, "\n");
 
 	if (end_written < 0)
 		return -1;

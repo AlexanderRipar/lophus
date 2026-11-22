@@ -39,6 +39,8 @@ struct PrintResult
 	const Code2* next;
 };
 
+static s64 print_code2_impl(PrintSinkHandle sink, CoreData* core, const Code2Block* block) noexcept;
+
 static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const Code2Block* base, const Code2* code) noexcept
 {
 	const Code2Op op = code->op;
@@ -47,7 +49,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 
 	const Code2Offset offset = offset_from_code2(base, code);
 
-	s64 total_written = print(sink, "%[> 6] %", static_cast<u32>(offset), op_name);
+	s64 total_written = print_noflush(sink, "%[> 6] %", static_cast<u32>(offset), op_name);
 
 	if (total_written < 0)
 		return { -1, nullptr };
@@ -58,7 +60,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	{
 		const Code2AttLeave* const attachment = attachment_of<Code2AttLeave>(code);
 
-		s64 written = print(sink, " value=% out=%\n",
+		s64 written = print_noflush(sink, " value=% out=%\n",
 			attachment->operand,
 			code->leave.out
 		);
@@ -71,7 +73,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 
 	case Code2Op::Repeat:
 	{
-		s64 written = print(sink, " out=%\n", code->repeat.out);
+		s64 written = print_noflush(sink, " out=%\n", code->repeat.out);
 
 		if (written < 0)
 			return { -1, nullptr };
@@ -81,7 +83,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 
 	case Code2Op::Builtin:
 	{
-		s64 written = print(sink, " builtin=%\n", tag_name(code->builtin.builtin));
+		s64 written = print_noflush(sink, " builtin=%\n", tag_name(code->builtin.builtin));
 
 		if (written < 0)
 			return { -1, nullptr };
@@ -93,7 +95,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	{
 		const Code2AttComposite* const attachment = attachment_of<Code2AttComposite>(code);
 
-		s64 written = print(sink, " members=%\n", code->composite.member_count);
+		s64 written = print_noflush(sink, " members=%\n", code->composite.member_count);
 
 		if (written < 0)
 			return { -1, nullptr };
@@ -108,7 +110,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 				? identifier_name_from_id(core, get(member->name))
 				: range::from_literal_string("<none>");
 
-			written = print(sink, "         %[> 5] - name=\"%\" (%) value=%\n",
+			written = print_noflush(sink, "         %[> 5] - name=\"%\" (%) value=%\n",
 				i,
 				name,
 				is_some(member->name) ? static_cast<u32>(get(member->name)) : 0,
@@ -128,7 +130,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	{
 		const Code2AttArray* const attachment = attachment_of<Code2AttArray>(code);
 
-		s64 written = print(sink, " elements=%\n", code->array.element_count);
+		s64 written = print_noflush(sink, " elements=%\n", code->array.element_count);
 
 		if (written < 0)
 			return { -1, nullptr };
@@ -139,7 +141,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 		{
 			const Code2AttArray_Element* const member = attachment->elements + i;
 
-			written = print(sink, "         %[> 5] - value=%\n", i, member->value);
+			written = print_noflush(sink, "         %[> 5] - value=%\n", i, member->value);
 
 			if (written < 0)
 				return { -1, nullptr };
@@ -154,7 +156,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	{
 		const Code2AttDefinition* const attachment = attachment_of<Code2AttDefinition>(code);
 
-		const s64 written = print(sink, "name=\"%\" (%) type=% value=% pub=% mut=% selfref=%\n",
+		const s64 written = print_noflush(sink, "name=\"%\" (%) type=% value=% pub=% mut=% selfref=%\n",
 			identifier_name_from_id(core, attachment->name),
 			static_cast<u32>(attachment->name),
 			attachment->type,
@@ -174,7 +176,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	{
 		const Code2AttUnaryOp* const attachment = attachment_of<Code2AttUnaryOp>(code);
 
-		s64 written = print(sink, " mut=% value=%\n",
+		s64 written = print_noflush(sink, " mut=% value=%\n",
 			code->make_location.is_mut,
 			attachment->operand
 		);
@@ -189,7 +191,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	{
 		const Code2AttUnaryOp* const attachment = attachment_of<Code2AttUnaryOp>(code);
 
-		const s64 written = print(sink, " value=% index=% mut=% selfref=%\n",
+		const s64 written = print_noflush(sink, " value=% index=% mut=% selfref=%\n",
 			attachment->operand,
 			code->define.definition_index,
 			code->define.is_mut,
@@ -206,7 +208,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	{
 		const Code2AttBinaryOp* const attachment = attachment_of<Code2AttBinaryOp>(code);
 
-		const s64 written = print(sink, " type=% value=% index=% mut=% selfref=%\n",
+		const s64 written = print_noflush(sink, " type=% value=% index=% mut=% selfref=%\n",
 			attachment->lhs,
 			attachment->rhs,
 			code->define.definition_index,
@@ -234,7 +236,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	{
 		const Code2AttUnaryOp* const attachment = attachment_of<Code2AttUnaryOp>(code);
 
-		s64 written = print(sink, " operand=%\n", attachment->operand);
+		s64 written = print_noflush(sink, " operand=%\n", attachment->operand);
 
 		if (written < 0)
 			return { -1, nullptr };
@@ -247,7 +249,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	case Code2Op::Unreachable:
 	case Code2Op::Undefined:
 	{
-		s64 written = print(sink, "\n");
+		s64 written = print_noflush(sink, "\n");
 
 		if (written < 0)
 			return { -1, nullptr };
@@ -259,7 +261,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	{
 		const Code2AttIf* const attachment = attachment_of<Code2AttIf>(code);
 
-		s64 written = print(sink, " condition=% consequent=% alternative=%\n",
+		s64 written = print_noflush(sink, " condition=% consequent=% alternative=%\n",
 			attachment->condition,
 			attachment->consequent,
 			attachment->alternative
@@ -276,7 +278,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	{
 		const Code2AttJump* const attachment = attachment_of<Code2AttJump>(code);
 
-		s64 written = print(sink, " body=%\n", attachment->body);
+		s64 written = print_noflush(sink, " body=%\n", attachment->body);
 
 		if (written < 0)
 			return { -1, nullptr };
@@ -288,7 +290,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	{
 		const Code2AttFunc* const attachment = attachment_of<Code2AttFunc>(code);
 
-		s64 written = print(sink, " signature=% body=%\n",
+		s64 written = print_noflush(sink, " signature=% body=%\n",
 			attachment->signature,
 			attachment->body
 		);
@@ -303,7 +305,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	{
 		const Code2AttSignature* const attachment = attachment_of<Code2AttSignature>(code);
 
-		s64 written = print(sink, " kind=% parameters=% return_type=",
+		s64 written = print_noflush(sink, " kind=% parameters=% return_type=",
 			code->signature.is_func ? range::from_literal_string("func") : range::from_literal_string("proc"),
 			code->signature.parameter_count
 		);
@@ -314,8 +316,8 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 		total_written += written;
 
 		written = code->signature.has_templated_return_type
-			? print(sink, "%\n", attachment->return_type.templated)
-			: print(sink, "%\n", attachment->return_type.complete);
+			? print_noflush(sink, "%\n", attachment->return_type.templated)
+			: print_noflush(sink, "%\n", attachment->return_type.complete);
 
 		if (written < 0)
 			return { -1, nullptr };
@@ -330,7 +332,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 
 			const Range<char8> name = identifier_name_from_id(core, parameter->name);
 
-			written = print(sink, "            %[> 2] - name=\"%\" (%) mut=% eval=% template=%",
+			written = print_noflush(sink, "            %[> 2] - name=\"%\" (%) mut=% eval=% template=%",
 				i,
 				name,
 				static_cast<u32>(parameter->name),
@@ -346,7 +348,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 
 			if (parameter->is_templated)
 			{
-				written = print(sink, " type=% default=%\n",
+				written = print_noflush(sink, " type=% default=%\n",
 					parameter->templated.type,
 					parameter->templated.default_value
 				);
@@ -358,7 +360,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 			}
 			else
 			{
-				written = print(sink, " type=% default=%\n",
+				written = print_noflush(sink, " type=% default=%\n",
 					parameter->complete.type,
 					parameter->complete.default_value
 				);
@@ -377,7 +379,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	{
 		const Code2AttTrait* const attachment = attachment_of<Code2AttTrait>(code);
 
-		s64 written = print(sink, " parameters=% members=%\n", code->trait.parameter_count, code->trait.member_count);
+		s64 written = print_noflush(sink, " parameters=% members=%\n", code->trait.parameter_count, code->trait.member_count);
 
 		if (written < 0)
 			return { -1, nullptr };
@@ -388,7 +390,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 		{
 			const Range<char8> name = identifier_name_from_id(core, attachment->parameters[i]);
 
-			written = print(sink, "            [%] name=%\n", i, name);
+			written = print_noflush(sink, "            [%] name=%\n", i, name);
 
 			if (written < 0)
 				return { -1, nullptr };
@@ -396,7 +398,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 			total_written += written;
 		}
 
-		written = print(sink, "\n");
+		written = print_noflush(sink, "\n");
 
 		if (written < 0)
 			return { -1, nullptr };
@@ -409,7 +411,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 		{
 			const Range<char8> name = identifier_name_from_id(core, members[i].name);
 
-			written = print(sink, "            [%] name=\"%\" (%) pub=% mut=% type=% default=%",
+			written = print_noflush(sink, "            [%] name=\"%\" (%) pub=% mut=% type=% default=%",
 				i,
 				name,
 				static_cast<u32>(members[i].name),
@@ -432,7 +434,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	{
 		const Code2AttImpl* const attachment = attachment_of<Code2AttImpl>(code);
 
-		s64 written = print(sink, " base=% traitcall=% members=%\n",
+		s64 written = print_noflush(sink, " base=% traitcall=% members=%\n",
 			attachment->base_type,
 			attachment->trait_call,
 			code->impl.member_count
@@ -447,7 +449,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 		{
 			const Range<char8> name = identifier_name_from_id(core, attachment->members[i].name);
 
-			written = print(sink, "         [>5 %] name=\"%\" (%) type=% value=% mut=% pub=%\n",
+			written = print_noflush(sink, "         [>5 %] name=\"%\" (%) type=% value=% mut=% pub=%\n",
 				i,
 				name,
 				static_cast<u32>(attachment->members[i].name),
@@ -471,7 +473,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	{
 		const Code2AttCall* const attachment = attachment_of<Code2AttCall>(code);
 
-		s64 written = print(sink, " callee=% arguments=%\n", static_cast<u32>(attachment->callee), code->call.argument_count);
+		s64 written = print_noflush(sink, " callee=% arguments=%\n", static_cast<u32>(attachment->callee), code->call.argument_count);
 
 		if (written < 0)
 			return { -1, nullptr };
@@ -484,7 +486,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 				? identifier_name_from_id(core, get(attachment->arguments[i].name))
 				: range::from_literal_string("<none>");
 
-			written = print(sink, "            %[> 2] - name=\"%\" (%) value=%\n",
+			written = print_noflush(sink, "            %[> 2] - name=\"%\" (%) value=%\n",
 				i,
 				name,
 				is_some(attachment->arguments[i].name) ? static_cast<u32>(get(attachment->arguments[i].name)) : 0,
@@ -503,7 +505,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	case Code2Op::LocalValue:
 	case Code2Op::LocalLocation:
 	{
-		s64 written = print(sink, " out=% rank=%\n", code->local_ref.out, code->local_ref.rank);
+		s64 written = print_noflush(sink, " out=% rank=%\n", code->local_ref.out, code->local_ref.rank);
 
 		if (written < 0)
 			return { -1, nullptr };
@@ -514,7 +516,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	case Code2Op::GlobalValue:
 	case Code2Op::GlobalLocation:
 	{
-		s64 written = print(sink, " rank=%\n", code->global_ref.rank);
+		s64 written = print_noflush(sink, " rank=%\n", code->global_ref.rank);
 
 		if (written < 0)
 			return { -1, nullptr };
@@ -525,7 +527,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	case Code2Op::ClosedValue:
 	case Code2Op::ClosedLocation:
 	{
-		const s64 written = print(sink, " rank=%\n", code->closed_ref.rank);
+		const s64 written = print_noflush(sink, " rank=%\n", code->closed_ref.rank);
 
 		if (written < 0)
 			return { -1, nullptr };
@@ -536,7 +538,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	case Code2Op::TraitArgumentValue:
 	case Code2Op::TraitArgumentLocation:
 	{
-		const s64 written = print(sink, " rank=%\n", code->trait_argument_ref.rank);
+		const s64 written = print_noflush(sink, " rank=%\n", code->trait_argument_ref.rank);
 
 		if (written < 0)
 			return { -1, nullptr };
@@ -548,7 +550,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	{
 		const Code2AttSlice* const attachment = attachment_of<Code2AttSlice>(code);
 
-		const s64 written = print(sink, " sliced=% begin=% end=%\n",
+		const s64 written = print_noflush(sink, " sliced=% begin=% end=%\n",
 			attachment->sliced,
 			attachment->begin,
 			attachment->end
@@ -562,7 +564,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 
 	case Code2Op::Integer16:
 	{
-		s64 written = print(sink, " value=%\n", code->integer16.value);
+		s64 written = print_noflush(sink, " value=%\n", code->integer16.value);
 
 		if (written < 0)
 			return { -1, nullptr };
@@ -583,9 +585,9 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 		u64 raw_value;
 		
 		if (u64_from_comp_integer(value, 64, &raw_value))
-			written = print(sink, " value=%\n", raw_value);
+			written = print_noflush(sink, " value=%\n", raw_value);
 		else
-			written = print(sink, " value=<huge>\n");
+			written = print_noflush(sink, " value=<huge>\n");
 
 		if (written < 0)
 			return { -1, nullptr };
@@ -600,7 +602,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 		CompFloatValue value;
 		memcpy(&value, &attachment->value_lo, sizeof(CompFloatValue));
 
-		s64 written = print(sink, " value=%\n", f64_from_comp_float(value));
+		s64 written = print_noflush(sink, " value=%\n", f64_from_comp_float(value));
 
 		if (written < 0)
 			return { -1, nullptr };
@@ -616,7 +618,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 
 		const Range<char8> value{ begin, attachment->size };
 
-		s64 written = print(sink, " length=% value=\"%\"\n", attachment->size, value);
+		s64 written = print_noflush(sink, " length=% value=\"%\"\n", attachment->size, value);
 
 		if (written < 0)
 			return { -1, nullptr };
@@ -630,7 +632,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	{
 		const Code2AttUnaryOp* const attachment = attachment_of<Code2AttUnaryOp>(code);
 
-		s64 written = print(sink, " operand=% mut=% opt=% multi=%\n",
+		s64 written = print_noflush(sink, " operand=% mut=% opt=% multi=%\n",
 			attachment->operand,
 			code->reference_type.is_mut,
 			code->reference_type.is_opt,
@@ -647,7 +649,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	{
 		const Code2AttBinaryOp* const attachment = attachment_of<Code2AttBinaryOp>(code);
 
-		s64 written = print(sink, " kind=% lhs=% rhs=%\n",
+		s64 written = print_noflush(sink, " kind=% lhs=% rhs=%\n",
 			tag_name(code->binary_arithmetic.kind),
 			attachment->lhs,
 			attachment->rhs
@@ -663,7 +665,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	{
 		const Code2AttBinaryOp* const attachment = attachment_of<Code2AttBinaryOp>(code);
 
-		s64 written = print(sink, " kind=% lhs=% rhs=%\n",
+		s64 written = print_noflush(sink, " kind=% lhs=% rhs=%\n",
 			tag_name(code->bit_shift.kind),
 			attachment->lhs,
 			attachment->rhs
@@ -681,7 +683,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	{
 		const Code2AttBinaryOp* const attachment = attachment_of<Code2AttBinaryOp>(code);
 
-		s64 written = print(sink, " lhs=% rhs=%\n",
+		s64 written = print_noflush(sink, " lhs=% rhs=%\n",
 			attachment->lhs,
 			attachment->rhs
 		);
@@ -697,7 +699,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	{
 		const Code2AttLogicalOp* const attachment = attachment_of<Code2AttLogicalOp>(code);
 
-		s64 written = print(sink, " lhs=% rhs=@%\n",
+		s64 written = print_noflush(sink, " lhs=% rhs=@%\n",
 			attachment->lhs,
 			attachment->rhs
 		);
@@ -715,7 +717,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 
 		const Range<char8> name = identifier_name_from_id(core, attachment->name);
 
-		const s64 written = print(sink, " name=\"%\" (%) operand=%\n",
+		const s64 written = print_noflush(sink, " name=\"%\" (%) operand=%\n",
 			name,
 			static_cast<u32>(attachment->name),
 			attachment->composite.offset
@@ -731,7 +733,7 @@ static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const C
 	{
 		const Code2AttBinaryOp* const attachment = attachment_of<Code2AttBinaryOp>(code);
 
-		const s64 written = print(sink, " kind=% lhs=% rhs=%\n",
+		const s64 written = print_noflush(sink, " kind=% lhs=% rhs=%\n",
 			tag_name(code->compare.kind),
 			attachment->lhs,
 			attachment->rhs
@@ -1079,7 +1081,7 @@ static PrintResult print_one_code2_ref(PrintSinkHandle sink, CoreData* core, con
 	ASSERT_UNREACHABLE;
 }
 
-s64 diag::print_code2(PrintSinkHandle sink, CoreData* core, const Code2Block* block) noexcept
+static s64 print_code2_impl(PrintSinkHandle sink, CoreData* core, const Code2Block* block) noexcept
 {
 	const Code2* const begin = code2_block_begin(block);
 
@@ -1087,7 +1089,7 @@ s64 diag::print_code2(PrintSinkHandle sink, CoreData* core, const Code2Block* bl
 
 	const Code2Id id = id_from_code2_block(core, block);
 
-	s64 total_written = print(sink, "\n  %:\n", id);
+	s64 total_written = print_noflush(sink, "\n  %:\n", id);
 
 	if (total_written < 0)
 		return -1;
@@ -1123,4 +1125,21 @@ s64 diag::print_code2(PrintSinkHandle sink, CoreData* core, const Code2Block* bl
 		return -1;
 
 	return total_written;
+}
+
+s64 diag::print_code2(PrintSinkHandle unbuffered_sink, CoreData* core, const Code2Block* block) noexcept
+{
+	char8 buffer[16384];
+
+	PrintSink buffered_sink = print_make_buffered_sink(unbuffered_sink, MutRange{ buffer });
+
+	const s64 written = print_code2_impl(&buffered_sink, core, block);
+
+	if (written < 0)
+		return -1;
+
+	if (!print_flush_sink(&buffered_sink))
+		return -1;
+
+	return written;
 }
