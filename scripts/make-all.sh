@@ -34,7 +34,7 @@ for i in {0..3}; do
 
 	build_name="linux-$c_compiler-$short_build_type"
 
-	( cmake -S . -B build/$build_name -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_BUILD_TYPE=$build_type -DMONOBUILD=$monobuild && cmake --build build/$build_name --target $targets 2>&1 ) > $output &
+	( cd $(dirname ${BASH_SOURCE[0]}) && cmake -S . -B build/$build_name -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_BUILD_TYPE=$build_type -DMONOBUILD=$monobuild && cmake --build build/$build_name --target $targets 2>&1 ) > $output &
 
 	pids[$i]=$!
 done
