@@ -685,6 +685,75 @@ PrintSink print_make_sink(MutRange<char8> buffer) noexcept
 }
 
 
+struct BufferedSinkAttach
+{
+	PrintSink* target;
+
+	char8* buffer;
+
+	u32 capacity;
+
+	u32 used;
+};
+
+static u64 print_sink_write_buffered(void* raw_attach, Range<char8> data) noexcept
+{
+	BufferedSinkAttach* const attach = static_cast<BufferedSinkAttach*>(raw_attach);
+
+	char8* const buffer = attach->buffer;
+
+	const u32 capacity = attach->capacity;
+
+	u32 used = attach->used;
+
+	u64 written = 0;
+
+	if (capacity - used < data.count())
+	{
+		if (used != 0)
+		{
+			written = attach->target->write_func(attach->target->attach, Range{ buffer, used });
+
+			used = 0;
+		}
+
+		// If the data we are writing is bigger than the buffer, just write it
+		// directly to the target. This is only done after the buffer itself
+		// has been flushed.
+		if (capacity < data.count())
+		{
+			attach->used = 0;
+
+			return written + attach->target->write_func(attach->target->attach, data);
+		}
+	}
+
+	memcpy(buffer + used, data.begin(), data.count());
+
+	attach->used = used + static_cast<u32>(data.count());
+
+	// Do not count buffered data towards written. It will be counted once it
+	// is flushed to the target.
+	return written;
+}
+
+PrintSink print_make_buffered_sink(PrintSinkHandle target, MutRange<char8> buffer) noexcept
+{
+	ASSERT_OR_IGNORE(buffer.count() <= UINT32_MAX);
+
+	PrintSink sink{};
+	sink.write_func = print_sink_write_buffered;
+
+	BufferedSinkAttach* const attach = reinterpret_cast<BufferedSinkAttach*>(sink.attach);
+	attach->target = target;
+	attach->buffer = buffer.begin();
+	attach->capacity = static_cast<u32>(buffer.count());
+	attach->used = 0;
+
+	return sink;
+}
+
+
 
 struct PrintSpecInfo
 {

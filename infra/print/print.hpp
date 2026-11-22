@@ -66,6 +66,8 @@ PrintInsert print_make_insert(Range<char8>) noexcept;
 PrintSink print_make_sink(minos::FileHandle file) noexcept;
 PrintSink print_make_sink(MutRange<char8> buffer) noexcept;
 
+PrintSink print_make_buffered_sink(PrintSinkHandle target, MutRange<char8> buffer) noexcept;
+
 s64 vprint(PrintSinkHandle sink, Range<char8> format, Range<PrintInsert> inserts) noexcept;
 
 s64 print(PrintSinkHandle sink, Range<char8> format) noexcept;
