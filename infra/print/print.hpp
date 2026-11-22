@@ -8,7 +8,7 @@
 
 struct PrintState;
 
-using print_sink_write_func = u64 (*) (void* sink_attach, Range<char8> buffer) noexcept;
+using print_sink_write_func = s64 (*) (void* sink_attach, Range<char8> buffer, bool flush) noexcept;
 
 struct PrintSink
 {
@@ -68,16 +68,27 @@ PrintSink print_make_sink(MutRange<char8> buffer) noexcept;
 
 PrintSink print_make_buffered_sink(PrintSinkHandle target, MutRange<char8> buffer) noexcept;
 
-s64 vprint(PrintSinkHandle sink, Range<char8> format, Range<PrintInsert> inserts) noexcept;
 
-s64 print(PrintSinkHandle sink, Range<char8> format) noexcept;
+
+s64 print_flush_sink(PrintSinkHandle sink) noexcept;
+
+
+
+s64 vprint(PrintSinkHandle sink, bool flush, Range<char8> format, Range<PrintInsert> inserts) noexcept;
 
 template<typename... Inserts>
 s64 print(PrintSinkHandle sink, Range<char8> format, Inserts... inserts) noexcept
 {
-	PrintInsert erased_inserts[] = { print_make_insert(inserts)... };
+	if constexpr (sizeof...(inserts) != 0)
+	{
+		PrintInsert erased_inserts[] = { print_make_insert(inserts)... };
 
-	return vprint(sink, format, Range{ erased_inserts });
+		return vprint(sink, true, format, Range{ erased_inserts });
+	}
+	else
+	{
+		return vprint(sink, true, format, {});
+	}
 }
 
 template<typename... Inserts>
@@ -100,6 +111,43 @@ s64 print(Sink sink, const char8* format, Inserts... inserts) noexcept
 	PrintSink print_sink = print_make_sink(sink);
 
 	return print(&print_sink, range::from_cstring(format), inserts...);
+}
+
+template<typename... Inserts>
+s64 print_noflush(PrintSinkHandle sink, Range<char8> format, Inserts... inserts) noexcept
+{
+	if constexpr (sizeof...(inserts) != 0)
+	{
+		PrintInsert erased_inserts[] = { print_make_insert(inserts)... };
+
+		return vprint(sink, false, format, Range{ erased_inserts });
+	}
+	else
+	{
+		return vprint(sink, false, format, {});
+	}
+}
+
+template<typename... Inserts>
+s64 print_noflush(PrintSinkHandle sink, const char8* format, Inserts... inserts) noexcept
+{
+	return print_noflush(sink, range::from_cstring(format), inserts...);
+}
+
+template<typename Sink, typename... Inserts>
+s64 print_noflush(Sink sink, Range<char8> format, Inserts... inserts) noexcept
+{
+	PrintSink print_sink = print_make_sink(sink);
+
+	return print_noflush(&print_sink, format, inserts...);
+}
+
+template<typename Sink, typename... Inserts>
+s64 print_noflush(Sink sink, const char8* format, Inserts... inserts) noexcept
+{
+	PrintSink print_sink = print_make_sink(sink);
+
+	return print_noflush(&print_sink, range::from_cstring(format), inserts...);
 }
 
 #endif // PRINT_INCLUDE_GUARD

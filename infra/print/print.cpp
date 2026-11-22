@@ -59,7 +59,7 @@ Maybe<char8*> ps_reserve_buffer(PrintState* state, u64 n) noexcept
 
 	if (array_count(state->buffer) - state->buffer_used < n)
 	{
-		const u64 written = state->sink->write_func(state->sink->attach, Range{ state->buffer, state->buffer_used });
+		const u64 written = state->sink->write_func(state->sink->attach, Range{ state->buffer, state->buffer_used }, false);
 
 		if (written != state->buffer_used)
 			return none<char8*>();
@@ -90,7 +90,7 @@ bool ps_fill(PrintState* state, u64 count, char8 fill_char) noexcept
 
 	while (count != 0)
 	{
-		const u64 written = state->sink->write_func(state->sink->attach, Range{ state->buffer, state->buffer_used });
+		const u64 written = state->sink->write_func(state->sink->attach, Range{ state->buffer, state->buffer_used }, false);
 
 		if (written != state->buffer_used)
 			return false;
@@ -173,7 +173,7 @@ bool ps_print_chars(PrintState* state, Range<char8> value) noexcept
 	}
 	else
 	{
-		const u64 written = state->sink->write_func(state->sink->attach, Range{ state->buffer, state->buffer_used });
+		const u64 written = state->sink->write_func(state->sink->attach, Range{ state->buffer, state->buffer_used }, false);
 
 		if (written != state->buffer_used)
 			return false;
@@ -188,7 +188,7 @@ bool ps_print_chars(PrintState* state, Range<char8> value) noexcept
 		}
 		else
 		{
-			const u64 value_written = state->sink->write_func(state->sink->attach, value);
+			const u64 value_written = state->sink->write_func(state->sink->attach, value, false);
 
 			if (value_written != value_count)
 				return false;
@@ -635,12 +635,12 @@ struct MinosFileHandleSinkAttach
 	u64 offset;
 };
 
-static u64 print_sink_write_minos_filehandle(void* raw_attach, Range<char8> data) noexcept
+static s64 print_sink_write_minos_filehandle(void* raw_attach, Range<char8> data, [[maybe_unused]] bool flush) noexcept
 {
 	MinosFileHandleSinkAttach* const attach = static_cast<MinosFileHandleSinkAttach*>(raw_attach);
 
 	if (!minos::file_write_append(attach->filehandle, data.as_byte_range()))
-		return 0;
+		return -1;
 
 	return data.count();
 }
@@ -660,7 +660,7 @@ struct MutRangeFormatSinkAttach
 	MutRange<char8> buffer;
 };
 
-static u64 print_sink_write_mut_range(void* raw_attach, Range<char8> data) noexcept
+static s64 print_sink_write_mut_range(void* raw_attach, Range<char8> data, [[maybe_unused]] bool flush) noexcept
 {
 	MutRangeFormatSinkAttach* const attach = static_cast<MutRangeFormatSinkAttach*>(raw_attach);
 
@@ -696,7 +696,7 @@ struct BufferedSinkAttach
 	u32 used;
 };
 
-static u64 print_sink_write_buffered(void* raw_attach, Range<char8> data) noexcept
+static s64 print_sink_write_buffered(void* raw_attach, Range<char8> data, bool flush) noexcept
 {
 	BufferedSinkAttach* const attach = static_cast<BufferedSinkAttach*>(raw_attach);
 
@@ -706,13 +706,25 @@ static u64 print_sink_write_buffered(void* raw_attach, Range<char8> data) noexce
 
 	u32 used = attach->used;
 
-	u64 written = 0;
+	if (flush)
+	{
+		if (used != 0)
+		{
+			if (attach->target->write_func(attach->target->attach, Range{ buffer, used }, false) < 0)
+				return -1;
+
+			attach->used = 0;
+		}
+
+		return attach->target->write_func(attach->target->attach, data, true);
+	}
 
 	if (capacity - used < data.count())
 	{
 		if (used != 0)
 		{
-			written = attach->target->write_func(attach->target->attach, Range{ buffer, used });
+			if (attach->target->write_func(attach->target->attach, Range{ buffer, used }, false) < 0)
+				return -1;
 
 			used = 0;
 		}
@@ -724,7 +736,7 @@ static u64 print_sink_write_buffered(void* raw_attach, Range<char8> data) noexce
 		{
 			attach->used = 0;
 
-			return written + attach->target->write_func(attach->target->attach, data);
+			return attach->target->write_func(attach->target->attach, data, true);
 		}
 	}
 
@@ -734,7 +746,7 @@ static u64 print_sink_write_buffered(void* raw_attach, Range<char8> data) noexce
 
 	// Do not count buffered data towards written. It will be counted once it
 	// is flushed to the target.
-	return written;
+	return data.count();
 }
 
 PrintSink print_make_buffered_sink(PrintSinkHandle target, MutRange<char8> buffer) noexcept
@@ -976,7 +988,14 @@ static PrintSpecInfo parse_print_spec(const char8* chars, u64 count, u64 default
 
 
 
-s64 vprint(PrintSinkHandle sink, Range<char8> format, Range<PrintInsert> inserts) noexcept
+s64 print_flush_sink(PrintSinkHandle sink) noexcept
+{
+	return sink->write_func(sink->attach, Range<char8>{}, true) >= 0;
+}
+
+
+
+s64 vprint(PrintSinkHandle sink, bool flush, Range<char8> format, Range<PrintInsert> inserts) noexcept
 {
 	PrintState state;
 	state.sink = sink;
@@ -1091,7 +1110,7 @@ s64 vprint(PrintSinkHandle sink, Range<char8> format, Range<PrintInsert> inserts
 
 	if (state.buffer_used != 0)
 	{
-		const u64 written = state.sink->write_func(state.sink->attach, Range{ state.buffer, state.buffer_used });
+		const u64 written = state.sink->write_func(state.sink->attach, Range{ state.buffer, state.buffer_used }, flush);
 
 		if (written != state.buffer_used)
 			return -1;
@@ -1100,9 +1119,4 @@ s64 vprint(PrintSinkHandle sink, Range<char8> format, Range<PrintInsert> inserts
 	}
 
 	return state.written;
-}
-
-s64 print(PrintSinkHandle sink, Range<char8> format) noexcept
-{
-	return vprint(sink, format, {});
 }
