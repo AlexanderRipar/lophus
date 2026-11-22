@@ -106,10 +106,8 @@ function(set_common_target_options NAME)
 			-Wpedantic
 			-Wextra
 			-g
-			-pg
 			-mavx2
 		)
-		target_link_options(${NAME} PRIVATE -pg)
 	elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
 		target_compile_options(${NAME} PRIVATE
 			-Wall
