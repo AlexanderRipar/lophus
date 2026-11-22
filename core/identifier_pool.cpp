@@ -203,13 +203,19 @@ Range<char8> identifier_name_from_id(const CoreData* core, IdentifierId id) noex
 
 
 
-void identifier_pool_metrics(const CoreData* core, PrintSinkHandle sink) noexcept
+void identifier_pool_metrics(const CoreData* core, PrintSinkHandle unbuffered_sink) noexcept
 {
+	char8 buffer[16384];
+
+	PrintSink buffered_sink = print_make_buffered_sink(unbuffered_sink, MutRange{ buffer });
+
+	PrintSinkHandle const sink = &buffered_sink;
+
 	IdMapMetrics metrics;
 
 	core->identifiers.map.compute_metrics(&metrics);
 
-	print(sink,
+	print_noflush(sink,
 		"########## Identifier Pool Metrics ##########\n"
 		"Used:  .  .  .  .  .  .  .  .  .  .  %\n"
 		"Committed:   .  .  .  .  .  .  .  .  %\n"
@@ -244,10 +250,10 @@ void identifier_pool_metrics(const CoreData* core, PrintSinkHandle sink) noexcep
 		if (bar_size == 0 && metrics.psl_histogram[i] != 0)
 			bar_size = 1;
 
-		print(sink, "\t%[> 2] - %[> 6] |%[>#%]\n", i, metrics.psl_histogram[i], "", bar_size);
+		print_noflush(sink, "\t%[> 2] - %[> 6] |%[>#%]\n", i, metrics.psl_histogram[i], "", bar_size);
 	}
 
-	print(sink, "Run lengths (% overlong):\n", metrics.overlong_runs);
+	print_noflush(sink, "Run lengths (% overlong):\n", metrics.overlong_runs);
 
 	u32 max_run_bucket_count = 0;
 
@@ -269,16 +275,16 @@ void identifier_pool_metrics(const CoreData* core, PrintSinkHandle sink) noexcep
 		if (bar_size == 0 && metrics.run_histogram[i] != 0)
 			bar_size = 1;
 
-		print(sink, "\t%[> 2] - %[> 6] |%[>#%]\n", i, metrics.run_histogram[i], "", bar_size);
+		print_noflush(sink, "\t%[> 2] - %[> 6] |%[>#%]\n", i, metrics.run_histogram[i], "", bar_size);
 	}
 
 	if (metrics.overlong_runs != 0)
 	{
-		print(sink, "Longest overlong run lengths:\n");
+		print_noflush(sink, "Longest overlong run lengths:\n");
 
 		const u64 count = metrics.overlong_runs < array_count(metrics.longest_runs) ? metrics.overlong_runs : array_count(metrics.longest_runs);
 
 		for (u64 i = 0; i != count; ++i)
-			print(sink, "\t%\n", metrics.longest_runs[i]);
+			print_noflush(sink, "\t%\n", metrics.longest_runs[i]);
 	}
 }
