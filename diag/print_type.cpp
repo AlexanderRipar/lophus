@@ -5,7 +5,7 @@
 #include "../infra/range.hpp"
 #include "../infra/print/print.hpp"
 
-static s64 print_type_impl(PrintSink sink, CoreData* core, TypeId type_id, u32 indent, bool skip_initial_indent) noexcept
+static s64 print_type_impl(PrintSinkHandle sink, CoreData* core, TypeId type_id, u32 indent, bool skip_initial_indent) noexcept
 {
 	if (type_id == TypeId::INVALID)
 		return print(sink, "%[< %]<Invalid>\n", "", skip_initial_indent ? 0 : indent * 2);
@@ -281,7 +281,7 @@ static s64 print_type_impl(PrintSink sink, CoreData* core, TypeId type_id, u32 i
 	ASSERT_UNREACHABLE;
 }
 
-s64 diag::print_type(PrintSink sink, CoreData* core, TypeId type_id) noexcept
+s64 diag::print_type(PrintSinkHandle sink, CoreData* core, TypeId type_id) noexcept
 {
 	const s64 type_written = print_type_impl(sink, core, type_id, 0, false);
 

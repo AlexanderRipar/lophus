@@ -191,7 +191,7 @@ static const char8* error_message_of(CompileError error) noexcept
 
 
 
-bool error_sink_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSink sink) noexcept
+bool error_sink_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSinkHandle sink) noexcept
 {
 	ASSERT_OR_IGNORE(config->diagnostics.source_tab_size >= 0);
 
@@ -220,12 +220,7 @@ void error_sink_init(CoreData* core, MemoryAllocation allocation) noexcept
 
 	errors->records.init(allocation.ranges[0], 1024);
 
-	const bool enabled = core->config->diagnostics.sink.name_and_enabled.attachment();
-
-	errors->enabled = enabled;
-
-	if (enabled)
-		errors->sink = core->config->diagnostics.sink.sink;
+	errors->sink = core->config->diagnostics.sink.sink;
 }
 
 void error_sink_cleanup(CoreData* core) noexcept
@@ -254,7 +249,7 @@ void record_error(CoreData* core, const AstNode* source_node, CompileError error
 
 void print_errors(CoreData* core) noexcept
 {
-	if (!core->errors.enabled)
+	if (!is_none(core->errors.sink))
 		return;
 
 	const Range<ErrorRecord> records = get_errors(core);
@@ -263,7 +258,7 @@ void print_errors(CoreData* core) noexcept
 	{
 		const SourceLocation location = source_location_from_source_id(core, record.source_id);
 
-		print_error(core->errors.sink, &location, record.error, core->errors.source_tab_size);
+		print_error(get(core->errors.sink), &location, record.error, core->errors.source_tab_size);
 	}
 }
 
@@ -272,7 +267,7 @@ Range<ErrorRecord> get_errors(CoreData* core) noexcept
 	return Range<ErrorRecord>{ core->errors.records.begin(), core->errors.records.end() };
 }
 
-void print_error(PrintSink sink, const SourceLocation* location, CompileError error, u8 tab_size) noexcept
+void print_error(PrintSinkHandle sink, const SourceLocation* location, CompileError error, u8 tab_size) noexcept
 {
 	const char8* const message = error_message_of(error);
 

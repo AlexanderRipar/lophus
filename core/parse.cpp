@@ -2912,7 +2912,7 @@ static bool parse_file(CoreData* core) noexcept
 
 
 
-bool parser_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSink sink) noexcept
+bool parser_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSinkHandle sink) noexcept
 {
 	return true;
 }

@@ -78,7 +78,7 @@ struct TomlParser
 
 	Range<char8> filepath;
 
-	PrintSink error_sink;
+	PrintSinkHandle error_sink;
 };
 
 
@@ -142,7 +142,7 @@ static bool toml_line_error(TomlParser* parser, u32 line, u32 column, const char
 }
 
 template<typename... Inserts>
-static Maybe<TreeSchemaTable*> toml_io_error(PrintSink error_sink, Range<char8> filepath, const char8* message, Inserts... inserts) noexcept
+static Maybe<TreeSchemaTable*> toml_io_error(PrintSinkHandle error_sink, Range<char8> filepath, const char8* message, Inserts... inserts) noexcept
 {
 	// Quick-and-dirty semi-initialized parser for error-reporting.
 	TomlParser parser{};
@@ -1168,7 +1168,7 @@ static bool parse_toml(TomlParser* parser) noexcept
 
 
 
-Maybe<TreeSchemaTable*> parse_toml_blob(Range<char8> blob, Range<char8> filepath, PrintSink error_sink, TreeSchemaAllocator* inout_alloc) noexcept
+Maybe<TreeSchemaTable*> parse_toml_blob(Range<char8> blob, Range<char8> filepath, PrintSinkHandle error_sink, TreeSchemaAllocator* inout_alloc) noexcept
 {
 	TomlParser parser{};
 	parser.begin = blob.begin();
@@ -1196,7 +1196,7 @@ Maybe<TreeSchemaTable*> parse_toml_blob(Range<char8> blob, Range<char8> filepath
 	return root_table;
 }
 
-Maybe<TreeSchemaTable*> parse_toml_file(Range<char8> filepath, PrintSink error_sink, TreeSchemaAllocator* inout_alloc) noexcept
+Maybe<TreeSchemaTable*> parse_toml_file(Range<char8> filepath, PrintSinkHandle error_sink, TreeSchemaAllocator* inout_alloc) noexcept
 {
 	minos::FileHandle file;
 

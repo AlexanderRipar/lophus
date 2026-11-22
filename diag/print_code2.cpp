@@ -39,7 +39,7 @@ struct PrintResult
 	const Code2* next;
 };
 
-static PrintResult print_one_code2(PrintSink sink, CoreData* core, const Code2Block* base, const Code2* code) noexcept
+static PrintResult print_one_code2(PrintSinkHandle sink, CoreData* core, const Code2Block* base, const Code2* code) noexcept
 {
 	const Code2Op op = code->op;
 
@@ -750,14 +750,14 @@ static PrintResult print_one_code2(PrintSink sink, CoreData* core, const Code2Bl
 	ASSERT_UNREACHABLE;
 }
 
-static s64 print_code2_block(PrintSink sink, CoreData* core, Code2Id block_id) noexcept
+static s64 print_code2_block(PrintSinkHandle sink, CoreData* core, Code2Id block_id) noexcept
 {
 	const Code2Block* const block = code2_block_from_id(core, block_id);
 
 	return diag::print_code2(sink, core, block);
 }
 
-static PrintResult print_one_code2_ref(PrintSink sink, CoreData* core, const Code2* code) noexcept
+static PrintResult print_one_code2_ref(PrintSinkHandle sink, CoreData* core, const Code2* code) noexcept
 {
 	switch (code->op)
 	{
@@ -1079,7 +1079,7 @@ static PrintResult print_one_code2_ref(PrintSink sink, CoreData* core, const Cod
 	ASSERT_UNREACHABLE;
 }
 
-s64 diag::print_code2(PrintSink sink, CoreData* core, const Code2Block* block) noexcept
+s64 diag::print_code2(PrintSinkHandle sink, CoreData* core, const Code2Block* block) noexcept
 {
 	const Code2* const begin = code2_block_begin(block);
 

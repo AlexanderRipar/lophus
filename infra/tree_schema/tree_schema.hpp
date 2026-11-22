@@ -20,9 +20,27 @@ struct TreeSchemaAllocator
 
 
 
-struct TreeSchemaTable;
+struct TreeSchemaValue;
 
-struct TreeSchemaArray;
+struct TreeSchemaTable
+{
+	u16 used;
+	
+	u16 capacity;
+
+	u16 sorted;
+
+	TreeSchemaValue* entries;
+};
+
+struct TreeSchemaArray
+{
+	u32 used;
+	
+	u32 capacity;
+
+	TreeSchemaValue* entries;
+};
 
 enum class TreeSchemaValueTag : u8
 {

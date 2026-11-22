@@ -1180,7 +1180,7 @@ static void resolve_names_root(CoreData* core, AstNode* root, SourceFileId file_
 
 
 
-bool lexical_analyser_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSink sink) noexcept
+bool lexical_analyser_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSinkHandle sink) noexcept
 {
 	return true;
 }

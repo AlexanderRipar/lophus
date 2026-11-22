@@ -1619,7 +1619,7 @@ static TypeStructure* make_structure_hash(CoreData* core, TypeTag tag, Range<byt
 
 
 
-bool type_pool_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSink sink) noexcept
+bool type_pool_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSinkHandle sink) noexcept
 {
 	return true;
 }

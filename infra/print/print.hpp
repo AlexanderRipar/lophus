@@ -17,6 +17,8 @@ struct PrintSink
 	alignas(8) byte attach[24];
 };
 
+using PrintSinkHandle = PrintSink*;
+
 enum class PrintAlignment : u8
 {
 	None,
@@ -64,12 +66,12 @@ PrintInsert print_make_insert(Range<char8>) noexcept;
 PrintSink print_make_sink(minos::FileHandle file) noexcept;
 PrintSink print_make_sink(MutRange<char8> buffer) noexcept;
 
-s64 vprint(PrintSink sink, Range<char8> format, Range<PrintInsert> inserts) noexcept;
+s64 vprint(PrintSinkHandle sink, Range<char8> format, Range<PrintInsert> inserts) noexcept;
 
-s64 print(PrintSink sink, Range<char8> format) noexcept;
+s64 print(PrintSinkHandle sink, Range<char8> format) noexcept;
 
 template<typename... Inserts>
-s64 print(PrintSink sink, Range<char8> format, Inserts... inserts) noexcept
+s64 print(PrintSinkHandle sink, Range<char8> format, Inserts... inserts) noexcept
 {
 	PrintInsert erased_inserts[] = { print_make_insert(inserts)... };
 
@@ -77,7 +79,7 @@ s64 print(PrintSink sink, Range<char8> format, Inserts... inserts) noexcept
 }
 
 template<typename... Inserts>
-s64 print(PrintSink sink, const char8* format, Inserts... inserts) noexcept
+s64 print(PrintSinkHandle sink, const char8* format, Inserts... inserts) noexcept
 {
 	return print(sink, range::from_cstring(format), inserts...);
 }
@@ -85,13 +87,17 @@ s64 print(PrintSink sink, const char8* format, Inserts... inserts) noexcept
 template<typename Sink, typename... Inserts>
 s64 print(Sink sink, Range<char8> format, Inserts... inserts) noexcept
 {
-	return print(print_make_sink(sink), format, inserts...);
+	PrintSink print_sink = print_make_sink(sink);
+
+	return print(&print_sink, format, inserts...);
 }
 
 template<typename Sink, typename... Inserts>
 s64 print(Sink sink, const char8* format, Inserts... inserts) noexcept
 {
-	return print(print_make_sink(sink), range::from_cstring(format), inserts...);
+	PrintSink print_sink = print_make_sink(sink);
+
+	return print(&print_sink, range::from_cstring(format), inserts...);
 }
 
 #endif // PRINT_INCLUDE_GUARD

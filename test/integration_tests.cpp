@@ -166,9 +166,14 @@ static Config dummy_config(Range<char8> filepath, bool expect_failure, TreeSchem
 	config.std.prelude.filepath = range::from_literal_string("../sample/std/prelude.lophus");
 	config.entrypoint.filepath = filepath;
 
+	PrintSink diagnostics_sink;
+	
+	if (!expect_failure)
+		diagnostics_sink = print_make_sink(minos::standard_file_handle(minos::StdFileName::StdErr));
+
 	config.diagnostics.sink = expect_failure
-		? ConfigPrintSink{ { range::from_literal_string("$none"), false }, {} }
-		: ConfigPrintSink{ { range::from_literal_string("$stderr"), true }, print_make_sink(minos::standard_file_handle(minos::StdFileName::StdErr)) };
+		? ConfigPrintSink{ range::from_literal_string("$none"), none<PrintSinkHandle>() }
+		: ConfigPrintSink{ range::from_literal_string("$stderr"), some(&diagnostics_sink) };
 
 	const Range<char8> ffi_test_library_path = range::from_literal_string("../../build/" COMPILER_SPEC "/test/" FFI_TEST_LIBRARY_SUBPATH);
 

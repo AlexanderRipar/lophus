@@ -186,17 +186,28 @@ struct ConfigMetadata
 	ConfigMetadataEntry compile_all;
 };
 
+struct ConfigAlloc
+{
+	u32 used;
+
+	byte buffer[65536 - 4];
+};
+
 struct TomlConfigMappingContext
 {
 	Config* out;
 
 	Range<char8> directory_path;
 
-	Maybe<TreeSchemaAllocator*> ts_alloc;
+	ConfigAlloc* alloc;
 
 	Range<char8> filepath;
 
-	PrintSink error_sink;
+	PrintSinkHandle error_sink;
+
+	Maybe<PrintSinkHandle> stdout_sink;
+
+	Maybe<PrintSinkHandle> stderr_sink;
 
 	char8 directory_path_buf[4096];
 };
@@ -232,13 +243,13 @@ static constexpr ConfigMetadata init_metadata() noexcept
 	rst.logging.self_ = META_TABLE("logging", logging, "Logging configuration");
 	rst.logging.imports.self_ = META_TABLE("imports", logging.imports, "File import logging parameters");
 	rst.logging.imports.asts.self_ = META_TABLE("asts", logging.imports.asts, "Configuration for logging of abstract syntax trees at different stages");
-	rst.logging.imports.asts.unresolved = META_PRINT_SINK("unresolved", logging.imports.asts.unresolved_sink, range::from_literal_string("$none"), "File abstract syntax trees are written to when files are imported. This is done before name resolution");
-	rst.logging.imports.asts.resolved = META_PRINT_SINK("resolved", logging.imports.asts.resolved_sink, range::from_literal_string("$none"), "File abstract syntax trees are written to when files are imported. This is done after name resolution");
-	rst.logging.imports.code2s = META_PRINT_SINK("code2s", logging.imports.code2s_sink, range::from_literal_string("$none"), "File typechecker opcodes are written to when files are imported");
-	rst.logging.imports.types = META_PRINT_SINK("types", logging.imports.types_sink, range::from_literal_string("$none"), "File top-level types are written to when files are imported");
-	rst.logging.config = META_PRINT_SINK("config", logging.config_sink, range::from_literal_string("$none"), "File the parsed configuration gets written to");
+	rst.logging.imports.asts.unresolved = META_PRINT_SINK("unresolved", logging.imports.asts.unresolved, range::from_literal_string("$none"), "File abstract syntax trees are written to when files are imported. This is done before name resolution");
+	rst.logging.imports.asts.resolved = META_PRINT_SINK("resolved", logging.imports.asts.resolved, range::from_literal_string("$none"), "File abstract syntax trees are written to when files are imported. This is done after name resolution");
+	rst.logging.imports.code2s = META_PRINT_SINK("code2s", logging.imports.code2s, range::from_literal_string("$none"), "File typechecker opcodes are written to when files are imported");
+	rst.logging.imports.types = META_PRINT_SINK("types", logging.imports.types, range::from_literal_string("$none"), "File top-level types are written to when files are imported");
+	rst.logging.config = META_PRINT_SINK("config", logging.config, range::from_literal_string("$none"), "File the parsed configuration gets written to");
 	rst.logging.internals.self_ = META_TABLE("internals", logging.internals, "Logging of compiler internals");
-	rst.logging.internals.identifier_pool = META_PRINT_SINK("identifier-pool", logging.internals.identifier_pool_sink, range::from_literal_string("$none"), "File identifier pool metrics get written to");
+	rst.logging.internals.identifier_pool = META_PRINT_SINK("identifier-pool", logging.internals.identifier_pool, range::from_literal_string("$none"), "File identifier pool metrics get written to");
 
 	rst.diagnostics.self_ = META_TABLE("diagnostics", diagnostics, "Error message configuration");
 	rst.diagnostics.file = META_PRINT_SINK("path", diagnostics.sink, range::from_literal_string("$stderr"), "File errors generated during compilation are written to");
@@ -258,6 +269,52 @@ static constexpr ConfigMetadata init_metadata() noexcept
 }
 
 static constexpr ConfigMetadata CONFIG_METADATA = init_metadata();
+
+
+
+static void* config_alloc(ConfigAlloc* alloc, u64 size, u64 align) noexcept
+{
+	ASSERT_OR_IGNORE(align <= 4096);
+
+	const u64 begin = (alloc->used + align - 1) & ~(align - 1);
+
+	const u64 end = begin + size;
+
+	if (end > sizeof(alloc->buffer))
+		panic("Exhausted config allocator.\n");
+
+	alloc->used = static_cast<u32>(end);
+
+	return alloc->buffer + begin;
+}
+
+static Range<char8> config_alloc_string(ConfigAlloc* alloc, Range<char8> data) noexcept
+{
+	char8* const begin = static_cast<char8*>(config_alloc(alloc, data.count(), alignof(char8)));
+
+	memcpy(begin, data.begin(), data.count());
+
+	return Range{ begin, data.count() };
+}
+
+static PrintSinkHandle get_std_sink(TomlConfigMappingContext* ctx, minos::StdFileName name) noexcept
+{
+	ASSERT_OR_IGNORE(name == minos::StdFileName::StdErr || name == minos::StdFileName::StdOut);
+
+	Maybe<PrintSinkHandle>* const cached = name == minos::StdFileName::StdErr
+		? &ctx->stderr_sink
+		: &ctx->stdout_sink;
+
+	if (is_some(*cached))
+		return get(*cached);
+
+	PrintSink* const print_sink = static_cast<PrintSink*>(config_alloc(ctx->alloc, sizeof(PrintSink), alignof(PrintSink)));
+	*print_sink = print_make_sink(minos::standard_file_handle(name));
+
+	*cached = some(print_sink);
+
+	return print_sink;
+}
 
 
 
@@ -297,7 +354,7 @@ static bool config_error(TomlConfigMappingContext* ctx, u32 line, u32 column, co
 
 
 
-static bool absolute_path_from_config_path(TomlConfigMappingContext* ctx, const TreeSchemaValue* toml, const ConfigMetadataEntry* curr, Range<char8>* out) noexcept
+static bool absolute_path_from_config_path(TomlConfigMappingContext* ctx, const TreeSchemaValue* toml, [[maybe_unused]] const ConfigMetadataEntry* curr, Range<char8>* out) noexcept
 {
 	ASSERT_OR_IGNORE(toml->name_and_tag.attachment() == TreeSchemaValueTag::String);
 
@@ -310,24 +367,14 @@ static bool absolute_path_from_config_path(TomlConfigMappingContext* ctx, const 
 	else if (path[0] == '$')
 		return config_error(ctx, toml->source_line, toml->source_column, "Configuration paths for input files cannot use `$` escape pseudo-paths. Prefix the path with `./` to force it to be treated as a filesystem path.\n");
 
-	if (is_some(ctx->ts_alloc))
-	{
-		char8 resolved_path_buf[4096];
+	char8 resolved_path_buf[4096];
 
-		const u32 resolved_path_count = minos::path_to_absolute_relative_to(path, ctx->directory_path, MutRange{ resolved_path_buf });
+	const u32 resolved_path_count = minos::path_to_absolute_relative_to(path, ctx->directory_path, MutRange{ resolved_path_buf });
 
-		if (resolved_path_count == 0 || resolved_path_count > sizeof(resolved_path_buf))
-			return config_error(ctx, toml->source_line, toml->source_column, "Failed to resolve path `%` relative to the TOML configuration file (0x%[|X]).\n", path, minos::last_error());
+	if (resolved_path_count == 0 || resolved_path_count > sizeof(resolved_path_buf))
+		return config_error(ctx, toml->source_line, toml->source_column, "Failed to resolve path `%` relative to the TOML configuration file (0x%[|X]).\n", path, minos::last_error());
 
-		const Range<char8> resolved_path{ resolved_path_buf, resolved_path_count };
-
-		if (!ts_string_create(get(ctx->ts_alloc), resolved_path, out))
-			return config_error(ctx, 0, 0, "Failed to create TOML string.\n");
-	}
-	else
-	{
-		*out = curr->attach.path;
-	}
+	*out = config_alloc_string(ctx->alloc, Range{ resolved_path_buf, resolved_path_count });
 
 	return true;
 }
@@ -340,15 +387,15 @@ static bool print_sink_from_config_path(TomlConfigMappingContext* ctx, const Tre
 
 	if (path.count() == 0 || string_equal(path, range::from_literal_string("$none")))
 	{
-		*out = ConfigPrintSink{ { range::from_literal_string("$none"), false }, {} };
+		*out = ConfigPrintSink{ range::from_literal_string("$none"), none<PrintSinkHandle>() };
 	}
 	else if (string_equal(path, range::from_literal_string("$stderr")))
 	{
-		*out = ConfigPrintSink{ { range::from_literal_string("$stderr"), true }, print_make_sink(minos::standard_file_handle(minos::StdFileName::StdErr)) };
+		*out = ConfigPrintSink{ range::from_literal_string("$stderr"), some(get_std_sink(ctx, minos::StdFileName::StdErr)) };
 	}
 	else if (string_equal(path, range::from_literal_string("$stdout")))
 	{
-		*out = ConfigPrintSink{ { range::from_literal_string("$stderr"), true }, print_make_sink(minos::standard_file_handle(minos::StdFileName::StdOut)) };
+		*out = ConfigPrintSink{ range::from_literal_string("$stdout"), some(get_std_sink(ctx, minos::StdFileName::StdOut)) };
 	}
 	else if (path[0] != '$')
 	{
@@ -362,7 +409,10 @@ static bool print_sink_from_config_path(TomlConfigMappingContext* ctx, const Tre
 		if (!minos::file_create(resolved_path, minos::Access::Write, minos::ExistsMode::Truncate, minos::NewMode::Create, minos::AccessPattern::Sequential, none<const minos::CompletionInitializer*>(), false, &file))
 			return config_error(ctx, toml->source_line, toml->source_column, "Failed to open file `%` (0x%[|X]).\n", resolved_path, minos::last_error());
 
-		*out = ConfigPrintSink{ { resolved_path, true }, print_make_sink(file) };
+		PrintSink* const sink = static_cast<PrintSink*>(config_alloc(ctx->alloc, sizeof(PrintSink), alignof(PrintSink)));
+		*sink = print_make_sink(file);
+
+		*out = ConfigPrintSink{ resolved_path, some(sink) };
 	}
 	else
 	{
@@ -412,7 +462,7 @@ static bool map_defaults_to_config(TomlConfigMappingContext* ctx, const ConfigMe
 	{
 		ASSERT_OR_IGNORE(curr->offset + sizeof(Range<char8>) <= sizeof(Config));
 
-		*static_cast<Range<char8>*>(dst) = curr->attach.string;
+		*static_cast<Range<char8>*>(dst) = config_alloc_string(ctx->alloc, curr->attach.string);
 
 		return true;
 	}
@@ -482,6 +532,70 @@ static bool map_defaults_to_config(TomlConfigMappingContext* ctx, const ConfigMe
 
 	ASSERT_UNREACHABLE;
 }
+
+static void copy_dynamic_toml(TomlConfigMappingContext* ctx, TreeSchemaValue* dst, const TreeSchemaValue* src) noexcept
+{
+	memcpy(dst, src, sizeof(TreeSchemaValue));
+
+	switch (src->name_and_tag.attachment())
+	{
+	case TreeSchemaValueTag::Table:
+	{
+		const u16 used = src->value.table->used;
+
+		TreeSchemaValue* const dst_entries = static_cast<TreeSchemaValue*>(config_alloc(ctx->alloc, used * sizeof(TreeSchemaValue), alignof(TreeSchemaValue)));
+
+		const TreeSchemaValue* const src_entries = src->value.table->entries;
+
+		for (u32 i = 0; i != used; ++i)
+			copy_dynamic_toml(ctx, dst_entries + i, src_entries + i);
+
+		dst->value.table->capacity = used;
+		dst->value.table->entries = dst_entries;
+
+		return;
+	}
+
+	case TreeSchemaValueTag::Array:
+	{
+		const u32 used = src->value.array->used;
+
+		TreeSchemaValue* const dst_entries = static_cast<TreeSchemaValue*>(config_alloc(ctx->alloc, used * sizeof(TreeSchemaValue), alignof(TreeSchemaValue)));
+
+		const TreeSchemaValue* const src_entries = src->value.array->entries;
+
+		for (u32 i = 0; i != used; ++i)
+			copy_dynamic_toml(ctx, dst_entries + i, src_entries + i);
+
+		dst->value.array->capacity = used;
+		dst->value.array->entries = dst_entries;
+
+		return;
+	}
+
+	case TreeSchemaValueTag::Integer:
+	case TreeSchemaValueTag::Boolean:
+	{
+		return;
+	}
+
+	case TreeSchemaValueTag::String:
+	{
+		const Range<char8> string = config_alloc_string(ctx->alloc, src->value.string);
+
+		dst->value.string = string;
+
+		return;
+	}
+
+	case TreeSchemaValueTag::INVALID:
+		; // Fallthrough to unreachable.
+	}
+
+	ASSERT_UNREACHABLE;
+}
+
+
 
 static bool map_toml_to_config(TomlConfigMappingContext* ctx, const TreeSchemaValue* toml, const ConfigMetadataEntry** meta) noexcept
 {
@@ -595,7 +709,7 @@ static bool map_toml_to_config(TomlConfigMappingContext* ctx, const TreeSchemaVa
 		if (toml->name_and_tag.attachment() != TreeSchemaValueTag::String)
 			return config_error(ctx, toml->source_line, toml->source_column, "Config parameter `%` must be a string.\n", curr->name);
 
-		const Range<char8> value = toml->value.string;
+		const Range<char8> value = config_alloc_string(ctx->alloc, toml->value.string);
 
 		*reinterpret_cast<Range<char8>*>(reinterpret_cast<byte*>(ctx->out) + curr->offset) = value;
 
@@ -657,7 +771,11 @@ static bool map_toml_to_config(TomlConfigMappingContext* ctx, const TreeSchemaVa
 		if (toml->name_and_tag.attachment() != TreeSchemaValueTag::Table)
 			return config_error(ctx, toml->source_line, toml->source_column, "Config parameter `%` must be a TOML table.\n", curr->name);
 
-		*reinterpret_cast<Maybe<const TreeSchemaTable*>*>(reinterpret_cast<byte*>(ctx->out) + curr->offset) = some<const TreeSchemaTable*>(toml->value.table);
+		TreeSchemaValue tmp{};
+
+		copy_dynamic_toml(ctx, &tmp, toml);
+
+		*reinterpret_cast<Maybe<const TreeSchemaTable*>*>(reinterpret_cast<byte*>(ctx->out) + curr->offset) = some<const TreeSchemaTable*>(tmp.value.table);
 
 		return true;
 	}
@@ -703,7 +821,7 @@ static bool map_toml_to_config(TomlConfigMappingContext* ctx, const TreeSchemaVa
 
 
 
-static void print_tree_schema_value(PrintSink sink, const TreeSchemaValue* value, u32 indent) noexcept
+static void print_tree_schema_value(PrintSinkHandle sink, const TreeSchemaValue* value, u32 indent) noexcept
 {
 	switch (value->name_and_tag.attachment())
 	{
@@ -781,7 +899,7 @@ static void print_tree_schema_value(PrintSink sink, const TreeSchemaValue* value
 
 
 
-static void print_config_element(PrintSink sink, const Config* config, const ConfigMetadataEntry** meta, u32 indent) noexcept
+static void print_config_element(PrintSinkHandle sink, const Config* config, const ConfigMetadataEntry** meta, u32 indent) noexcept
 {
 	const ConfigMetadataEntry* const curr = *meta;
 
@@ -845,7 +963,7 @@ static void print_config_element(PrintSink sink, const Config* config, const Con
 
 		const ConfigPrintSink value = *reinterpret_cast<const ConfigPrintSink*>(reinterpret_cast<const byte*>(config) + curr->offset);
 
-		print(sink, "= '%'\n", value.name_and_enabled.range());
+		print(sink, "= '%'\n", value.name);
 		
 		return;
 	}
@@ -894,7 +1012,7 @@ static void print_config_element(PrintSink sink, const Config* config, const Con
 	ASSERT_UNREACHABLE;
 }
 
-static void print_config_help_element(PrintSink sink, const ConfigMetadataEntry** meta, u32 indent, u32 max_indent) noexcept
+static void print_config_help_element(PrintSinkHandle sink, const ConfigMetadataEntry** meta, u32 indent, u32 max_indent) noexcept
 {
 	const ConfigMetadataEntry* const curr = *meta;
 
@@ -1053,7 +1171,7 @@ static void print_config_help_element(PrintSink sink, const ConfigMetadataEntry*
 
 
 
-bool config_from_toml_file(Range<char8> filepath, PrintSink error_sink, Config* out_config, TreeSchemaAllocator* out_ts_alloc) noexcept
+bool config_from_toml_file(Range<char8> filepath, PrintSinkHandle error_sink, Config* out_config) noexcept
 {
 	*out_config = Config{};
 
@@ -1070,13 +1188,21 @@ bool config_from_toml_file(Range<char8> filepath, PrintSink error_sink, Config* 
 		return false;
 	}
 
+	ConfigAlloc* const alloc = static_cast<ConfigAlloc*>(minos::mem_reserve(sizeof(ConfigAlloc)));
+
+	if (alloc == nullptr)
+		panic("Failed to reserve % bytes for config allocator (0x[|X]).\n", sizeof(ConfigAlloc), minos::last_error());
+
+	if (!minos::mem_commit(alloc, sizeof(ConfigAlloc)))
+		panic("Failed to commit % bytes for config allocator (0x[|X]).\n", sizeof(ConfigAlloc), minos::last_error());
+
 	TomlConfigMappingContext ctx;
 	ctx.filepath = filepath;
 	ctx.error_sink = error_sink;
 	ctx.out = out_config;
-	ctx.ts_alloc = some(&ts_alloc);
-
-
+	ctx.alloc = alloc;
+	ctx.stdout_sink = none<PrintSinkHandle>();
+	ctx.stderr_sink = none<PrintSinkHandle>();
 
 	const u32 directory_path_count = minos::path_to_absolute_directory(filepath, MutRange{ ctx.directory_path_buf });
 
@@ -1097,7 +1223,9 @@ bool config_from_toml_file(Range<char8> filepath, PrintSink error_sink, Config* 
 		return false;
 	}
 
-	*out_ts_alloc = ts_alloc;
+
+
+	ts_allocator_release(ts_alloc);
 
 	return true;
 }
@@ -1106,11 +1234,21 @@ Config config_defaults() noexcept
 {
 	Config config{};
 
+	PrintSink error_sink = print_make_sink(minos::standard_file_handle(minos::StdFileName::StdErr));
+
+	ConfigAlloc* const alloc = static_cast<ConfigAlloc*>(minos::mem_reserve(sizeof(ConfigAlloc)));
+
+	if (alloc == nullptr)
+		panic("Failed to reserve % bytes for config allocator (0x[|X]).\n", sizeof(ConfigAlloc), minos::last_error());
+
+	if (!minos::mem_commit(alloc, sizeof(ConfigAlloc)))
+		panic("Failed to commit % bytes for config allocator (0x[|X]).\n", sizeof(ConfigAlloc), minos::last_error());
+
 	TomlConfigMappingContext ctx;
 	ctx.filepath = range::from_literal_string("<pseudo-file>");
-	ctx.error_sink = print_make_sink(minos::standard_file_handle(minos::StdFileName::StdErr));
+	ctx.error_sink = &error_sink;
 	ctx.out = &config;
-	ctx.ts_alloc = none<TreeSchemaAllocator*>();
+	ctx.alloc = alloc;
 	
 	const ConfigMetadataEntry* meta = &CONFIG_METADATA.self_;
 
@@ -1125,7 +1263,7 @@ Config config_defaults() noexcept
 	return config;
 }
 
-void print_config(PrintSink sink, const Config* config) noexcept
+void print_config(PrintSinkHandle sink, const Config* config) noexcept
 {
 	const ConfigMetadataEntry* meta = &CONFIG_METADATA.self_;
 
@@ -1135,7 +1273,7 @@ void print_config(PrintSink sink, const Config* config) noexcept
 		print_config_element(sink, config, &meta, 0);
 }
 
-void print_config_help(PrintSink sink, u32 depth) noexcept
+void print_config_help(PrintSinkHandle sink, u32 depth) noexcept
 {
 	const ConfigMetadataEntry* meta = &CONFIG_METADATA.self_;
 

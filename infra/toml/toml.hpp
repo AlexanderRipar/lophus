@@ -14,7 +14,7 @@
 // `inout_alloc` must be a `TreeSchemaAllocator` previously initialized by
 // `ts_allocator_create` and is used to allocate the parsed `TreeSchema`
 // objects.
-Maybe<TreeSchemaTable*> parse_toml_blob(Range<char8> blob, Range<char8> filepath, PrintSink error_sink, TreeSchemaAllocator* inout_alloc) noexcept;
+Maybe<TreeSchemaTable*> parse_toml_blob(Range<char8> blob, Range<char8> filepath, PrintSinkHandle error_sink, TreeSchemaAllocator* inout_alloc) noexcept;
 
 // Reads the file identified by `filepath` and parses its contents into a
 // `TreeSchema` tree. The data is expected to be in [TOML](https://toml.io)
@@ -24,6 +24,6 @@ Maybe<TreeSchemaTable*> parse_toml_blob(Range<char8> blob, Range<char8> filepath
 // `inout_alloc` must be a `TreeSchemaAllocator` previously initialized by
 // `ts_allocator_create` and is used to allocate the parsed `TreeSchema`
 // objects.
-Maybe<TreeSchemaTable*> parse_toml_file(Range<char8> filepath, PrintSink error_sink, TreeSchemaAllocator* inout_alloc) noexcept;
+Maybe<TreeSchemaTable*> parse_toml_file(Range<char8> filepath, PrintSinkHandle error_sink, TreeSchemaAllocator* inout_alloc) noexcept;
 
 #endif // TOML_INCLUDE_GUARD

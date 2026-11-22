@@ -8,26 +8,6 @@ static constexpr u16 INITIAL_TABLE_CAPACITY = 2;
 
 static constexpr u16 MIN_TABLE_SORT_SIZE = 16;
 
-struct TreeSchemaTable
-{
-	u16 used;
-	
-	u16 capacity;
-
-	u16 sorted;
-
-	TreeSchemaValue* entries;
-};
-
-struct TreeSchemaArray
-{
-	u32 used;
-	
-	u32 capacity;
-
-	TreeSchemaValue* entries;
-};
-
 
 
 static s32 string_compare(Range<char8> a, Range<char8> b) noexcept

@@ -130,7 +130,7 @@ void IdentifierAlloc::dealloc([[maybe_unused]] u32 id) noexcept
 
 
 
-bool identifier_pool_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSink sink) noexcept
+bool identifier_pool_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSinkHandle sink) noexcept
 {
 	return true;
 }
@@ -203,7 +203,7 @@ Range<char8> identifier_name_from_id(const CoreData* core, IdentifierId id) noex
 
 
 
-void identifier_pool_metrics(const CoreData* core, PrintSink sink) noexcept
+void identifier_pool_metrics(const CoreData* core, PrintSinkHandle sink) noexcept
 {
 	IdMapMetrics metrics;
 

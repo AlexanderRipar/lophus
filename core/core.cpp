@@ -7,25 +7,25 @@
 #include "../infra/inplace_sort.hpp"
 #include "../diag/diag.hpp"
 
-bool comp_heap_validate_config(const Config* config, PrintSink sink) noexcept;
+bool comp_heap_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
 
-bool temp_stack_validate_config(const Config* config, PrintSink sink) noexcept;
+bool temp_stack_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
 
-bool ast_pool_validate_config(const Config* config, PrintSink sink) noexcept;
+bool ast_pool_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
 
-bool error_sink_validate_config(const Config* config, PrintSink sink) noexcept;
+bool error_sink_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
 
-bool identifier_pool_validate_config(const Config* config, PrintSink sink) noexcept;
+bool identifier_pool_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
 
-bool lexical_analyser_validate_config(const Config* config, PrintSink sink) noexcept;
+bool lexical_analyser_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
 
-bool type_pool_validate_config(const Config* config, PrintSink sink) noexcept;
+bool type_pool_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
 
-bool parser_validate_config(const Config* config, PrintSink sink) noexcept;
+bool parser_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
 
-bool source_reader_validate_config(const Config* config, PrintSink sink) noexcept;
+bool source_reader_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
 
-bool code2_validate_config(const Config* config, PrintSink sink) noexcept;
+bool code2_validate_config(const Config* config, PrintSinkHandle sink) noexcept;
 
 
 
@@ -95,7 +95,7 @@ void code2_cleanup(CoreData* core) noexcept;
 
 
 
-using validate_config_func = bool (*) (const Config* config, PrintSink sink) noexcept;
+using validate_config_func = bool (*) (const Config* config, PrintSinkHandle sink) noexcept;
 
 using memory_requirements_func = MemoryRequirements (*) (const Config* config) noexcept;
 
@@ -194,8 +194,11 @@ static CoreMemoryLayout check_config(const Config* config) noexcept
 	CoreMemoryLayout memory_layout;
 
 	// First, print the config if requested.
-	if (config->logging.config_sink.name_and_enabled.attachment())
-		print_config(config->logging.config_sink.sink, config);
+
+	if (is_some(config->logging.config.sink))
+	{
+		print_config(get(config->logging.config.sink), config);
+	}
 
 	// Let every core member validate the given config.
 
@@ -203,9 +206,11 @@ static CoreMemoryLayout check_config(const Config* config) noexcept
 
 	const minos::FileHandle config_validation_log_file = minos::standard_file_handle(minos::StdFileName::StdErr);
 
+	PrintSink config_validation_sink = print_make_sink(config_validation_log_file);
+
 	for (u64 i = 0; i != CORE_MEMBER_COUNT; ++i)
 	{
-		if (!VALIDATE_CONFIG_FUNCS[i](config, print_make_sink(config_validation_log_file)))
+		if (!VALIDATE_CONFIG_FUNCS[i](config, &config_validation_sink))
 			is_valid_config = false;
 	}
 
@@ -333,30 +338,36 @@ void reset_core_data(CoreData* core) noexcept
 
 static void log_resolved_ast(CoreData* core, AstNode* ast) noexcept
 {
-	if (!core->config->logging.imports.asts.resolved_sink.name_and_enabled.attachment())
+	const Maybe<PrintSinkHandle> sink = core->config->logging.imports.asts.resolved.sink;
+
+	if (is_none(sink))
 		return;
 
-	if (diag::print_ast(core->config->logging.imports.asts.resolved_sink.sink, core, ast) < 0)
+	if (diag::print_ast(get(sink), core, ast) < 0)
 		panic("Failed to print imported resolved AST.");
 }
 
 static void log_unresolved_ast(CoreData* core, AstNode* ast) noexcept
 {
-	if (!core->config->logging.imports.asts.unresolved_sink.name_and_enabled.attachment())
+	const Maybe<PrintSinkHandle> sink = core->config->logging.imports.asts.unresolved.sink;
+
+	if (is_none(sink))
 		return;
 
-	if (diag::print_ast(core->config->logging.imports.asts.unresolved_sink.sink, core, ast) < 0)
+	if (diag::print_ast(get(sink), core, ast) < 0)
 		panic("Failed to print imported resolved AST.");
 }
 
 static void log_code2(CoreData* core, Code2Id block_id) noexcept
 {
-	if (!core->config->logging.imports.code2s_sink.name_and_enabled.attachment())
+	const Maybe<PrintSinkHandle> sink = core->config->logging.imports.code2s.sink;
+
+	if (is_none(sink))
 		return;
 
 	Code2Block* const block = code2_block_from_id(core, block_id);
 
-	if (diag::print_code2(core->config->logging.imports.code2s_sink.sink, core, block) < 0)
+	if (diag::print_code2(get(sink), core, block) < 0)
 		panic("Failed to print imported Code2.");
 }
 
@@ -555,8 +566,10 @@ bool run_compilation(CoreData* core, bool main_is_std) noexcept
 	}
 	while (i < repeats && (timeout_secs == 0 || end_time - start_time < timeout_secs * ticks_per_second));
 
-	if (core->config->logging.internals.identifier_pool_sink.name_and_enabled.attachment())
-		identifier_pool_metrics(core, core->config->logging.internals.identifier_pool_sink.sink);
+	const Maybe<PrintSinkHandle> identifier_pool_metrics_sink = core->config->logging.internals.identifier_pool.sink;
+
+	if (is_some(identifier_pool_metrics_sink))
+		identifier_pool_metrics(core, get(identifier_pool_metrics_sink));
 
 	if (repeats != 0)
 	{

@@ -454,7 +454,7 @@ static SourceLocation source_location_from_source_file_and_source_id(CoreData* c
 
 
 
-bool source_reader_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSink sink) noexcept
+bool source_reader_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSinkHandle sink) noexcept
 {
 	return true;
 }

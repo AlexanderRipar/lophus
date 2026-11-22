@@ -13,7 +13,7 @@
 
 struct PrintState
 {
-	PrintSink sink;
+	PrintSinkHandle sink;
 
 	u64 written;
 
@@ -59,7 +59,7 @@ Maybe<char8*> ps_reserve_buffer(PrintState* state, u64 n) noexcept
 
 	if (array_count(state->buffer) - state->buffer_used < n)
 	{
-		const u64 written = state->sink.write_func(state->sink.attach, Range{ state->buffer, state->buffer_used });
+		const u64 written = state->sink->write_func(state->sink->attach, Range{ state->buffer, state->buffer_used });
 
 		if (written != state->buffer_used)
 			return none<char8*>();
@@ -90,7 +90,7 @@ bool ps_fill(PrintState* state, u64 count, char8 fill_char) noexcept
 
 	while (count != 0)
 	{
-		const u64 written = state->sink.write_func(state->sink.attach, Range{ state->buffer, state->buffer_used });
+		const u64 written = state->sink->write_func(state->sink->attach, Range{ state->buffer, state->buffer_used });
 
 		if (written != state->buffer_used)
 			return false;
@@ -173,7 +173,7 @@ bool ps_print_chars(PrintState* state, Range<char8> value) noexcept
 	}
 	else
 	{
-		const u64 written = state->sink.write_func(state->sink.attach, Range{ state->buffer, state->buffer_used });
+		const u64 written = state->sink->write_func(state->sink->attach, Range{ state->buffer, state->buffer_used });
 
 		if (written != state->buffer_used)
 			return false;
@@ -188,7 +188,7 @@ bool ps_print_chars(PrintState* state, Range<char8> value) noexcept
 		}
 		else
 		{
-			const u64 value_written = state->sink.write_func(state->sink.attach, value);
+			const u64 value_written = state->sink->write_func(state->sink->attach, value);
 
 			if (value_written != value_count)
 				return false;
@@ -655,7 +655,6 @@ PrintSink print_make_sink(minos::FileHandle filehandle) noexcept
 }
 
 
-
 struct MutRangeFormatSinkAttach
 {
 	MutRange<char8> buffer;
@@ -908,7 +907,7 @@ static PrintSpecInfo parse_print_spec(const char8* chars, u64 count, u64 default
 
 
 
-s64 vprint(PrintSink sink, Range<char8> format, Range<PrintInsert> inserts) noexcept
+s64 vprint(PrintSinkHandle sink, Range<char8> format, Range<PrintInsert> inserts) noexcept
 {
 	PrintState state;
 	state.sink = sink;
@@ -1023,7 +1022,7 @@ s64 vprint(PrintSink sink, Range<char8> format, Range<PrintInsert> inserts) noex
 
 	if (state.buffer_used != 0)
 	{
-		const u64 written = state.sink.write_func(state.sink.attach, Range{ state.buffer, state.buffer_used });
+		const u64 written = state.sink->write_func(state.sink->attach, Range{ state.buffer, state.buffer_used });
 
 		if (written != state.buffer_used)
 			return -1;
@@ -1034,7 +1033,7 @@ s64 vprint(PrintSink sink, Range<char8> format, Range<PrintInsert> inserts) noex
 	return state.written;
 }
 
-s64 print(PrintSink sink, Range<char8> format) noexcept
+s64 print(PrintSinkHandle sink, Range<char8> format) noexcept
 {
 	return vprint(sink, format, {});
 }

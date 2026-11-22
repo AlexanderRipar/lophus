@@ -24,9 +24,9 @@ s32 main(s32 argc, const char8** argv)
 	{
 		Config config;
 
-		TreeSchemaAllocator ts_alloc;
+		PrintSink config_creation_error_sink = print_make_sink(minos::standard_file_handle(minos::StdFileName::StdErr));
 
-		if (!config_from_toml_file(range::from_cstring(argv[2]), print_make_sink(minos::standard_file_handle(minos::StdFileName::StdErr)), &config, &ts_alloc))
+		if (!config_from_toml_file(range::from_cstring(argv[2]), &config_creation_error_sink, &config))
 			return EXIT_FAILURE;
 
 		CoreData* const core = create_core_data(&config);
@@ -37,8 +37,6 @@ s32 main(s32 argc, const char8** argv)
 
 			release_core_data(core);
 
-			ts_allocator_release(ts_alloc);
-
 			return EXIT_SUCCESS;
 		}
 		else
@@ -48,8 +46,6 @@ s32 main(s32 argc, const char8** argv)
 			print(minos::standard_file_handle(minos::StdFileName::StdErr), "\nFailure\n");
 
 			release_core_data(core);
-
-			ts_allocator_release(ts_alloc);
 
 			return EXIT_FAILURE;
 		}

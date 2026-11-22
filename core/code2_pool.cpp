@@ -1555,7 +1555,7 @@ const char8* tag_name(Code2AttCompare_Kind kind) noexcept
 
 
 
-bool code2_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSink sink) noexcept
+bool code2_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSinkHandle sink) noexcept
 {
 	return true;
 }

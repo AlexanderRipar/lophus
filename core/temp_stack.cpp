@@ -5,7 +5,7 @@ static constexpr u64 TEMP_STACK_RESERVE = 1 << 29;
 
 static constexpr u64 TEMP_STACK_COMMIT_INCREMENT = 1 << 14;
 
-bool temp_stack_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSink sink) noexcept
+bool temp_stack_validate_config([[maybe_unused]] const Config* config, [[maybe_unused]] PrintSinkHandle sink) noexcept
 {
 	return true;
 }

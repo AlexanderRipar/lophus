@@ -5,7 +5,7 @@
 #include "../infra/minos/minos.hpp"
 #include "../core/core.hpp"
 
-static s64 print_node_header(PrintSink sink, CoreData* core, const AstNode* node, s32 depth) noexcept
+static s64 print_node_header(PrintSinkHandle sink, CoreData* core, const AstNode* node, s32 depth) noexcept
 {
 	s64 total_written = print(sink, "%[< %]%", "", (depth + 1) * 2, tag_name(node->tag));
 
@@ -109,7 +109,7 @@ static s64 print_node_header(PrintSink sink, CoreData* core, const AstNode* node
 	return total_written;
 }
 
-s64 diag::print_ast(PrintSink sink, CoreData* core, AstNode* root) noexcept
+s64 diag::print_ast(PrintSinkHandle sink, CoreData* core, AstNode* root) noexcept
 {
 	AstPreorderIterator it = preorder_ancestors_of(root);
 

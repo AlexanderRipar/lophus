@@ -33,9 +33,7 @@ struct ErrorSink
 
 	u8 source_tab_size;
 
-	bool enabled;
-
-	PrintSink sink;
+	Maybe<PrintSinkHandle> sink;
 
 	ReservedVec<ErrorRecord> records;
 };

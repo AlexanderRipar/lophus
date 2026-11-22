@@ -218,9 +218,9 @@ const char8* tag_name(Builtin builtin) noexcept;
 
 struct ConfigPrintSink
 {
-	AttachmentRange<char8, bool> name_and_enabled;
+	Range<char8> name;
 
-	PrintSink sink;
+	Maybe<PrintSinkHandle> sink;
 };
 
 enum class CompileMode : u32
@@ -267,21 +267,21 @@ struct Config
 		{
 			struct
 			{
-				ConfigPrintSink unresolved_sink;
+				ConfigPrintSink unresolved;
 
-				ConfigPrintSink resolved_sink;
+				ConfigPrintSink resolved;
 			} asts;
 
-			ConfigPrintSink code2s_sink;
+			ConfigPrintSink code2s;
 
-			ConfigPrintSink types_sink;
+			ConfigPrintSink types;
 		} imports;
 
-		ConfigPrintSink config_sink;
+		ConfigPrintSink config;
 
 		struct
 		{
-			ConfigPrintSink identifier_pool_sink;
+			ConfigPrintSink identifier_pool;
 		} internals;
 	} logging;
 
@@ -306,24 +306,28 @@ struct Config
 	bool compile_all;
 };
 
-bool config_from_toml_file(Range<char8> filepath, PrintSink error_sink, Config* out_config, TreeSchemaAllocator* out_ts_alloc) noexcept;
+bool config_from_toml_file(Range<char8> filepath, PrintSinkHandle error_sink, Config* out_config) noexcept;
 
 Config config_defaults() noexcept;
 
-void print_config(PrintSink sink, const Config* config) noexcept;
+void print_config(PrintSinkHandle sink, const Config* config) noexcept;
 
-void print_config_help(PrintSink sink, u32 depth = 0) noexcept;
+void print_config_help(PrintSinkHandle sink, u32 depth = 0) noexcept;
 
 template<typename Sink>
 void print_config(Sink sink, const Config* config) noexcept
 {
-	print_config(print_make_sink(sink), config);
+	PrintSink print_sink = print_make_sink(sink);
+
+	print_config(&print_sink, config);
 }
 
 template<typename Sink>
 void print_config_help(Sink sink, u32 depth = 0) noexcept
 {
-	print_config_help(print_make_sink(sink), depth);
+	PrintSink print_sink = print_make_sink(sink);
+
+	print_config_help(&print_sink, depth);
 }
 
 
@@ -433,7 +437,7 @@ void identifier_set_attachment(CoreData* core, Range<char8> identifier, u8 attac
 // `id_and_attachment_from_identifier`.
 Range<char8> identifier_name_from_id(const CoreData* core, IdentifierId id) noexcept;
 
-void identifier_pool_metrics(const CoreData* core, PrintSink sink) noexcept;
+void identifier_pool_metrics(const CoreData* core, PrintSinkHandle sink) noexcept;
 
 
 
@@ -2106,7 +2110,7 @@ Range<ErrorRecord> get_errors(CoreData* core) noexcept;
 // the given `location`.
 // This is mainly intended for usage with `Config` parsing, as there is no
 // `ErrorSink` available at that point.
-void print_error(PrintSink sink, const SourceLocation* location, CompileError error, u8 tab_size) noexcept;
+void print_error(PrintSinkHandle sink, const SourceLocation* location, CompileError error, u8 tab_size) noexcept;
 
 const char8* tag_name(CompileError error) noexcept;
 

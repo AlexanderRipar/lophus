@@ -252,7 +252,7 @@ static u64 calc_memory_reserve(const Config* config, u64 commit_increment) noexc
 
 
 
-bool comp_heap_validate_config(const Config* config, PrintSink sink) noexcept
+bool comp_heap_validate_config(const Config* config, PrintSinkHandle sink) noexcept
 {
 	if (config->heap.reserve < config->heap.commit_increment)
 	{
