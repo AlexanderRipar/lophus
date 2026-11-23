@@ -1576,7 +1576,7 @@ INTERNAL AstNode* ast_node_from_id(CoreData* core, AstNodeId id) noexcept;
 // The node's `source_id`, `flags` and `tag` fields will be set to the given
 // values. The node will not have an attachment.
 // To complete the ast builder, call `complete_ast`.
-INTERNAL AstBuilderToken push_node(CoreData* core, AstBuilderToken first_child, SourceId source_id, AstFlag flags, AstTag tag) noexcept;
+AstBuilderToken push_node(CoreData* core, AstBuilderToken first_child, SourceId source_id, AstFlag flags, AstTag tag) noexcept;
 
 // Pushes a new `AstNode` with the given attachment into `asts`'s ast builder.
 // Nodes are pushed in post-order, meaning that children are pushed before
@@ -1590,7 +1590,7 @@ INTERNAL AstBuilderToken push_node(CoreData* core, AstBuilderToken first_child, 
 // argument. Note that the allocated attachment is four-byte aligned, so it is
 // not possible to have attachments requiring a higher alignment.
 // To complete the ast builder, call `complete_ast`.
-INTERNAL AstBuilderToken push_node(CoreData* core, AstBuilderToken first_child, SourceId source_id, AstFlag flags, AstTag tag, u8 attachment_dwords, const void* attachment) noexcept;
+AstBuilderToken push_node(CoreData* core, AstBuilderToken first_child, SourceId source_id, AstFlag flags, AstTag tag, u8 attachment_dwords, const void* attachment) noexcept;
 
 // Templated helper version of `push_node`.
 // This makes it easier to create a node with a given `attachment`.
@@ -1611,7 +1611,7 @@ static inline AstBuilderToken push_node(CoreData* core, AstBuilderToken first_ch
 // resulting ast.
 // To fill the builder, use one of the `push_node` functions.
 // After a call to this function, `asts`'s builder will be reset.
-INTERNAL AstNode* complete_ast(CoreData* core) noexcept;
+AstNode* complete_ast(CoreData* core) noexcept;
 
 
 
@@ -1633,7 +1633,7 @@ INTERNAL ReferenceList* reference_list_from_id(CoreData* core, ReferenceListId i
 
 // Checks whether `node` has any child nodes.
 // If it does, returns `true`, otherwise returns `false`.
-INTERNAL bool has_children(const AstNode* node) noexcept;
+bool has_children(const AstNode* node) noexcept;
 
 // Checks whether `node` has a next sibling.
 // If it does, returns `true`, otherwise returns `false`.
@@ -1721,42 +1721,42 @@ INTERNAL OpSliceOfInfo get_op_slice_of_info(AstNode* node) noexcept;
 // Creates an iterator over `node`'s direct children, skipping over more
 // removed ancestors.
 // See `AstDirectChildIterator` for further details.
-INTERNAL AstDirectChildIterator direct_children_of(AstNode* node) noexcept;
+AstDirectChildIterator direct_children_of(AstNode* node) noexcept;
 
 // Retrieves the next element of `iterator`. This function may only be called
 // exactly once after `has_next` called on the same iterator has returned
 // `true`.
-INTERNAL AstNode* next(AstDirectChildIterator* iterator) noexcept;
+AstNode* next(AstDirectChildIterator* iterator) noexcept;
 
 // Checks whether `iterator` has an element to be returned by a future call to
 // `next`. This call is idempotent.
-INTERNAL bool has_next(const AstDirectChildIterator* iterator) noexcept;
+bool has_next(const AstDirectChildIterator* iterator) noexcept;
 
 // Creates an iterator over `node`'s ancestors, yielding them in preorder.
 // See `AstPreorderIterator` for further details.
-INTERNAL AstPreorderIterator preorder_ancestors_of(AstNode* node) noexcept;
+AstPreorderIterator preorder_ancestors_of(AstNode* node) noexcept;
 
 // Retrieves the next element of `iterator`. This function may only be called
 // exactly once after `has_next` called on the same iterator has returned
 // `true`.
-INTERNAL AstIterationResult next(AstPreorderIterator* iterator) noexcept;
+AstIterationResult next(AstPreorderIterator* iterator) noexcept;
 
 // Checks whether `iterator` has an element to be returned by a future call to
 // `next`. This call is idempotent.
-INTERNAL bool has_next(const AstPreorderIterator* iterator) noexcept;
+bool has_next(const AstPreorderIterator* iterator) noexcept;
 
 // Creates an iterator over `node`'s ancestors, yielding them in postorder.
 // See `AstPostorderIterator` for further details.
-INTERNAL AstPostorderIterator postorder_ancestors_of(AstNode* node) noexcept;
+AstPostorderIterator postorder_ancestors_of(AstNode* node) noexcept;
 
 // Retrieves the next element of `iterator`. This function may only be called
 // exactly once after `has_next` called on the same iterator has returned
 // `true`.
-INTERNAL AstIterationResult next(AstPostorderIterator* iterator) noexcept;
+AstIterationResult next(AstPostorderIterator* iterator) noexcept;
 
 // Checks whether `iterator` has an element to be returned by a future call to
 // `next`. This call is idempotent.
-INTERNAL bool has_next(const AstPostorderIterator* iterator) noexcept;
+bool has_next(const AstPostorderIterator* iterator) noexcept;
 
 INTERNAL AstFlatIterator flat_ancestors_of(AstNode* node) noexcept;
 
@@ -1892,7 +1892,7 @@ INTERNAL SourceFileRead read_source_file(CoreData* core, Range<char8> filepath) 
 // Converts `source_id` to a `SourceLocation`.
 // If `source_id` is `SourceId::INVALID`, a dummy location indicating the
 // hard-coded prelude is returned.
-INTERNAL SourceLocation source_location_from_source_id(CoreData* core, SourceId source_id) noexcept;
+SourceLocation source_location_from_source_id(CoreData* core, SourceId source_id) noexcept;
 
 // Retrieves the path to the file to which the given `source_id` belongs.
 // This path may not be the same as that from which the file was imported, but
@@ -2110,7 +2110,7 @@ void print_errors(CoreData* core) noexcept;
 
 // Returns a range of `ErrorRecords` representing all previous calls to
 // `record_error` on the given `ErrorSink`.
-INTERNAL Range<ErrorRecord> get_errors(CoreData* core) noexcept;
+Range<ErrorRecord> get_errors(CoreData* core) noexcept;
 
 // Appends the message for the given `CompileError` to `sink`, prefixing it with
 // the given `location`.
@@ -2120,7 +2120,7 @@ INTERNAL void print_error(PrintSinkHandle sink, const SourceLocation* location, 
 
 INTERNAL const char8* tag_name(CompileError error) noexcept;
 
-INTERNAL Maybe<CompileError> compile_error_from_name(Range<char8> name) noexcept;
+Maybe<CompileError> compile_error_from_name(Range<char8> name) noexcept;
 
 
 
@@ -2554,22 +2554,22 @@ struct alignas(8) SelfType
 // Creates a "simple" type. This takes a `tag`, which
 // must not expect any additional associated data.
 // See `TypeTag` for details on which `tag`s are applicable.
-INTERNAL TypeId type_create_simple(CoreData* core, TypeTag tag) noexcept;
+TypeId type_create_simple(CoreData* core, TypeTag tag) noexcept;
 
 // Creates a "numeric", i.e. `Integer` or `Float` type.
 // This takes a tag indicating which type to create, along with a `NumericType`
 // further describing it.
-INTERNAL TypeId type_create_numeric(CoreData* core, TypeTag tag, NumericType attach) noexcept;
+TypeId type_create_numeric(CoreData* core, TypeTag tag, NumericType attach) noexcept;
 
 // Creates a "reference", i.e. `Ptr`, `Slice` or `TailArray` type.
 // This takes a tag indicating which type to create, along with a
 // `ReferenceType` further describing it.
-INTERNAL TypeId type_create_reference(CoreData* core, TypeTag tag, ReferenceType attach) noexcept;
+TypeId type_create_reference(CoreData* core, TypeTag tag, ReferenceType attach) noexcept;
 
 // Creates an "array", i.e. `Array` or `ArrayLiteral` type.
 // This takes a tag indicating which type to create, along with an `ArrayType`
 // further describing it.
-INTERNAL TypeId type_create_array(CoreData* core, ArrayType attach) noexcept;
+TypeId type_create_array(CoreData* core, ArrayType attach) noexcept;
 
 
 
@@ -2615,11 +2615,11 @@ INTERNAL void type_seal_impl_body(CoreData* core, TypeId type_id) noexcept;
 
 
 
-INTERNAL TypeId type_create_user_composite(CoreData* core, SourceId definition_site) noexcept;
+TypeId type_create_user_composite(CoreData* core, SourceId definition_site) noexcept;
 
-INTERNAL bool type_add_user_composite_member(CoreData* core, TypeId type_id, UserCompositeMemberInit init) noexcept;
+bool type_add_user_composite_member(CoreData* core, TypeId type_id, UserCompositeMemberInit init) noexcept;
 
-INTERNAL TypeId type_seal_user_composite(CoreData* core, TypeId type_id, UserCompositeSealInfo seal_info) noexcept;
+TypeId type_seal_user_composite(CoreData* core, TypeId type_id, UserCompositeSealInfo seal_info) noexcept;
 
 
 
@@ -2647,7 +2647,7 @@ INTERNAL TypeRelation type_relation(CoreData* core, TypeId first_type_id, TypeId
 
 // Checks whether `type_id_a` and `type_id_b` refer to the same type or
 // non-distinct aliases of the same type.
-INTERNAL TypeEquality type_is_equal(CoreData* core, TypeId type_id_a, TypeId type_id_b) noexcept;
+TypeEquality type_is_equal(CoreData* core, TypeId type_id_a, TypeId type_id_b) noexcept;
 
 
 
@@ -2670,7 +2670,7 @@ INTERNAL bool type_metrics_from_id(CoreData* core, TypeId type_id, TypeMetrics* 
 // For types craeted by `alias_type`, this is the same as the `tag` of the
 // aliased type.
 // For types created by `create_open_type`, this is `TypeTag::Composite`.
-INTERNAL TypeTag type_tag_from_id(CoreData* core, TypeId type_id) noexcept;
+TypeTag type_tag_from_id(CoreData* core, TypeId type_id) noexcept;
 
 // Retrieves the number of members in the type referenced by `type_id`, which
 // must reference a sealed composite type.
@@ -2691,7 +2691,7 @@ INTERNAL MemberByNameRst type_member_info_by_name(CoreData* core, TypeId type_id
 INTERNAL IdentifierId type_member_name_by_rank(CoreData* core, TypeId type_id, u16 rank) noexcept;
 
 // Do not call this function directly. Use `type_attachment_from_id` instead.
-INTERNAL const void* type_attachment_from_id_raw(CoreData* core, TypeId type_id) noexcept;
+const void* type_attachment_from_id_raw(CoreData* core, TypeId type_id) noexcept;
 
 // Retrieves the structural data associated with `type_id`, which must not
 // refer to a composite type.
@@ -2728,16 +2728,16 @@ INTERNAL const char8* tag_name(TypeTag tag) noexcept;
 
 // Creates an iterator over `type_id`s members.
 // See `MemberIterator` for further details.
-INTERNAL MemberIterator members_of(CoreData* core, TypeId type_id) noexcept;
+MemberIterator members_of(CoreData* core, TypeId type_id) noexcept;
 
 // Retrieves the next element of `iterator`. This function may only be called
 // exactly once after `has_next` called on the same iterator has returned
 // `true`.
-INTERNAL bool next(MemberIterator* it, MemberInfo* out_info) noexcept;
+bool next(MemberIterator* it, MemberInfo* out_info) noexcept;
 
 // Checks whether `iterator` has an element to be returned by a future call to
 // `next`. This call is idempotent.
-INTERNAL bool has_next(const MemberIterator* it) noexcept;
+bool has_next(const MemberIterator* it) noexcept;
 
 
 

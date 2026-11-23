@@ -598,7 +598,7 @@ INTERNAL SourceFileRead read_source_file(CoreData* core, Range<char8> filepath) 
 	return SourceFileRead{ &id_entry->data, content };
 }
 
-INTERNAL SourceLocation source_location_from_source_id(CoreData* core, SourceId source_id) noexcept
+SourceLocation source_location_from_source_id(CoreData* core, SourceId source_id) noexcept
 {
 	if (source_id == SourceId::INVALID)
 	{

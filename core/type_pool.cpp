@@ -1674,7 +1674,7 @@ INTERNAL void type_pool_cleanup(CoreData* core) noexcept
 
 
 
-INTERNAL TypeId type_create_simple([[maybe_unused]] CoreData* core, TypeTag tag) noexcept
+TypeId type_create_simple([[maybe_unused]] CoreData* core, TypeTag tag) noexcept
 {
 	ASSERT_OR_IGNORE(tag >= TypeTag::Void && tag <= TypeTag::Divergent);
 
@@ -1685,21 +1685,21 @@ INTERNAL TypeId type_create_simple([[maybe_unused]] CoreData* core, TypeTag tag)
 	return type_id;
 }
 
-INTERNAL TypeId type_create_numeric(CoreData* core, TypeTag tag, NumericType attach) noexcept
+TypeId type_create_numeric(CoreData* core, TypeTag tag, NumericType attach) noexcept
 {
 	ASSERT_OR_IGNORE(tag == TypeTag::Integer || tag == TypeTag::Float);
 
 	return holotype_id_from_attachment(core, tag, range::from_object_bytes(&attach));
 }
 
-INTERNAL TypeId type_create_reference(CoreData* core, TypeTag tag, ReferenceType attach) noexcept
+TypeId type_create_reference(CoreData* core, TypeTag tag, ReferenceType attach) noexcept
 {
 	ASSERT_OR_IGNORE(tag == TypeTag::Ptr || tag == TypeTag::Slice || tag == TypeTag::TailArray);
 
 	return holotype_id_from_attachment(core, tag, range::from_object_bytes(&attach));
 }
 
-INTERNAL TypeId type_create_array(CoreData* core, ArrayType attach) noexcept
+TypeId type_create_array(CoreData* core, ArrayType attach) noexcept
 {
 	return holotype_id_from_attachment(core, TypeTag::Array, range::from_object_bytes(&attach));
 }
@@ -2036,7 +2036,7 @@ INTERNAL void type_seal_impl_body(CoreData* core, TypeId type_id) noexcept
 
 
 
-INTERNAL TypeId type_create_user_composite(CoreData* core, SourceId definition_site) noexcept
+TypeId type_create_user_composite(CoreData* core, SourceId definition_site) noexcept
 {
 	TypeStructure* const structure = composite_alloc(core, TypeTag::Composite, CompositeKind::User, CompositeFlags::User_IsOpen, 4, false);
 
@@ -2058,7 +2058,7 @@ INTERNAL TypeId type_create_user_composite(CoreData* core, SourceId definition_s
 	return id_from_structure(core, indirection_structure);
 }
 
-INTERNAL bool type_add_user_composite_member(CoreData* core, TypeId type_id, UserCompositeMemberInit init) noexcept
+bool type_add_user_composite_member(CoreData* core, TypeId type_id, UserCompositeMemberInit init) noexcept
 {
 	TypeStructure* indirection_structure;
 
@@ -2105,7 +2105,7 @@ INTERNAL bool type_add_user_composite_member(CoreData* core, TypeId type_id, Use
 	return true;
 }
 
-INTERNAL TypeId type_seal_user_composite(CoreData* core, TypeId type_id, UserCompositeSealInfo seal_info) noexcept
+TypeId type_seal_user_composite(CoreData* core, TypeId type_id, UserCompositeSealInfo seal_info) noexcept
 {
 	ASSERT_OR_IGNORE(seal_info.align != 0 && is_pow2(seal_info.align));
 
@@ -2309,7 +2309,7 @@ INTERNAL TypeRelation type_relation(CoreData* core, TypeId first_type_id, TypeId
 		: second_to_first_relation;
 }
 
-INTERNAL TypeEquality type_is_equal(CoreData* core, TypeId type_id_a, TypeId type_id_b) noexcept
+TypeEquality type_is_equal(CoreData* core, TypeId type_id_a, TypeId type_id_b) noexcept
 {
 	ASSERT_OR_IGNORE(type_id_a != TypeId::INVALID && type_id_b != TypeId::INVALID);
 
@@ -2631,7 +2631,7 @@ INTERNAL bool type_metrics_from_id(CoreData* core, TypeId type_id, TypeMetrics* 
 	ASSERT_UNREACHABLE;
 }
 
-INTERNAL TypeTag type_tag_from_id(CoreData* core, TypeId type_id) noexcept
+TypeTag type_tag_from_id(CoreData* core, TypeId type_id) noexcept
 {
 	ASSERT_OR_IGNORE(type_id != TypeId::INVALID);
 
@@ -2707,7 +2707,7 @@ INTERNAL IdentifierId type_member_name_by_rank(CoreData* core, TypeId type_id, u
 	return info.member_names[rank];
 }
 
-INTERNAL const void* type_attachment_from_id_raw(CoreData* core, TypeId type_id) noexcept
+const void* type_attachment_from_id_raw(CoreData* core, TypeId type_id) noexcept
 {
 	ASSERT_OR_IGNORE(type_id != TypeId::INVALID);
 
@@ -2756,7 +2756,7 @@ INTERNAL const char8* tag_name(TypeTag tag) noexcept
 
 
 
-INTERNAL MemberIterator members_of(CoreData* core, TypeId type_id) noexcept
+MemberIterator members_of(CoreData* core, TypeId type_id) noexcept
 {
 	ASSERT_OR_IGNORE(type_id != TypeId::INVALID);
 
@@ -2798,7 +2798,7 @@ INTERNAL MemberIterator members_of(CoreData* core, TypeId type_id) noexcept
 	return it;
 }
 
-INTERNAL bool next(MemberIterator* it, MemberInfo* out) noexcept
+bool next(MemberIterator* it, MemberInfo* out) noexcept
 {
 	ASSERT_OR_IGNORE(has_next(it));
 
@@ -2816,7 +2816,7 @@ INTERNAL bool next(MemberIterator* it, MemberInfo* out) noexcept
 	return fill_member_info(info, rank, out);
 }
 
-INTERNAL bool has_next(const MemberIterator* it) noexcept
+bool has_next(const MemberIterator* it) noexcept
 {
 	ASSERT_OR_IGNORE(it->rank <= it->count);
 

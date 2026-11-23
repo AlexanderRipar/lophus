@@ -262,7 +262,7 @@ void print_errors(CoreData* core) noexcept
 	}
 }
 
-INTERNAL Range<ErrorRecord> get_errors(CoreData* core) noexcept
+Range<ErrorRecord> get_errors(CoreData* core) noexcept
 {
 	return Range<ErrorRecord>{ core->errors.records.begin(), core->errors.records.end() };
 }
@@ -484,7 +484,7 @@ INTERNAL const char8* tag_name(CompileError error) noexcept
 	return COMPILE_ERROR_NAMES[ordinal];
 }
 
-INTERNAL Maybe<CompileError> compile_error_from_name(Range<char8> name) noexcept
+Maybe<CompileError> compile_error_from_name(Range<char8> name) noexcept
 {
 	for (u32 ordinal = 1; ordinal != array_count(COMPILE_ERROR_NAMES); ++ordinal)
 	{
