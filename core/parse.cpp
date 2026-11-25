@@ -1209,7 +1209,7 @@ static Lexeme next_without_source(CoreData* core) noexcept
 		{
 			core->parser.curr += 1;
 
-			return { Token::OpLogAnd };
+			return { Token::OpLogOr };
 		}
 		else if (second == '=')
 		{

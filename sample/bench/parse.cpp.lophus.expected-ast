@@ -195016,9 +195016,9 @@ File {
       }
       Block {
         Return {
-          OpLogAnd {
-            OpLogAnd {
-              OpLogAnd {
+          OpLogOr {
+            OpLogOr {
+              OpLogOr {
                 OpCmpEQ {
                   Call {
                     Identifier [cast | -] {}
@@ -195086,7 +195086,7 @@ File {
       }
       Block {
         Return {
-          OpLogAnd {
+          OpLogOr {
             OpLogAnd {
               OpCmpGE {
                 Call {
@@ -195198,8 +195198,8 @@ File {
       }
       Block {
         Return {
-          OpLogAnd {
-            OpLogAnd {
+          OpLogOr {
+            OpLogOr {
               Call {
                 Identifier [is_alphabetic_char | -] {}
                 Identifier [c | -] {}
@@ -196169,7 +196169,7 @@ File {
           }
           Block {
             For {
-              OpLogAnd {
+              OpLogOr {
                 OpCmpEQ {
                   Call {
                     Identifier [cast | -] {}
@@ -197215,7 +197215,7 @@ File {
                       }
                     }
                     If {
-                      OpLogAnd {
+                      OpLogOr {
                         OpCmpLT {
                           Call {
                             Identifier [cast | -] {}
@@ -197660,7 +197660,7 @@ File {
                   LitInteger [1] {}
                 }
                 If {
-                  OpLogAnd {
+                  OpLogOr {
                     OpCmpEQ {
                       Call {
                         Identifier [cast | -] {}
@@ -197710,7 +197710,7 @@ File {
               }
             }
             If {
-              OpLogAnd {
+              OpLogOr {
                 Call {
                   Identifier [is_alphabetic_char | -] {}
                   UOpDeref {
@@ -197881,7 +197881,7 @@ File {
           }
           Block {
             If {
-              OpLogAnd {
+              OpLogOr {
                 Call {
                   Identifier [is_alphabetic_char | -] {}
                   UOpDeref {
@@ -199228,8 +199228,8 @@ File {
             }
             Block {
               If {
-                OpLogAnd {
-                  OpLogAnd {
+                OpLogOr {
+                  OpLogOr {
                     OpCmpEQ {
                       Call {
                         Identifier [cast | -] {}
@@ -201868,7 +201868,7 @@ File {
               }
             }
             If {
-              OpLogAnd {
+              OpLogOr {
                 OpCmpGT {
                   Call {
                     Identifier [cast | -] {}
@@ -202346,8 +202346,8 @@ File {
       }
       Block {
         Return {
-          OpLogAnd {
-            OpLogAnd {
+          OpLogOr {
+            OpLogOr {
               OpCmpEQ {
                 Identifier [token | -] {}
                 Identifier [KwdLet | -] {}
@@ -202973,7 +202973,7 @@ File {
           }
         }
         If {
-          OpLogAnd {
+          OpLogOr {
             Call {
               Identifier [is_definition_start | -] {}
               Member [token] {
@@ -206349,7 +206349,7 @@ File {
                                             Identifier [continue | -] {}
                                           }
                                           If {
-                                            OpLogAnd {
+                                            OpLogOr {
                                               OpCmpEQ {
                                                 Member [token] {
                                                   Identifier [lexeme | -] {}
@@ -206688,7 +206688,7 @@ File {
                                                             }
                                                           }
                                                           If {
-                                                            OpLogAnd {
+                                                            OpLogOr {
                                                               OpCmpLT {
                                                                 Call {
                                                                   Identifier [cast | -] {}
@@ -207655,7 +207655,7 @@ File {
                             }
                           }
                           If {
-                            OpLogAnd {
+                            OpLogOr {
                               Call {
                                 Identifier [is_definition_start | -] {}
                                 Member [token] {
@@ -208105,8 +208105,8 @@ File {
                                 }
                               }
                               If {
-                                OpLogAnd {
-                                  OpLogAnd {
+                                OpLogOr {
+                                  OpLogOr {
                                     OpCmpLT {
                                       Call {
                                         Identifier [cast | -] {}
